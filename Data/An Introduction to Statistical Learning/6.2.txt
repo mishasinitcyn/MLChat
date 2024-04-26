@@ -1,0 +1,567 @@
+240 6. Linear Model Selection and Regularization
+repeated the validation set approach using a different split of the data into
+a training set and a validation set, or if we repeated cross-validation using
+a different set of cross-validation folds, then the precise model with the
+lowest estimated test error would surely change. In this setting, we can
+select a model using the one-standard-error rule . We first calculate theone-
+standard-
+error
+rulestandard error of the estimated test MSE for each model size, and then
+select the smallest model for which the estimated test error is within one
+standard error of the lowest point on the curve. The rationale here is that
+if a set of models appear to be more or less equally good, then we might
+as well choose the simplest model{\textemdash}that is, the model with the smallest
+number of predictors. In this case, applying the one-standard-error rule
+to the validation set or cross-validation approach leads to selection of the
+three-variable model.
+6.2 Shrinkage Methods
+The subset selection methods described in Section 6.1involve using least
+squares to fit a linear model that contains a subset of the predictors. As an
+alternative, we can fit a model containing all ppredictors using a technique
+thatconstrains orregularizes the coefficient estimates, or equivalently, that
+shrinksthe coefficient estimates towards zero. It may not be immediately
+obvious why such a constraint should improve the fit, but it turns out that
+shrinking the coefficient estimates can significantly reduce their variance.
+The two best-known techniques for shrinking the regression coefficients
+towards zero are ridge regression and thelasso.
+6.2.1 Ridge Regression
+Recall from Chapter 3that the least squares fitting procedure estimates
+{\beta}0,{\beta}1,...,{\beta}pusing the values that minimize
+RSS =n{\sum}
+i=1
+yi{-}{\beta}0{-}p{\sum}
+j=1{\beta}jxij
+2
+.
+Ridge regression is very similar to least squares, except that the coefficientsridge
+regressionare estimated by minimizing a slightly different quantity. In particular, the
+ridge regression coefficient estimates {\textasciicircum}{\beta}Rare the values that minimize
+n{\sum}
+i=1
+yi{-}{\beta}0{-}p{\sum}
+j=1{\beta}jxij
+2
++{\lambda}p{\sum}
+j=1{\beta}2
+j= RSS + {\lambda}p{\sum}
+j=1{\beta}2
+j, (6.5)
+where{\lambda}{\geq}0is atuning parameter , to be determined separately. Equa-tuning
+parametertion6.5trades off two different criteria. As with least squares, ridge regres-
+sion seeks coefficient estimates that fit the data well, by making the RSS
+small. However, the second term, {\lambda}{\sum}
+j{\beta}2
+j, called a shrinkage penalty , isshrinkage
+penaltysmall when {\beta}1,...,{\beta}pare close to zero, and so it has the effect of shrinking
+the estimates of {\beta}jtowards zero. The tuning parameter {\lambda}serves to control
+6.2 Shrinkage Methods 241
+1e{-}02 1e+00 1e+02 1e+04{-}300 {-}100 0 100 200 300 400Standardized CoefficientsIncomeLimitRatingStudent
+0.0 0.2 0.4 0.6 0.8 1.0{-}300 {-}100 0 100 200 300 400Standardized Coefficients{\lambda}{\parallel}{\textasciicircum}{\beta}R{\lambda}{\parallel}2/{\parallel}{\textasciicircum}{\beta}{\parallel}2FIGURE 6.4. The standardized ridge regression coefficients are displayed for
+theCreditdata set, as a function of {\lambda}and{\parallel}{\textasciicircum}{\beta}R
+{\lambda}{\parallel}2/{\parallel}{\textasciicircum}{\beta}{\parallel}2.
+the relative impact of these two terms on the regression coefficient esti-
+mates. When {\lambda}=0, the penalty term has no effect, and ridge regression
+will produce the least squares estimates. However, as {\lambda}{\textrightarrow}{\infty}, the impact of
+the shrinkage penalty grows, and the ridge regression coefficient estimates
+will approach zero. Unlike least squares, which generates only one set of co-
+efficient estimates, ridge regression will produce a different set of coefficient
+estimates, {\textasciicircum}{\beta}R
+{\lambda}, for each value of {\lambda}. Selecting a good value for {\lambda}is critical;
+we defer this discussion to Section 6.2.3, where we use cross-validation.
+Note that in ( 6.5), the shrinkage penalty is applied to {\beta}1,...,{\beta}p, but
+not to the intercept {\beta}0. We want to shrink the estimated association of
+each variable with the response; however, we do not want to shrink the
+intercept, which is simply a measure of the mean value of the response
+whenxi1=xi2=...=xip=0. If we assume that the variables{\textemdash}that is,
+the columns of the data matrix X{\textemdash}have been centered to have mean zero
+before ridge regression is performed, then the estimated intercept will take
+the form {\textasciicircum}{\beta}0={\textasciimacron}y={\sum}n
+i=1yi/n.
+An Application to the Credit Data
+In Figure 6.4, the ridge regression coefficient estimates for the Creditdata
+set are displayed. In the left-hand panel, each curve corresponds to the
+ridge regression coefficient estimate for one of the ten variables, plotted
+as a function of {\lambda}. For example, the black solid line represents the ridge
+regression estimate for the incomecoefficient, as {\lambda}is varied. At the extreme
+left-hand side of the plot, {\lambda}is essentially zero, and so the corresponding
+ridge coefficient estimates are the same as the usual least squares esti-
+mates. But as {\lambda}increases, the ridge coefficient estimates shrink towards
+zero. When {\lambda}is extremely large, then all of the ridge coefficient estimates
+are basically zero; this corresponds to the null model that contains no pre-
+dictors. In this plot, the income,limit,rating, andstudentvariables are
+displayed in distinct colors, since these variables tend to have by far the
+largest coefficient estimates. While the ridge coefficient estimates tend to
+decrease in aggregate as {\lambda}increases, individual coefficients, such as rating
+andincome, may occasionally increase as {\lambda}increases.
+242 6. Linear Model Selection and Regularization
+The right-hand panel of Figure 6.4displays the same ridge coefficient
+estimates as the left-hand panel, but instead of displaying {\lambda}on thex-axis,
+we now display {\parallel}{\textasciicircum}{\beta}R
+{\lambda}{\parallel}2/{\parallel}{\textasciicircum}{\beta}{\parallel}2, where {\textasciicircum}{\beta}denotes the vector of least squares
+coefficient estimates. The notation {\parallel}{\beta}{\parallel}2denotes the {\ell}2norm(pronounced{\ell}2norm
+{\textquotedblleft}ell 2{\textquotedblright}) of a vector, and is defined as {\parallel}{\beta}{\parallel}2={\sqrt{}}{\sum}p
+j=1{\beta}j2. It measures the
+distance of {\beta}from zero. As {\lambda}increases, the {\ell}2norm of {\textasciicircum}{\beta}R
+{\lambda}willalways
+decrease, and so will {\parallel}{\textasciicircum}{\beta}R
+{\lambda}{\parallel}2/{\parallel}{\textasciicircum}{\beta}{\parallel}2. The latter quantity ranges from 1 (when
+{\lambda}=0, in which case the ridge regression coefficient estimate is the same
+as the least squares estimate, and so their {\ell}2norms are the same) to 0
+(when{\lambda}={\infty}, in which case the ridge regression coefficient estimate is a
+vector of zeros, with {\ell}2norm equal to zero). Therefore, we can think of the
+x-axis in the right-hand panel of Figure 6.4as the amount that the ridge
+regression coefficient estimates have been shrunken towards zero; a small
+value indicates that they have been shrunken very close to zero.
+The standard least squares coefficient estimates discussed in Chapter 3
+arescale equivariant : multiplying Xjby a constant csimply leads to ascale
+equivariantscaling of the least squares coefficient estimates by a factor of 1/c. In other
+words, regardless of how the jth predictor is scaled, Xj{\textasciicircum}{\beta}jwill remain the
+same. In contrast, the ridge regression coefficient estimates can change sub-
+stantially when multiplying a given predictor by a constant. For instance,
+consider the incomevariable, which is measured in dollars. One could rea-
+sonably have measured income in thousands of dollars, which would result
+inareductionintheobservedvaluesof incomebyafactorof1,000.Nowdue
+to the sum of squared coefficients term in the ridge regression formulation
+(6.5), such a change in scale will not simply cause the ridge regression co-
+efficient estimate for incometo change by a factor of 1,000. In other words,
+Xj{\textasciicircum}{\beta}R
+j,{\lambda}will depend not only on the value of {\lambda}, but also on the scaling of the
+jth predictor. In fact, the value of Xj{\textasciicircum}{\beta}R
+j,{\lambda}may even depend on the scaling
+of theotherpredictors! Therefore, it is best to apply ridge regression after
+standardizing the predictors , using the formula
+{\textasciitilde}xij=xij{\sqrt{}}
+1
+n{\sum}n
+i=1(xij{-}xj)2, (6.6)
+so that they are all on the same scale. In ( 6.6), the denominator is the
+estimated standard deviation of the jth predictor. Consequently, all of the
+standardized predictors will have a standard deviation of one. As a re-
+sult the final fit will not depend on the scale on which the predictors are
+measured. In Figure 6.4, they-axis displays the standardized ridge regres-
+sion coefficient estimates{\textemdash}that is, the coefficient estimates that result from
+performing ridge regression using standardized predictors.
+Why Does Ridge Regression Improve Over Least Squares?
+Ridgeregression`sadvantageoverleastsquaresisrootedinthe bias-variance
+trade-off. As{\lambda}increases, the flexibility of the ridge regression fit decreases,
+leading to decreased variance but increased bias. This is illustrated in the
+left-hand panel of Figure 6.5, using a simulated data set containing p= 45
+predictors and n= 50 observations. The green curve in the left-hand panel
+6.2 Shrinkage Methods 243
+1e{-}01 1e+01 1e+030 10 20 30 40 50 60Mean Squared Error0.0 0.2 0.4 0.6 0.8 1.00 10 20 30 40 50 60Mean Squared Error{\lambda}{\parallel}{\textasciicircum}{\beta}R{\lambda}{\parallel}2/{\parallel}{\textasciicircum}{\beta}{\parallel}2FIGURE 6.5. Squared bias (black), variance (green), and test mean squared
+error (purple) for the ridge regression predictions on a simulated data set, as a
+function of {\lambda}and{\parallel}{\textasciicircum}{\beta}R
+{\lambda}{\parallel}2/{\parallel}{\textasciicircum}{\beta}{\parallel}2. The horizontal dashed lines indicate the minimum
+possible MSE. The purple crosses indicate the ridge regression models for which
+the MSE is smallest.
+of Figure 6.5displays the variance of the ridge regression predictions as a
+function of {\lambda}. At the least squares coefficient estimates, which correspond
+to ridge regression with {\lambda}=0, the variance is high but there is no bias. But
+as{\lambda}increases, the shrinkage of the ridge coefficient estimates leads to a
+substantial reduction in the variance of the predictions, at the expense of a
+slight increase in bias. Recall that the test mean squared error (MSE), plot-
+ted in purple, is closely related to the variance plus the squared bias. For
+values of {\lambda}up to about 10, the variance decreases rapidly, with very little
+increase in bias, plotted in black. Consequently, the MSE drops consider-
+ably as{\lambda}increases from 0to10. Beyond this point, the decrease in variance
+due to increasing {\lambda}slows, and the shrinkage on the coefficients causes them
+to be significantly underestimated, resulting in a large increase in the bias.
+The minimum MSE is achieved at approximately {\lambda}= 30 . Interestingly,
+because of its high variance, the MSE associated with the least squares
+fit, when {\lambda}=0, is almost as high as that of the null model for which all
+coefficient estimates are zero, when {\lambda}={\infty}. However, for an intermediate
+value of{\lambda}, the MSE is considerably lower.
+The right-hand panel of Figure 6.5displays the same curves as the left-
+hand panel, this time plotted against the {\ell}2norm of the ridge regression
+coefficient estimates divided by the {\ell}2norm of the least squares estimates.
+Now as we move from left to right, the fits become more flexible, and so
+the bias decreases and the variance increases.
+In general, in situations where the relationship between the response
+and the predictors is close to linear, the least squares estimates will have
+low bias but may have high variance. This means that a small change in
+the training data can cause a large change in the least squares coefficient
+estimates. In particular, when the number of variables pis almost as large
+as the number of observations n, as in the example in Figure 6.5, the
+least squares estimates will be extremely variable. And if p{>}n , then the
+least squares estimates do not even have a unique solution, whereas ridge
+regression can still perform well by trading off a small increase in bias for a
+244 6. Linear Model Selection and Regularization
+large decrease in variance. Hence, ridge regression works best in situations
+where the least squares estimates have high variance.
+Ridge regression also has substantial computational advantages over best
+subset selection, which requires searching through 2pmodels. As we dis-
+cussed previously, even for moderate values of p, such a search can be
+computationally infeasible. In contrast, for any fixed value of {\lambda}, ridge re-
+gression only fits a single model, and the model-fitting procedure can be
+performed quite quickly. In fact, one can show that the computations re-
+quired to solve ( 6.5),simultaneously for all values of {\lambda}, are almost identical
+to those for fitting a model using least squares.
+6.2.2 The Lasso
+Ridge regression does have one obvious disadvantage. Unlike best subset,
+forward stepwise, and backward stepwise selection, which will generally
+select models that involve just a subset of the variables, ridge regression
+will include all ppredictors in the final model. The penalty {\lambda}{\sum}{\beta}2
+jin (6.5)
+willshrinkallofthecoefficientstowardszero,butitwillnotsetanyofthem
+exactly to zero (unless {\lambda}={\infty}). This may not be a problem for prediction
+accuracy, but it can create a challenge in model interpretation in settings in
+which the number of variables pis quite large. For example, in the Credit
+data set, it appears that the most important variables are income,limit,
+rating, andstudent. So we might wish to build a model including just
+these predictors. However, ridge regression will always generate a model
+involving all ten predictors. Increasing the value of {\lambda}will tend to reduce
+the magnitudes of the coefficients, but will not result in exclusion of any of
+the variables.
+Thelassois a relatively recent alternative to ridge regression that over-lassocomes this disadvantage. The lasso coefficients, {\textasciicircum}{\beta}L
+{\lambda}, minimize the quantity
+n{\sum}
+i=1
+yi{-}{\beta}0{-}p{\sum}
+j=1{\beta}jxij
+2
++{\lambda}p{\sum}
+j=1|{\beta}j|= RSS + {\lambda}p{\sum}
+j=1|{\beta}j|. (6.7)
+Comparing ( 6.7) to (6.5), we see that the lasso and ridge regression have
+similar formulations. The only difference is that the {\beta}2
+jterm in the ridge
+regression penalty ( 6.5) has been replaced by |{\beta}j|in the lasso penalty ( 6.7).
+In statistical parlance, the lasso uses an {\ell}1(pronounced {\textquotedblleft}ell 1{\textquotedblright}) penalty
+instead of an {\ell}2penalty. The {\ell}1norm of a coefficient vector {\beta}is given by
+{\parallel}{\beta}{\parallel}1={\sum}|{\beta}j|.
+As with ridge regression, the lasso shrinks the coefficient estimates to-
+wards zero. However, in the case of the lasso, the {\ell}1penalty has the effect
+of forcing some of the coefficient estimates to be exactly equal to zero when
+thetuningparameter {\lambda}issufficientlylarge.Hence,muchlikebestsubsetse-
+lection, the lasso performs variable selection . As a result, models generated
+from the lasso are generally much easier to interpret than those produced
+by ridge regression. We say that the lasso yields sparsemodels{\textemdash}that is,sparse
+models that involve only a subset of the variables. As in ridge regression,
+selecting a good value of {\lambda}for the lasso is critical; we defer this discussion
+to Section 6.2.3, where we use cross-validation.
+6.2 Shrinkage Methods 245
+20 50 100 200 500 2000 5000{-}200 0 100 200 300 400Standardized Coefficients0.0 0.2 0.4 0.6 0.8 1.0{-}300 {-}100 0 100 200 300 400Standardized CoefficientsIncomeLimitRatingStudent{\lambda}{\parallel}{\textasciicircum}{\beta}L{\lambda}{\parallel}1/{\parallel}{\textasciicircum}{\beta}{\parallel}1FIGURE 6.6. The standardized lasso coefficients on the Creditdata set are
+shown as a function of {\lambda}and{\parallel}{\textasciicircum}{\beta}L
+{\lambda}{\parallel}1/{\parallel}{\textasciicircum}{\beta}{\parallel}1.
+As an example, consider the coefficient plots in Figure 6.6, which are gen-
+erated from applying the lasso to the Creditdata set. When {\lambda}=0, then
+the lasso simply gives the least squares fit, and when {\lambda}becomes sufficiently
+large, the lasso gives the null model in which all coefficient estimates equal
+zero. However, in between these two extremes, the ridge regression and
+lasso models are quite different from each other. Moving from left to right
+in the right-hand panel of Figure 6.6, we observe that at first the lasso re-
+sults in a model that contains only the ratingpredictor. Then studentand
+limitenter the model almost simultaneously, shortly followed by income.
+Eventually, the remaining variables enter the model. Hence, depending on
+the value of {\lambda}, the lasso can produce a model involving any number of vari-
+ables. In contrast, ridge regression will always include all of the variables in
+the model, although the magnitude of the coefficient estimates will depend
+on{\lambda}.
+Another Formulation for Ridge Regression and the Lasso
+One can show that the lasso and ridge regression coefficient estimates solve
+the problems
+minimize
+{\beta}
+
+n{\sum}
+i=1
+yi{-}{\beta}0{-}p{\sum}
+j=1{\beta}jxij
+2
+
+subject top{\sum}
+j=1|{\beta}j|{\leq}s
+(6.8)
+and
+minimize
+{\beta}
+
+n{\sum}
+i=1
+yi{-}{\beta}0{-}p{\sum}
+j=1{\beta}jxij
+2
+
+subject top{\sum}
+j=1{\beta}2
+j{\leq}s,
+(6.9)
+respectively. In other words, for every value of {\lambda}, there is some ssuch that
+the Equations ( 6.7) and (6.8) will give the same lasso coefficient estimates.
+Similarly, for every value of {\lambda}there is a corresponding ssuch that Equa-
+tions(6.5)and(6.9)willgivethesameridgeregressioncoefficientestimates.
+246 6. Linear Model Selection and Regularization
+Whenp=2, then (6.8) indicates that the lasso coefficient estimates have
+the smallest RSS out of all points that lie within the diamond defined by
+|{\beta}1|+|{\beta}2|{\leq}s. Similarly, the ridge regression estimates have the smallest
+RSS out of all points that lie within the circle defined by {\beta}2
+1+{\beta}2
+2{\leq}s.
+Wecanthinkof( 6.8)asfollows.Whenweperformthelassowearetrying
+to find the set of coefficient estimates that lead to the smallest RSS, subject
+to the constraint that there is a budgetsfor how large{\sum}p
+j=1|{\beta}j|can be.
+Whensis extremely large, then this budget is not very restrictive, and so
+the coefficient estimates can be large. In fact, if sis large enough that the
+least squares solution falls within the budget, then ( 6.8) will simply yield
+the least squares solution. In contrast, if sis small, then{\sum}p
+j=1|{\beta}j|must be
+small in order to avoid violating the budget. Similarly, ( 6.9) indicates that
+when we perform ridge regression, we seek a set of coefficient estimates
+such that the RSS is as small as possible, subject to the requirement that{\sum}p
+j=1{\beta}2
+jnot exceed the budget s.
+The formulations ( 6.8) and (6.9) reveal a close connection between the
+lasso, ridge regression, and best subset selection. Consider the problem
+minimize
+{\beta}
+
+n{\sum}
+i=1
+yi{-}{\beta}0{-}p{\sum}
+j=1{\beta}jxij
+2
+
+subject top{\sum}
+j=1I({\beta}j= 0) {\leq}s.
+(6.10)
+HereI({\beta}j= 0) isanindicatorvariable:ittakesonavalueof1if {\beta}j=0,and
+equals zero otherwise. Then ( 6.10) amounts to finding a set of coefficient
+estimates such that RSS is as small as possible, subject to the constraint
+that no more than scoefficients can be nonzero. The problem ( 6.10) is
+equivalent to best subset selection. Unfortunately, solving ( 6.10) is com-
+putationally infeasible when pis large, since it requires considering all(p
+s)
+models containing spredictors. Therefore, we can interpret ridge regression
+and the lasso as computationally feasible alternatives to best subset selec-
+tion that replace the intractable form of the budget in ( 6.10) with forms
+that are much easier to solve. Of course, the lasso is much more closely
+related to best subset selection, since the lasso performs feature selection
+forssufficiently small in ( 6.8), while ridge regression does not.
+The Variable Selection Property of the Lasso
+Why is it that the lasso, unlike ridge regression, results in coefficient esti-
+mates that are exactly equal to zero? The formulations ( 6.8) and (6.9) can
+be used to shed light on the issue. Figure 6.7illustrates the situation. The
+least squares solution is marked as {\textasciicircum}{\beta}, while the blue diamond and circle
+represent the lasso and ridge regression constraints in ( 6.8) and (6.9), re-
+spectively. If sis sufficiently large, then the constraint regions will contain
+{\textasciicircum}{\beta}, and so the ridge regression and lasso estimates will be the same as the
+least squares estimates. (Such a large value of scorresponds to {\lambda}=0 in
+(6.5) and (6.7).) However, in Figure 6.7the least squares estimates lie out-
+side of the diamond and the circle, and so the least squares estimates are
+not the same as the lasso and ridge regression estimates.
+Each of the ellipses centered around {\textasciicircum}{\beta}represents a contour: this meanscontourthat all of the points on a particular ellipse have the same RSS value. As
+6.2 Shrinkage Methods 247
+FIGURE 6.7. Contours of the error and constraint functions for the lasso
+(left)and ridge regression (right). The solid blue areas are the constraint regions,
+|{\beta}1|+|{\beta}2|{\leq}sand{\beta}2
+1+{\beta}2
+2{\leq}s, while the red ellipses are the contours of the RSS.
+the ellipses expand away from the least squares coefficient estimates, the
+RSS increases. Equations ( 6.8) and (6.9) indicate that the lasso and ridge
+regression coefficient estimates are given by the first point at which an
+ellipse contacts the constraint region. Since ridge regression has a circular
+constraintwithnosharppoints,thisintersectionwillnotgenerallyoccuron
+an axis, and so the ridge regression coefficient estimates will be exclusively
+non-zero. However, the lasso constraint has cornersat each of the axes, and
+so the ellipse will often intersect the constraint region at an axis. When this
+occurs, one of the coefficients will equal zero. In higher dimensions, many of
+the coefficient estimates may equal zero simultaneously. In Figure 6.7, the
+intersection occurs at {\beta}1=0, and so the resulting model will only include
+{\beta}2.
+In Figure 6.7, we considered the simple case of p=2. When p=3,
+then the constraint region for ridge regression becomes a sphere, and the
+constraint region for the lasso becomes a polyhedron. When p{>}3, the
+constraint for ridge regression becomes a hypersphere, and the constraint
+for the lasso becomes a polytope. However, the key ideas depicted in Fig-
+ure6.7still hold. In particular, the lasso leads to feature selection when
+p{>}2due to the sharp corners of the polyhedron or polytope.
+Comparing the Lasso and Ridge Regression
+It is clear that the lasso has a major advantage over ridge regression, in
+that it produces simpler and more interpretable models that involve only a
+subset of the predictors. However, which method leads to better prediction
+accuracy? Figure 6.8displays the variance, squared bias, and test MSE of
+the lasso applied to the same simulated data as in Figure 6.5. Clearly the
+lasso leads to qualitatively similar behavior to ridge regression, in that as {\lambda}
+increases, the variance decreases and the bias increases. In the right-hand
+248 6. Linear Model Selection and Regularization
+0.02 0.10 0.50 2.00 10.00 50.000 10 20 30 40 50 60Mean Squared Error0.0 0.2 0.4 0.6 0.8 1.00 10 20 30 40 50 60R2 on Training DataMean Squared Error{\lambda}FIGURE 6.8. Left:Plots of squared bias (black), variance (green), and test
+MSE (purple) for the lasso on a simulated data set. Right:Comparison of squared
+bias, variance, and test MSE between lasso (solid) and ridge (dotted). Both are
+plotted against their R2on the training data, as a common form of indexing. The
+crosses in both plots indicate the lasso model for which the MSE is smallest.
+panel of Figure 6.8, the dotted lines represent the ridge regression fits.
+Here we plot both against their R2on the training data. This is another
+useful way to index models, and can be used to compare models with
+different types of regularization, as is the case here. In this example, the
+lasso and ridge regression result in almost identical biases. However, the
+variance of ridge regression is slightly lower than the variance of the lasso.
+Consequently,theminimumMSEofridgeregressionisslightlysmallerthan
+that of the lasso.
+However, the data in Figure 6.8were generated in such a way that all 45
+predictorswererelatedtotheresponse{\textemdash}thatis,noneofthetruecoefficients
+{\beta}1,...,{\beta}45equaled zero. The lasso implicitly assumes that a number of the
+coefficients truly equal zero. Consequently, it is not surprising that ridge
+regression outperforms the lasso in terms of prediction error in this setting.
+Figure6.9illustrates a similar situation, except that now the response is a
+function of only 2 out of 45predictors. Now the lasso tends to outperform
+ridge regression in terms of bias, variance, and MSE.
+These two examples illustrate that neither ridge regression nor the lasso
+will universally dominate the other. In general, one might expect the lasso
+to perform better in a setting where a relatively small number of predictors
+have substantial coefficients, and the remaining predictors have coefficients
+that are very small or that equal zero. Ridge regression will perform better
+when the response is a function of many predictors, all with coefficients of
+roughly equal size. However, the number of predictors that is related to the
+response is never known a priori for real data sets. A technique such as
+cross-validation can be used in order to determine which approach is better
+on a particular data set.
+As with ridge regression, when the least squares estimates have exces-
+sively high variance, the lasso solution can yield a reduction in variance
+at the expense of a small increase in bias, and consequently can gener-
+ate more accurate predictions. Unlike ridge regression, the lasso performs
+variable selection, and hence results in models that are easier to interpret.
+6.2 Shrinkage Methods 249
+0.02 0.10 0.50 2.00 10.00 50.000 20 40 60 80 100Mean Squared Error0.4 0.5 0.6 0.7 0.8 0.9 1.00 20 40 60 80 100R2 on Training DataMean Squared Error{\lambda}FIGURE 6.9. Left:Plots of squared bias (black), variance (green), and test
+MSE (purple) for the lasso. The simulated data is similar to that in Figure 6.8,
+except that now only two predictors are related to the response. Right:Comparison
+of squared bias, variance, and test MSE between lasso (solid) and ridge (dotted).
+Both are plotted against their R2on the training data, as a common form of
+indexing. The crosses in both plots indicate the lasso model for which the MSE is
+smallest.
+Thereareveryefficientalgorithmsforfittingbothridgeandlassomodels;
+in both cases the entire coefficient paths can be computed with about the
+same amount of work as a single least squares fit. We will explore this
+further in the lab at the end of this chapter.
+A Simple Special Case for Ridge Regression and the Lasso
+In order to obtain a better intuition about the behavior of ridge regression
+and the lasso, consider a simple special case with n=p, andXa diag-
+onal matrix with 1`s on the diagonal and 0`s in all off-diagonal elements.
+To simplify the problem further, assume also that we are performing regres-
+sion without an intercept. With these assumptions, the usual least squares
+problem simplifies to finding {\beta}1,...,{\beta}pthat minimize
+p{\sum}
+j=1(yj{-}{\beta}j)2. (6.11)
+In this case, the least squares solution is given by
+{\textasciicircum}{\beta}j=yj.
+And in this setting, ridge regression amounts to finding {\beta}1,...,{\beta}psuch that
+p{\sum}
+j=1(yj{-}{\beta}j)2+{\lambda}p{\sum}
+j=1{\beta}2
+j (6.12)
+is minimized, and the lasso amounts to finding the coefficients such that
+p{\sum}
+j=1(yj{-}{\beta}j)2+{\lambda}p{\sum}
+j=1|{\beta}j| (6.13)
+250 6. Linear Model Selection and Regularization
+{-}1.5 {-}0.5 0.0 0.5 1.0 1.5{-}1.5 {-}0.5 0.5 1.5Coefficient EstimateRidgeLeast Squares
+{-}1.5 {-}0.5 0.0 0.5 1.0 1.5{-}1.5 {-}0.5 0.5 1.5Coefficient EstimateLassoLeast Squares
+yjyjFIGURE 6.10. The ridge regression and lasso coefficient estimates for a simple
+setting with n=pandXa diagonal matrix with 1`s on the diagonal. Left:The
+ridge regression coefficient estimates are shrunken proportionally towards zero,
+relative to the least squares estimates. Right:The lasso coefficient estimates are
+soft-thresholded towards zero.
+is minimized. One can show that in this setting, the ridge regression esti-
+mates take the form
+{\textasciicircum}{\beta}R
+j=yj/(1 + {\lambda}), (6.14)
+and the lasso estimates take the form
+{\textasciicircum}{\beta}L
+j=
+
+yj{-}{\lambda}/2ifyj{>}{\lambda}/2;
+yj+{\lambda}/2ifyj{<}{-}{\lambda}/2;
+0 if|yj|{\leq}{\lambda}/2.(6.15)
+Figure6.10displays the situation. We can see that ridge regression and
+the lasso perform two very different types of shrinkage. In ridge regression,
+each least squares coefficient estimate is shrunken by the same proportion.
+In contrast, the lasso shrinks each least squares coefficient towards zero by
+a constant amount, {\lambda}/2; the least squares coefficients that are less than
+{\lambda}/2in absolute value are shrunken entirely to zero. The type of shrink-
+age performed by the lasso in this simple setting ( 6.15) is known as soft-
+thresholding . The fact that some lasso coefficients are shrunken entirely tosoft-
+thresholdingzero explains why the lasso performs feature selection.
+In the case of a more general data matrix X, the story is a little more
+complicated than what is depicted in Figure 6.10, but the main ideas still
+hold approximately: ridge regression more or less shrinks every dimension
+of the data by the same proportion, whereas the lasso more or less shrinks
+all coefficients toward zero by a similar amount, and sufficiently small co-
+efficients are shrunken all the way to zero.
+Bayesian Interpretation of Ridge Regression and the Lasso
+We now show that one can view ridge regression and the lasso through
+a Bayesian lens. A Bayesian viewpoint for regression assumes that the
+coefficient vector {\beta}has some priordistribution, say p({\beta}), where {\beta}=
+({\beta}0,{\beta}1,...,{\beta}p)T. The likelihood of the data can be written as f(Y|X,{\beta}),
+6.2 Shrinkage Methods 251
+{-}3 {-}2 {-}1 0 1 2 30.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7{-}3 {-}2 {-}1 0 1 2 30.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7{\beta}j{\beta}j
+g({\beta}j)g({\beta}j)
+FIGURE 6.11. Left:Ridge regression is the posterior mode for {\beta}under a Gaus-
+sian prior. Right:The lasso is the posterior mode for {\beta}under a double-exponential
+prior.
+whereX=(X1,...,X p). Multiplying the prior distribution by the likeli-
+hood gives us (up to a proportionality constant) the posterior distribution ,posterior
+distributionwhich takes the form
+p({\beta}|X,Y){\propto}f(Y|X,{\beta})p({\beta}|X)=f(Y|X,{\beta})p({\beta}),
+where the proportionality above follows from Bayes` theorem, and the
+equality above follows from the assumption that Xis fixed.
+We assume the usual linear model,
+Y={\beta}0+X1{\beta}1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+Xp{\beta}p+{\epsilon},
+and suppose that the errors are independent and drawn from a normal dis-
+tribution. Furthermore, assume that p({\beta})={\prod}p
+j=1g({\beta}j), for some density
+function g. It turns out that ridge regression and the lasso follow naturally
+from two special cases of g:
+ Ifgis a Gaussian distribution with mean zero and standard deviation
+a function of {\lambda}, then it follows that the posterior mode for{\beta}{\textemdash}thatposterior
+modeis, the most likely value for {\beta}, given the data{\textemdash}is given by the ridge
+regression solution. (In fact, the ridge regression solution is also the
+posterior mean.)
+ Ifgis a double-exponential (Laplace) distribution with mean zero
+and scale parameter a function of {\lambda}, then it follows that the posterior
+mode for {\beta}is the lasso solution. (However, the lasso solution is not
+the posterior mean, and in fact, the posterior mean does not yield a
+sparse coefficient vector.)
+The Gaussian and double-exponential priors are displayed in Figure 6.11.
+Therefore, from a Bayesian viewpoint, ridge regression and the lasso follow
+directly from assuming the usual linear model with normal errors, together
+with a simple prior distribution for {\beta}. Notice that the lasso prior is steeply
+peaked at zero, while the Gaussian is flatter and fatter at zero. Hence, the
+lasso expects a priori that many of the coefficients are (exactly) zero, while
+ridge assumes the coefficients are randomly distributed about zero.
+252 6. Linear Model Selection and Regularization
+5e{-}03 5e{-}02 5e{-}01 5e+0025.0 25.2 25.4 25.6Cross{-}Validation Error5e{-}03 5e{-}02 5e{-}01 5e+00{-}300 {-}100 0 100 300Standardized Coefficients{\lambda}{\lambda}FIGURE 6.12. Left:Cross-validation errors that result from applying ridge
+regression to the Creditdata set with various values of {\lambda}.Right:The coefficient
+estimates as a function of {\lambda}. The vertical dashed lines indicate the value of {\lambda}
+selected by cross-validation.
+6.2.3 Selecting the Tuning Parameter
+Just as the subset selection approaches considered in Section 6.1require
+a method to determine which of the models under consideration is best,
+implementing ridge regression and the lasso requires a method for selecting
+a value for the tuning parameter {\lambda}in (6.5) and (6.7), or equivalently, the
+value of the constraint sin (6.9) and (6.8). Cross-validation provides a sim-
+ple way to tackle this problem. We choose a grid of {\lambda}values, and compute
+the cross-validation error for each value of {\lambda}, as described in Chapter 5.W e
+then select the tuning parameter value for which the cross-validation error
+is smallest. Finally, the model is re-fit using all of the available observations
+and the selected value of the tuning parameter.
+Figure6.12displays the choice of {\lambda}that results from performing leave-
+one-out cross-validation on the ridge regression fits from the Creditdata
+set. The dashed vertical lines indicate the selected value of {\lambda}. In this case
+the value is relatively small, indicating that the optimal fit only involves a
+smallamountofshrinkagerelativetotheleastsquaressolution.Inaddition,
+the dip is not very pronounced, so there is rather a wide range of values
+that would give a very similar error. In a case like this we might simply use
+the least squares solution.
+Figure6.13provides an illustration of ten-fold cross-validation applied to
+the lasso fits on the sparse simulated data from Figure 6.9. The left-hand
+panelofFigure 6.13displaysthecross-validationerror,whiletheright-hand
+panel displays the coefficient estimates. The vertical dashed lines indicate
+the point at which the cross-validation error is smallest. The two colored
+lines in the right-hand panel of Figure 6.13represent the two predictors
+that are related to the response, while the grey lines represent the unre-
+lated predictors; these are often referred to as signalandnoisevariables,signalrespectively. Not only has the lasso correctly given much larger coeffi-
+cient estimates to the two signal predictors, but also the minimum cross-
+validation error corresponds to a set of coefficient estimates for which only
+the signal variables are non-zero. Hence cross-validation together with the
+lasso has correctly identified the two signal variables in the model, even
+though this is a challenging setting, with p= 45 variables and only n= 50

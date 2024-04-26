@@ -1,0 +1,11 @@
+google.generativeai
+pinecone-client
+mixedbread-ai
+pylatexenc
+langchain
+pypdf
+html2text
+dotenv
+tiktoken
+pandas
+numpy

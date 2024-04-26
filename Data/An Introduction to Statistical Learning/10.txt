@@ -1,0 +1,1302 @@
+10
+Deep Learning
+This chapter covers the important topic of deep learning . At the time ofdeep
+learningwriting(2020),deeplearningisaveryactiveareaofresearchinthemachine
+learning and artificial intelligence communities. The cornerstone of deep
+learning is the neural network .neural
+networkNeural networks rose to fame in the late 1980s. There was a lot of excite-
+ment and a certain amount of hype associated with this approach, and they
+were the impetus for the popular Neural Information Processing Systems
+meetings (NeurIPS, formerly NIPS) held every year, typically in exotic
+places like ski resorts. This was followed by a synthesis stage, where the
+properties of neural networks were analyzed by machine learners, math-
+ematicians and statisticians; algorithms were improved, and the method-
+ology stabilized. Then along came SVMs, boosting, and random forests,
+and neural networks fell somewhat from favor. Part of the reason was that
+neural networks required a lot of tinkering, while the new methods were
+more automatic. Also, on many problems the new methods outperformed
+poorly-trained neural networks. This was the status quo for the first decade
+in the new millennium.
+All the while, though, a core group of neural-network enthusiasts were
+pushingtheirtechnologyharderonever-largercomputingarchitecturesand
+data sets. Neural networks resurfaced after 2010 with the new name deep
+learning, with new architectures, additional bells and whistles, and a string
+of success stories on some niche problems such as image and video classifi-
+cation, speech and text modeling. Many in the field believe that the major
+reason for these successes is the availability of ever-larger training datasets,
+made possible by the wide-scale use of digitization in science and industry.
+In this chapter we discuss the basics of neural networks and deep learn-
+ing, and then go into some of the specializations for specific problems, such
+as convolutional neural networks (CNNs) for image classification, and re-
+current neural networks (RNNs) for time series and other sequences. We
+{\textcopyright} Springer Nature Switzerland AG 2023 
+G. James et al., An Introduction to Statistical Learning , Springer Texts in Statistics, 
+https://doi.org/10.1007/978-3-031-38747-0{\_}10 399
+400 10. Deep Learning
+X1X2X3X4A1A2A3A4A5f(X)YHiddenLayerInputLayerOutputLayer
+FIGURE 10.1. Neural network with a single hidden layer. The hidden layer
+computes activations Ak=hk(X)that are nonlinear transformations of linear
+combinations of the inputs X1,X2,...,X p. Hence these Akare not directly ob-
+served. The functions hk({\textperiodcentered})are not fixed in advance, but are learned during the
+training of the network. The output layer is a linear model that uses these acti-
+vationsAkas inputs, resulting in a function f(X).
+will also demonstrate these models using the Python torch package, along
+with a number of helper packages.
+The material in this chapter is slightly more challenging than elsewhere
+in this book.
+10.1 Single Layer Neural Networks
+A neural network takes an input vector of pvariables X=(X1,X2,...,X p)
+and builds a nonlinear function f(X)to predict the response Y. We have
+built nonlinear prediction models in earlier chapters, using trees, boosting
+and generalized additive models. What distinguishes neural networks from
+these methods is the particular structure of the model. Figure 10.1shows
+a simple feed-forward neural network for modeling a quantitative responsefeed-forward
+neural
+networkusingp=4predictors. In the terminology of neural networks, the four fea-
+turesX1,...,X 4make up the units in the input layer . The arrows indicate
+input layer that each of the inputs from the input layer feeds into each of the Khidden
+units(we get to pick K; here we chose 5). The neural network model hashidden unitsthe form
+f(X)= {\beta}0+{\sum}K
+k=1{\beta}khk(X)
+={\beta}0+{\sum}K
+k=1{\beta}kg(wk0+{\sum}p
+j=1wkjXj).(10.1)
+It is built up here in two steps. First the Kactivations Ak,k=1,...,K , inactivationsthehiddenlayerarecomputedasfunctionsoftheinputfeatures X1,...,X p,
+Ak=hk(X)=g(wk0+{\sum}p
+j=1wkjXj), (10.2)
+10.1 Single Layer Neural Networks 401
+{-}4 {-}2 0240.0 0.2 0.4 0.6 0.8 1.0zg(z)sigmoidReLU
+FIGURE 10.2. Activation functions. The piecewise-linear ReLUfunction is pop-
+ular for its efficiency and computability. We have scaled it down by a factor of
+five for ease of comparison.
+whereg(z)is a nonlinear activation function that is specified in advance.activation
+functionWe can think of each Akas a different transformation hk(X)of the original
+features, much like the basis functions of Chapter 7. These Kactivations
+from the hidden layer then feed into the output layer, resulting in
+f(X)={\beta}0+K{\sum}
+k=1{\beta}kAk, (10.3)
+a linear regression model in the K=5 activations. All the parameters
+{\beta}0,...,{\beta}Kandw10,...,w Kpneed to be estimated from data. In the early
+instances of neural networks, the sigmoidactivation function was favored,sigmoid
+g(z)=ez
+1+ez=1
+1+e{-}z, (10.4)
+which is the same function used in logistic regression to convert a linear
+function into probabilities between zero and one (see Figure 10.2). The
+preferred choice in modern neural networks is the ReLU(rectified linearReLUunit) activation function, which takes the formrectified
+linear unit
+g(z)=( z)+={\{}0ifz{<}0
+zotherwise .(10.5)
+A ReLU activation can be computed and stored more efficiently than a
+sigmoid activation. Although it thresholds at zero, because we apply it to a
+linear function ( 10.2) the constant term wk0will shift this inflection point.
+So in words, the model depicted in Figure 10.1derives five new features
+by computing five different linear combinations of X, and then squashes
+each through an activation function g({\textperiodcentered})to transform it. The final model
+is linear in these derived variables.
+Thename neuralnetwork originallyderivedfromthinkingofthesehidden
+units as analogous to neurons in the brain {\textemdash} values of the activations
+Ak=hk(X)close to one are firing, while those close to zero are silent
+(using the sigmoid activation function).
+The nonlinearity in the activation function g({\textperiodcentered})is essential, since without
+it the model f(X)in (10.1) would collapse into a simple linear model in
+402 10. Deep Learning
+X1,...,X p. Moreover, having a nonlinear activation function allows the
+model to capture complex nonlinearities and interaction effects. Consider
+a very simple example with p=2 input variables X=(X1,X2), and
+K=2hidden units h1(X)andh2(X)withg(z)=z2. We specify the other
+parameters as
+{\beta}0=0,{\beta}1=1
+4,{\beta}2={-}1
+4,
+w10=0,w 11=1,w 12=1 ,
+w20=0,w 21=1,w 22={-}1.(10.6)
+From (10.2), this means that
+h1(X) = (0 + X1+X2)2,
+h2(X) = (0 + X1{-}X2)2.(10.7)
+Then plugging ( 10.7) into (10.1), we get
+f(X)=0 +1
+4{\textperiodcentered}(0 + X1+X2)2{-}1
+4{\textperiodcentered}(0 + X1{-}X2)2
+=1
+4[
+(X1+X2)2{-}(X1{-}X2)2]
+=X1X2.(10.8)
+So the sum of two nonlinear transformations of linear functions can give
+us an interaction! In practice we would not use a quadratic function for
+g(z), since we would always get a second-degree polynomial in the original
+coordinates X1,...,X p. The sigmoid or ReLU activations do not have such
+a limitation.
+Fitting a neural network requires estimating the unknown parameters in
+(10.1). For a quantitative response, typically squared-error loss is used, so
+that the parameters are chosen to minimize
+n{\sum}
+i=1(yi{-}f(xi))2. (10.9)
+DetailsabouthowtoperformthisminimizationareprovidedinSection 10.7.
+10.2 Multilayer Neural Networks
+Modern neural networks typically have more than one hidden layer, and
+often many units per layer. In theory a single hidden layer with a large
+number of units has the ability to approximate most functions. However,
+the learning task of discovering a good solution is made much easier with
+multiple layers each of modest size.
+We will illustrate a large dense network on the famous and publicly
+available MNISThandwritten digit dataset.1Figure10.3shows examples of
+these digits. The idea is to build a model to classify the images into their
+correct digit class 0{\textendash}9. Every image has p= 28 {\texttimes}28 = 784 pixels, each
+of which is an eight-bit grayscale value between 0 and 255 representing
+1See LeCun, Cortes, and Burges (2010) {\textquotedblleft}The MNIST database of handwritten digits{\textquotedblright},
+available at http://yann.lecun.com/exdb/mnist .
+10.2 Multilayer Neural Networks 403
+FIGURE 10.3. Examples of handwritten digits from the MNISTcorpus. Each
+grayscale image has 28{\texttimes}28pixels, each of which is an eight-bit number (0{\textendash}255)
+which represents how dark that pixel is. The first 3, 5, and 8 are enlarged to show
+their 784 individual pixel values.
+the relative amount of the written digit in that tiny square.2These pixels
+are stored in the input vector X(in, say, column order). The output is
+the class label, represented by a vector Y=(Y0,Y1,...,Y 9)of 10 dummy
+variables, with a one in the position corresponding to the label, and zeros
+elsewhere. In the machine learning community, this is known as one-hot
+encoding. There are 60,000 training images, and 10,000 test images.one-hot
+encodingOn a historical note, digit recognition problems were the catalyst that
+accelerated the development of neural network technology in the late 1980s
+at AT{\&}T Bell Laboratories and elsewhere. Pattern recognition tasks of this
+kind are relatively simple for humans. Our visual system occupies a large
+fraction of our brains, and good recognition is an evolutionary force for
+survival. These tasks are not so simple for machines, and it has taken more
+than 30 years to refine the neural-network architectures to match human
+performance.
+Figure10.4shows a multilayer network architecture that works well for
+solving the digit-classification task. It differs from Figure 10.1in several
+ways:
+ It has two hidden layers L1(256 units) and L2(128 units) rather
+than one. Later we will see a network with seven hidden layers.
+ It has ten output variables, rather than one. In this case the ten vari-
+ables really represent a single qualitative variable and so are quite
+dependent. (We have indexed them by the digit class 0{\textendash}9 rather than
+1{\textendash}10, for clarity.) More generally, in multi-task learning one can pre-multi-task
+learningdict different responses simultaneously with a single network; they
+all have a say in the formation of the hidden layers.
+ The loss function used for training the network is tailored for the
+multiclass classification task.
+2In the analog-to-digital conversion process, only part of the written numeral may
+fall in the square representing a particular pixel.
+404 10. Deep LearningX1X2X3X4X5X6...XpA(1)1A(1)2A(1)3A(1)4...A(1)K1A(2)1A(2)2A(2)3...A(2)K2f0(X)Y0f1(X)Y1......f9(X)Y9HiddenlayerL2HiddenlayerL1InputlayerOutputlayer
+W1W2BFIGURE 10.4. Neural network diagram with two hidden layers and multiple
+outputs, suitable for the MNISThandwritten-digit problem. The input layer has
+p= 784 units, the two hidden layers K1= 256 andK2= 128 units respectively,
+and the output layer 10units. Along with intercepts (referred to as biasesin the
+deep-learning community) this network has 235,146 parameters (referred to as
+weights).
+The first hidden layer is as in ( 10.2), with
+A(1)
+k=h(1)
+k(X)
+=g(w(1)
+k0+{\sum}p
+j=1w(1)
+kjXj)(10.10)
+fork=1,...,K 1. The second hidden layer treats the activations A(1)
+kof
+the first hidden layer as inputs and computes new activations
+A(2)
+{\ell}=h(2)
+{\ell}(X)
+=g(w(2)
+{\ell}0+{\sum}K1
+k=1w(2)
+{\ell}kA(1)
+k)(10.11)
+for{\ell}=1,...,K 2.Notice that each of the activations in the second layer
+A(2)
+{\ell}=h(2)
+{\ell}(X)is a function of the input vector X. This is the case because
+while they are explicitly a function of the activations A(1)
+kfrom layer L1,
+these in turn are functions of X. This would also be the case with more
+hidden layers. Thus, through a chain of transformations, the network is
+able to build up fairly complex transformations of Xthat ultimately feed
+into the output layer as features.
+We have introduced additional superscript notation such as h(2)
+{\ell}(X)and
+w(2)
+{\ell}jin (10.10) and (10.11) to indicate to which layer the activations and
+weights(coefficients) belong, in this case layer 2. The notation W1in Fig-weights
+10.2 Multilayer Neural Networks 405
+ure10.4represents the entire matrix of weights that feed from the input
+layer to the first hidden layer L1. This matrix will have 785{\texttimes}256 = 200 ,960
+elements; there are 785 rather than 784 because we must account for the
+intercept or biasterm.3
+biasEach element A(1)
+kfeeds to the second hidden layer L2via the matrix of
+weightsW2of dimension 257{\texttimes}128 = 32 ,896.
+We now get to the output layer, where we now have ten responses rather
+than one. The first step is to compute ten different linear models similar
+to our single model ( 10.1),
+Zm={\beta}m0+{\sum}K2
+{\ell}=1{\beta}m{\ell}h(2)
+{\ell}(X)
+={\beta}m0+{\sum}K2
+{\ell}=1{\beta}m{\ell}A(2)
+{\ell},(10.12)
+form=0,1,...,9. The matrix Bstores all 129{\texttimes}10 = 1 ,290of these
+weights.
+If these were all separate quantitative responses, we would simply set
+eachfm(X)=Zmand be done. However, we would like our estimates to
+represent class probabilities fm(X) = Pr( Y=m|X), just like in multi-
+nomial logistic regression in Section 4.3.5. So we use the special softmaxsoftmaxactivation function (see ( 4.13) on page 145),
+fm(X) = Pr( Y=m|X)=eZm
+{\sum}9
+{\ell}=0eZ{\ell}, (10.13)
+form=0,1,...,9. This ensures that the 10 numbers behave like proba-
+bilities (non-negative and sum to one). Even though the goal is to build
+a classifier, our model actually estimates a probability for each of the 10
+classes. The classifier then assigns the image to the class with the highest
+probability.
+To train this network, since the response is qualitative, we look for coef-
+ficient estimates that minimize the negative multinomial log-likelihood
+{-}n{\sum}
+i=19{\sum}
+m=0yimlog(fm(xi)), (10.14)
+also known as the cross-entropy . This is a generalization of the crite-cross-
+entropy rion (4.5) for two-class logistic regression. Details on how to minimize this
+objective are given in Section 10.7. If the response were quantitative, we
+would instead minimize squared-error loss as in ( 10.9).
+Table10.1compares the test performance of the neural network with
+two simple models presented in Chapter 4that make use of linear decision
+boundaries:multinomiallogisticregressionandlineardiscriminantanalysis.
+The improvement of neural networks over both of these linear methods is
+dramatic:thenetworkwithdropoutregularizationachievesatesterrorrate
+below 2{\%} on the 10,000test images. (We describe dropout regularization in
+Section10.7.3.) In Section 10.9.2of the lab, we present the code for fitting
+this model, which runs in just over two minutes on a laptop computer.
+3The use of {\textquotedblleft}weights{\textquotedblright} for coefficients and {\textquotedblleft}bias{\textquotedblright} for the intercepts wk0in (10.2) is
+popular in the machine learning community; this use of bias is not to be confused with
+the {\textquotedblleft}bias-variance{\textquotedblright} usage elsewhere in this book.
+406 10. Deep Learning
+Method Test Error
+Neural Network + Ridge Regularization 2.3{\%}
+Neural Network + Dropout Regularization 1.8{\%}
+Multinomial Logistic Regression 7.2{\%}
+Linear Discriminant Analysis 12.7{\%}
+TABLE 10.1. Test error rate on the MNISTdata, for neural networks with two
+forms of regularization, as well as multinomial logistic regression and linear dis-
+criminant analysis. In this example, the extra complexity of the neural network
+leads to a marked improvement in test error.
+FIGURE 10.5. A sample of images from the CIFAR100 database: a collection of
+natural images from everyday life, with 100 different classes represented.
+Adding the number of coefficients in W1,W2andB, we get235,146in
+all, more than 33 times the number 785{\texttimes}9=7,065needed for multinomial
+logistic regression. Recall that there are 60,000images in the training set.
+While this might seem like a large training set, there are almost four times
+asmanycoefficientsintheneuralnetworkmodelasthereareobservationsin
+the training set! To avoid overfitting, some regularization is needed. In this
+example, we used two forms of regularization: ridge regularization, which
+is similar to ridge regression from Chapter 6, anddropoutregularization.dropoutWe discuss both forms of regularization in Section 10.7.
+10.3 Convolutional Neural Networks
+Neural networks rebounded around 2010 with big successes in image classi-
+fication. Around that time, massive databases of labeled images were being
+accumulated, with ever-increasing numbers of classes. Figure 10.5shows
+75 images drawn from the CIFAR100 database.4This database consists of
+60,000 images labeled according to 20 superclasses (e.g. aquatic mammals),
+with five classes per superclass (beaver, dolphin, otter, seal, whale). Each
+image has a resolution of 32{\texttimes}32pixels, with three eight-bit numbers per
+pixel representing red, green and blue. The numbers for each image are
+organized in a three-dimensional array called a feature map . The first twofeature map
+4See Chapter 3 of Krizhevsky (2009) {\textquotedblleft}Learning multiple layers of fea-
+tures from tiny images{\textquotedblright}, available at https://www.cs.toronto.edu/{\textasciitilde}kriz/
+learning-features-2009-TR.pdf .
+10.3 Convolutional Neural Networks 407
+FIGURE 10.6. Schematic showing how a convolutional neural network classifies
+an image of a tiger. The network takes in the image and identifies local features.
+It then combines the local features in order to create compound features, which in
+this example include eyes and ears. These compound features are used to output
+the label {\textquotedblleft}tiger{\textquotedblright}.
+axes are spatial (both are 32-dimensional), and the third is the channelchannelaxis,5representing the three colors. There is a designated training set of
+50,000 images, and a test set of 10,000.
+A special family of convolutional neural networks (CNNs) has evolved forconvolutional
+neural
+networksclassifying images such as these, and has shown spectacular success on a
+wide range of problems. CNNs mimic to some degree how humans classify
+images, by recognizing specific features or patterns anywhere in the image
+that distinguish each particular object class. In this section we give a brief
+overview of how they work.
+Figure10.6illustrates the idea behind a convolutional neural network on
+a cartoon image of a tiger.6
+The network first identifies low-level features in the input image, such
+as small edges, patches of color, and the like. These low-level features are
+then combined to form higher-level features, such as parts of ears, eyes,
+and so on. Eventually, the presence or absence of these higher-level features
+contributes to the probability of any given output class.
+Howdoesaconvolutionalneuralnetworkbuildupthishierarchy?Itcom-
+bines two specialized types of hidden layers, called convolution layers and
+poolinglayers. Convolution layers search for instances of small patterns in
+the image, whereas pooling layers downsample these to select a prominent
+subset. In order to achieve state-of-the-art results, contemporary neural-
+network architectures make use of many convolution and pooling layers.
+We describe convolution and pooling layers next.
+10.3.1 Convolution Layers
+Aconvolution layer is made up of a large number of convolution filters , eachconvolution
+layer
+convolution
+filter5The term channel is taken from the signal-processing literature. Each channel is a
+distinct source of information.
+6Thanks to Elena Tuzhilina for producing the diagram and https://www.
+cartooning4kids.com/ for permission to use the cartoon tiger.
+408 10. Deep Learning
+of which is a template that determines whether a particular local feature is
+present in an image. A convolution filter relies on a very simple operation,
+called a convolution , which basically amounts to repeatedly multiplying
+matrix elements and then adding the results.
+To understand how a convolution filter works, consider a very simple
+example of a 4{\texttimes}3image:
+Original Image =
+abc
+def
+ghi
+jkl
+.
+Now consider a 2{\texttimes}2filter of the form
+Convolution Filter =[{\alpha}{\beta}
+{\gamma}{\delta}]
+.
+When we convolve the image with the filter, we get the result7
+Convolved Image =
+a{\alpha}+b{\beta}+d{\gamma}+e{\delta}b{\alpha}+c{\beta}+e{\gamma}+f{\delta}
+d{\alpha}+e{\beta}+g{\gamma}+h{\delta}e{\alpha}+f{\beta}+h{\gamma}+i{\delta}
+g{\alpha}+h{\beta}+j{\gamma}+k{\delta}h{\alpha}+i{\beta}+k{\gamma}+l{\delta}
+.
+For instance, the top-left element comes from multiplying each element in
+the2{\texttimes}2filter by the corresponding element in the top left 2{\texttimes}2portion
+of the image, and adding the results. The other elements are obtained in a
+similar way: the convolution filter is applied to every 2{\texttimes}2submatrix of the
+original image in order to obtain the convolved image. If a 2{\texttimes}2submatrix
+of the original image resembles the convolution filter, then it will have a
+largevalue in the convolved image; otherwise, it will have a smallvalue.
+Thus,the convolved image highlights regions of the original image that
+resemble the convolution filter. We have used 2{\texttimes}2as an example; in
+general convolution filters are small {\ell}1{\texttimes}{\ell}2arrays, with {\ell}1and{\ell}2small
+positive integers that are not necessarily equal.
+Figure10.7illustratestheapplicationoftwoconvolutionfilterstoa 192{\texttimes}
+179image of a tiger, shown on the left-hand side.8Each convolution filter
+is a15{\texttimes}15image containing mostly zeros (black), with a narrow strip
+of ones (white) oriented either vertically or horizontally within the image.
+When each filter is convolved with the image of the tiger, areas of the tiger
+that resemble the filter (i.e. that have either horizontal or vertical stripes or
+edges) are givenlarge values,and areas of the tiger that do not resemble the
+feature are given small values. The convolved images are displayed on the
+right-hand side. We see that the horizontal stripe filter picks out horizontal
+stripes and edges in the original image, whereas the vertical stripe filter
+picks out vertical stripes and edges in the original image.
+7The convolved image is smaller than the original image because its dimension is
+given by the number of 2{\texttimes}2submatrices in the original image. Note that 2{\texttimes}2is the
+dimension of the convolution filter. If we want the convolved image to have the same
+dimension as the original image, then padding can be applied.
+8The tiger image used in Figures 10.7{\textendash}10.9was obtained from the public domain
+image resource https://www.needpix.com/ .
+10.3 Convolutional Neural Networks 409
+FIGURE 10.7. Convolution filters find local features in an image, such as edges
+and small shapes. We begin with the image of the tiger shown on the left, and
+apply the two small convolution filters in the middle. The convolved images high-
+light areas in the original image where details similar to the filters are found.
+Specifically, the top convolved image highlights the tiger`s vertical stripes, whereas
+the bottom convolved image highlights the tiger`s horizontal stripes. We can think
+of the original image as the input layer in a convolutional neural network, and
+the convolved images as the units in the first hidden layer.
+We have used a large image and two large filters in Figure 10.7for illus-
+tration. For the CIFAR100 database there are 32{\texttimes}32color pixels per image,
+and we use 3{\texttimes}3convolution filters.
+In a convolution layer, we use a whole bank of filters to pick out a variety
+of differently-oriented edges and shapes in the image. Using predefined
+filters in this way is standard practice in image processing. By contrast,
+with CNNs the filters are learnedfor the specific classification task. We can
+think of the filter weights as the parameters going from an input layer to a
+hidden layer, with one hidden unit for each pixel in the convolved image.
+This is in fact the case, though the parameters are highly structured and
+constrained (see Exercise 4for more details). They operate on localized
+patches in the input image (so there are many structural zeros), and the
+sameweightsina givenfilter are reusedfor allpossible patchesin the image
+(so the weights are constrained).9
+We now give some additional details.
+ Since the input image is in color, it has three channels represented
+by a three-dimensional feature map (array). Each channel is a two-
+dimensional ( 32{\texttimes}32) feature map {\textemdash} one for red, one for green, and
+one for blue. A single convolution filter will also have three channels,
+one per color, each of dimension 3{\texttimes}3, with potentially different filter
+weights. The results of the three convolutions are summed to form
+a two-dimensional output feature map. Note that at this point the
+color information has been used, and is not passed on to subsequent
+layers except through its role in the convolution.
+9This used to be called weight sharing in the early years of neural networks.
+410 10. Deep Learning
+ If we use Kdifferent convolution filters at this first hidden layer,
+we getKtwo-dimensional output feature maps, which together are
+treated as a single three-dimensional feature map. We view each of
+theKoutput feature maps as a separate channel of information, so
+now we have Kchannels in contrast to the three color channels of
+the original input feature map. The three-dimensional feature map is
+just like the activations in a hidden layer of a simple neural network,
+except organized and produced in a spatially structured way.
+ We typically apply the ReLU activation function ( 10.5) to the con-
+volved image. This step is sometimes viewed as a separate layer in
+the convolutional neural network, in which case it is referred to as a
+detector layer .detector
+layer
+10.3.2 Pooling Layers
+Apoolinglayer provides a way to condense a large image into a smallerpoolingsummary image. While there are a number of possible ways to perform
+pooling, the max pooling operation summarizes each non-overlapping 2{\texttimes}2
+block of pixels in an image using the maximum value in the block. This
+reduces the size of the image by a factor of two in each direction, and it
+also provides some location invariance : i.e. as long as there is a large value
+in one of the four pixels in the block, the whole block registers as a large
+value in the reduced image.
+Here is a simple example of max pooling:
+Max pool
+1253
+3012
+2134
+1120
+{\textrightarrow}[35
+24]
+.
+10.3.3 Architecture of a Convolutional Neural Network
+So far we have defined a single convolution layer {\textemdash} each filter produces a
+new two-dimensional feature map. The number of convolution filters in a
+convolution layer is akin to the number of units at a particular hidden layer
+in a fully-connected neural network of the type we saw in Section 10.2.
+This number also defines the number of channels in the resulting three-
+dimensional feature map. We have also described a pooling layer, which
+reduces the first two dimensions of each three-dimensional feature map.
+Deep CNNs havemanysuchlayers.Figure 10.8showsa typicalarchitecture
+for a CNN for the CIFAR100 image classification task.
+At the input layer, we see the three-dimensional feature map of a color
+image, where the channel axis represents each color by a 32{\texttimes}32two-
+dimensional feature map of pixels. Each convolution filter produces a new
+channel at the first hidden layer, each of which is a 32{\texttimes}32feature map
+(after some padding at the edges). After this first round of convolutions, we
+now have a new {\textquotedblleft}image{\textquotedblright}; a feature map with considerably more channels
+than the three color input channels (six in the figure, since we used six
+convolution filters).
+3216328164322500100convolveconvolveconvolvepoolpoolpoolflatten8FIGURE 10.8. Architecture of a deep CNN for the CIFAR100 classification task.
+Convolution layers are interspersed with 2{\texttimes}2max-pool layers, which reduce the
+size by a factor of 2 in both dimensions.
+This is followed by a max-pool layer, which reduces the size of the feature
+map in each channel by a factor of four: two in each dimension.
+Thisconvolve-then-poolsequenceisnowrepeatedforthenexttwolayers.
+Some details are as follows:
+ Each subsequent convolve layer is similar to the first. It takes as input
+the three-dimensional feature map from the previous layer and treats
+it like a single multi-channel image. Each convolution filter learned
+has as many channels as this feature map.
+ Since the channel feature maps are reduced in size after each pool
+layer, we usually increase the number of filters in the next convolve
+layer to compensate.
+ Sometimes we repeat several convolve layers before a pool layer. This
+effectively increases the dimension of the filter.
+These operations are repeated until the pooling has reduced each channel
+feature map down to just a few pixels in each dimension. At this point the
+three-dimensional feature maps are flattened {\textemdash} the pixels are treated as
+separate units {\textemdash} and fed into one or more fully-connected layers before
+reaching the output layer, which is a softmax activation for the 100 classes
+(as in (10.13)).
+There are many tuning parameters to be selected in constructing such a
+network, apart from the number, nature, and sizes of each layer. Dropout
+learning can be used at each layer, as well as lasso or ridge regularization
+(see Section 10.7). The details of constructing a convolutional neural net-
+work can seem daunting. Fortunately, terrific software is available, with
+extensive examples and vignettes that provide guidance on sensible choices
+for the parameters. For the CIFAR100 official test set, the best accuracy as
+of this writing is just above 75{\%}, but undoubtedly this performance will
+continue to improve.
+10.3.4 Data Augmentation
+An additional important trick used with image modeling is data augment-data aug-
+mentationation. Essentially, each training image is replicated many times, with each
+replicate randomly distorted in a natural way such that human recognition
+is unaffected. Figure 10.9shows some examples. Typical distortions are10.3 Convolutional Neural Networks 411
+412 10. Deep Learning
+FIGURE 10.9. Data augmentation. The original image (leftmost) is distorted
+in natural ways to produce different images with the same class label. These
+distortions do not fool humans, and act as a form of regularization when fitting
+the CNN.
+zoom, horizontal and vertical shift, shear, small rotations, and in this case
+horizontal flips. At face value this is a way of increasing the training set
+considerably with somewhat different examples, and thus protects against
+overfitting. In fact we can see this as a form of regularization: we build a
+cloud of images around each original image, all with the same label. This
+kind of fattening of the data is similar in spirit to ridge regularization.
+We will see in Section 10.7.2that the stochastic gradient descent al-
+gorithms for fitting deep learning models repeatedly process randomly-
+selected batches of, say, 128 training images at a time. This works hand-in-
+glove with augmentation, because we can distort each image in the batch
+on the fly, and hence do not have to store all the new images.
+10.3.5 Results Using a Pretrained Classifier
+Here we use an industry-level pretrained classifier to predict the class of
+some new images. The resnet50 classifier is a convolutional neural network
+that was trained using the imagenet data set, which consists of millions of
+images that belong to an ever-growing number of categories.10Figure10.10
+demonstrates the performance of resnet50 on six photographs (private col-
+lection of one of the authors).11The CNN does a reasonable job classifying
+the hawk in the second image. If we zoom out as in the third image, it
+gets confused and chooses the fountain rather than the hawk. In the final
+image a {\textquotedblleft}jacamar{\textquotedblright} is a tropical bird from South and Central America with
+similar coloring to the South African Cape Weaver. We give more details
+on this example in Section 10.9.4.
+Much of the work in fitting a CNN is in learning the convolution filters
+at the hidden layers; these are the coefficients of a CNN. For models fit to
+massive corpora such as imagenet with many classes, the output of these
+filters can serve as features for general natural-image classification prob-
+lems. One can use these pretrained hidden layers for new problems with
+much smaller training sets (a process referred to as weight freezing ), andweight
+freezingjust train the last few layers of the network, which requires much less data.
+10For more information about resnet50 , see He, Zhang, Ren, and Sun (2015) {\textquotedblleft}Deep
+residual learning for image recognition{\textquotedblright}, https://arxiv.org/abs/1512.03385 . For de-
+tails about imagenet , see Russakovsky, Deng, et al. (2015) {\textquotedblleft}ImageNet Large Scale
+Visual Recognition Challenge{\textquotedblright}, in International Journal of Computer Vision .
+11Theseresnet results can change with time, since the publicly-trained model gets
+updated periodically.
+10.4 Document Classification 413
+flamingo Cooper`s hawk Cooper`s hawk
+flamingo 0.83 kite 0.60fountain 0.35
+spoonbill 0.17 great grey owl 0.09 nail 0.12
+white stork 0.00 robin 0.06hook 0.07
+Lhasa Apso cat Cape weaver
+Tibetan terrier 0.56 Old English sheepdog 0.82 jacamar 0.28
+Lhasa 0.32Shih-Tzu 0.04macaw 0.12
+cocker spaniel 0.03 Persian cat 0.04robin 0.12
+FIGURE 10.10. Classification of six photographs using the resnet50 CNN
+trained on the imagenet corpus. The table below the images displays the true
+(intended) label at the top of each panel, and the top three choices of the classifier
+(out of 100). The numbers are the estimated probabilities for each choice. (A kite
+is a raptor, but not a hawk.)
+The vignettes and book12that accompany the keraspackage give more
+details on such applications.
+10.4 Document Classification
+In this section we introduce a new type of example that has important
+applications in industry and science: predicting attributes of documents.
+Examples of documents include articles in medical journals, Reuters news
+feeds, emails, tweets, and so on. Our example will be IMDb(Internet Movie
+Database) ratings {\textemdash} short documents where viewers have written critiques
+of movies.13The response in this case is the sentiment of the review, which
+will bepositiveornegative.
+12Deep Learning with R by F. Chollet and J.J. Allaire, 2018, Manning Publications.
+13For details, see Maas et al. (2011) {\textquotedblleft}Learning word vectors for sentiment analysis{\textquotedblright},
+inProceedings of the 49th Annual Meeting of the Association for Computational Lin-
+guistics: Human Language Technologies , pages 142{\textendash}150.
+414 10. Deep Learning
+Here is the beginning of a rather amusing negative review:
+This has to be one of the worst films of the 1990s. When my
+friends {\&} I were watching this film (being the target audience it
+was aimed at) we just sat {\&} watched the first half an hour with
+our jaws touching the floor at how bad it really was. The rest
+of the time, everyone else in the theater just started talking to
+each other, leaving or generally crying into their popcorn ...
+Each review can be a different length, include slang or non-words, have
+spelling errors, etc. We need to find a way to featurize such a document.featurizeThis is modern parlance for defining a set of predictors.
+The simplest and most common featurization is the bag-of-words model.bag-of-wordsWe score each document for the presence or absence of each of the words in
+a language dictionary {\textemdash} in this case an English dictionary. If the dictionary
+contains Mwords,thatmeansforeachdocumentwecreateabinaryfeature
+vector of length M, and score a 1for every word present, and 0otherwise.
+That can be a very wide feature vector, so we limit the dictionary {\textemdash} in
+this case to the 10,000 most frequently occurring words in the training
+corpus of 25,000 reviews. Fortunately there are nice tools for doing this
+automatically. Here is the beginning of a positive review that has been
+redacted in this way:
+{\langle}START{\rangle}this film was just brilliant casting location scenery
+story direction everyone`s really suited the part they played and
+you could just imagine being there robert {\langle}UNK{\rangle}is an amazing
+actor and now the same being director {\langle}UNK{\rangle}father came from
+the same scottish island as myself so i loved ...
+Here we can see many words have been omitted, and some unknown words
+(UNK) have been marked as such. With this reduction the binary feature
+vector has length 10,000, and consists mostly of 0`s and a smattering of 1`s
+in the positions corresponding to words that are present in the document.
+We have a training set and test set, each with 25,000 examples, and each
+balanced with regard to sentiment . The resulting training feature matrix X
+has dimension 25,000{\texttimes}10,000, but only 1.3{\%} of the binary entries are non-
+zero. We call such a matrix sparse, because most of the values are the same
+(zero in this case); it can be stored efficiently in sparse matrix format .14
+sparse
+matrix
+formatThere are a variety of ways to account for the document length; here we
+only score a word as in or out of the document, but for example one could
+instead record the relative frequency of words. We split off a validation set
+of size 2,000 from the 25,000 training observations (for model tuning), and
+fit two model sequences:
+ A lasso logistic regression using the glmnetpackage;
+ A two-class neural network with two hidden layers, each with 16
+ReLU units.
+14Rather than store the whole matrix, we can store instead the location and values for
+the nonzero entries. In this case, since the nonzero entries are all 1, just the locations
+are stored.
+10.4 Document Classification 415
+FIGURE 10.11. Accuracy of the lasso and a two-hidden-layer neural network
+on theIMDbdata. For the lasso, the x-axis displays {-}log({\lambda}), while for the neural
+network it displays epochs (number of times the fitting algorithm passes through
+the training set). Both show a tendency to overfit, and achieve approximately the
+same test accuracy.
+Both methods produce a sequence of solutions. The lasso sequence is in-
+dexed by the regularization parameter {\lambda}. The neural-net sequence is in-
+dexed by the number of gradient-descent iterations used in the fitting,
+as measured by training epochs or passes through the training set (Sec-
+tion10.7). Notice that the training accuracy in Figure 10.11(black points)
+increases monotonically in both cases. We can use the validation error to
+pick a good solution from each sequence (blue points in the plots), which
+would then be used to make predictions on the test data set.
+Note that a two-class neural network amounts to a nonlinear logistic
+regression model. From ( 10.12) and (10.13) we can see that
+log(Pr(Y=1|X)
+Pr(Y=0|X))
+=Z1{-}Z0 (10.15)
+=( {\beta}10{-}{\beta}00)+K2{\sum}
+{\ell}=1({\beta}1{\ell}{-}{\beta}0{\ell})A(2)
+{\ell}.
+(This shows the redundancy in the softmax function; for Kclasses we
+really only need to estimate K{-}1sets of coefficients. See Section 4.3.5.) In
+Figure10.11we show accuracy (fraction correct) rather than classificationaccuracy
+error (fraction incorrect), the former being more popular in the machine
+learning community. Both models achieve a test-set accuracy of about 88{\%}.
+The bag-of-words model summarizes a document by the words present,
+and ignores their context. There are at least two popular ways to take the
+context into account:
+ Thebag-of-n-gramsmodel. For example, a bag of 2-grams recordsbag-of-n-
+grams/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF
+468 1 0 1 20.6 0.7 0.8 0.9 1.0Lasso
+{-}log({\lambda})Accuracy
+/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF
+/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF
+/uni25CF/uni25CF/uni25CFtrainvalidationtest/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF
+51 0 1 5 2 00.6 0.7 0.8 0.9 1.0Neural Net
+EpochsAccuracy/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF/uni25CF
+416 10. Deep Learningthe consecutive co-occurrence of every distinct pair of words. {\textquotedblleft}Bliss-fully long{\textquotedblright} can be seen as a positive phrase in a movie review, while{\textquotedblleft}blissfully short{\textquotedblright} a negative. Treat the document as a sequence, taking account of all the words inthe context of those that preceded and those that follow.In the next section we explore models for sequences of data, which haveapplications in weather forecasting, speech recognition, language transla-tion, and time-series prediction, to name a few. We continue with thisIMDbexample there.10.5 Recurrent Neural NetworksMany data sources are sequential in nature, and call for special treatmentwhen building predictive models. Examples include: Documents such as book and movie reviews, newspaper articles, andtweets. The sequence and relative positions of words in a documentcapture the narrative, theme and tone, and can be exploited in taskssuch as topic classification, sentiment analysis, and language transla-tion. Time series of temperature, rainfall, wind speed, air quality, and soon. We may want to forecast the weather several days ahead, or cli-mate several decades ahead. Financialtimeseries,wherewetrackmarketindices,tradingvolumes,stock and bond prices, and exchange rates. Here prediction is oftendifficult, but as we will see, certain indices can be predicted withreasonable accuracy. Recorded speech, musical recordings, and other sound recordings. Wemay want to give a text transcription of a speech, or perhaps a lan-guage translation. We may want to assess the quality of a piece ofmusic, or assign certain attributes. Handwriting, such as doctor`s notes, and handwritten digits such aszip codes. Here we want to turn the handwriting into digital text, orread the digits (optical character recognition).In arecurrent neural network(RNN), the input objectXis asequence.recurrentneuralnetworkConsider a corpus of documents, such as the collection ofIMDbmovie re-views. Each document can be represented as a sequence ofLwords, soX={\{}X1,X2,...,XL{\}}, where eachX{\ell}represents a word. The order ofthe words, and closeness of certain words in a sentence, convey semanticmeaning. RNNs are designed to accommodate and take advantage of thesequential nature of such input objects, much like convolutional neural net-works accommodate the spatial structure of image inputs. The outputYcan also be a sequence (such as in language translation), but often is ascalar, like the binary sentiment label of a movie review document.
+10.5 Recurrent Neural Networks 417
+A1A2A3AL-1AL=A{\ell}O{\ell}Y
+X{\ell}O1X1O2X2O3X3OL-1XL-1OLY
+XL...WUBWBWBWBWBWBUUUUFIGURE 10.12. Schematic of a simple recurrent neural network. The input is a
+sequence of vectors {\{}X{\ell}{\}}L
+1, and here the target is a single response. The network
+processes the input sequence Xsequentially; each X{\ell}feeds into the hidden layer,
+which also has as input the activation vector A{\ell}{-}1from the previous element in
+the sequence, and produces the current activation vector A{\ell}. The same collections
+of weights W,UandBare used as each element of the sequence is processed. The
+output layer produces a sequence of predictions O{\ell}from the current activation
+A{\ell}, but typically only the last of these, OL, is of relevance. To the left of the equal
+sign is a concise representation of the network, which is unrolled into a more
+explicit version on the right.
+Figure10.12illustratesthestructureofaverybasicRNNwithasequence
+X={\{}X1,X2,...,X L{\}}as input, a simple output Y, and a hidden-layer
+sequence {\{}A{\ell}{\}}L
+1={\{}A1,A2,...,A L{\}}. EachX{\ell}is a vector; in the document
+example X{\ell}could represent a one-hot encoding for the {\ell}th word based on
+the language dictionary for the corpus (see the top panel in Figure 10.13
+for a simple example). As the sequence is processed one vector X{\ell}at a
+time, the network updates the activations A{\ell}in the hidden layer, taking
+as input the vector X{\ell}and the activation vector A{\ell}{-}1from the previous
+step in the sequence. Each A{\ell}feeds into the output layer and produces a
+prediction O{\ell}forY.OL, the last of these, is the most relevant.
+In detail, suppose each vector X{\ell}of the input sequence has pcomponents
+XT
+{\ell}=(X{\ell}1,X{\ell}2,...,X {\ell}p), and the hidden layer consists of KunitsAT
+{\ell}=
+(A{\ell}1,A{\ell}2,...,A {\ell}K). As in Figure 10.4, we represent the collection of K{\texttimes}
+(p+1) shared weights wkjfor the input layer by a matrix W, and similarly
+Uis aK{\texttimes}Kmatrix of the weights uksfor the hidden-to-hidden layers,
+andBis aK+1vector of weights {\beta}kfor the output layer. Then
+A{\ell}k=g(
+wk0+p{\sum}
+j=1wkjX{\ell}j+K{\sum}
+s=1uksA{\ell}{-}1,s)
+, (10.16)
+and the output O{\ell}is computed as
+O{\ell}={\beta}0+K{\sum}
+k=1{\beta}kA{\ell}k (10.17)
+for a quantitative response, or with an additional sigmoid activation func-
+tion for a binary response, for example. Here g({\textperiodcentered})is an activation function
+such as ReLU. Notice that the same weights W,UandBare used as we
+418 10. Deep Learning
+process each element in the sequence, i.e. they are not functions of {\ell}. This
+is a form of weight sharing used by RNNs, and similar to the use of filtersweight
+sharingin convolutional neural networks (Section 10.3.1.) As we proceed from be-
+ginning to end, the activations A{\ell}accumulate a history of what has been
+seen before, so that the learned context can be used for prediction.
+For regression problems the loss function for an observation (X,Y)is
+(Y{-}OL)2, (10.18)
+whichonlyreferencesthefinaloutput OL={\beta}0+{\sum}K
+k=1{\beta}kALk.ThusO1,O2,
+...,O L{-}1arenotused.Whenwefitthemodel,eachelement X{\ell}oftheinput
+sequence Xcontributes to OLvia the chain ( 10.16), and hence contributes
+indirectly to learning the shared parameters W,UandBvia the loss
+(10.18). Withninput sequence/response pairs (xi,yi),the parameters are
+found by minimizing the sum of squares
+n{\sum}
+i=1(yi{-}oiL)2=n{\sum}
+i=1(
+yi{-}(
+{\beta}0+K{\sum}
+k=1{\beta}kg(
+wk0+p{\sum}
+j=1wkjxiLj+K{\sum}
+s=1uksai,L{-}1,s)))2
+.
+(10.19)
+Here we use lowercase letters for the observed yiand vector sequences
+xi={\{}xi1,xi2,...,x iL{\}},15as well as the derived activations.
+Since the intermediate outputs O{\ell}are not used, one may well ask why
+they are there at all. First of all, they come for free, since they use the same
+outputweights Bneededtoproduce OL,andprovideanevolvingprediction
+for the output. Furthermore, for some learning tasks the response is also a
+sequence, and so the output sequence {\{}O1,O2,...,O L{\}}is explicitly needed.
+When used at full strength, recurrent neural networks can be quite com-
+plex. We illustrate their use in two simple applications. In the first, we
+continue with the IMDbsentiment analysis of the previous section, where
+we process the words in the reviews sequentially. In the second application,
+we illustrate their use in a financial time series forecasting problem.
+10.5.1 Sequential Models for Document Classification
+Here we return to our classification task with the IMDbreviews. Our ap-
+proach in Section 10.4was to use the bag-of-words model. Here the plan
+is to use instead the sequence of words occurring in a document to make
+predictions about the label for the entire document.
+We have, however, a dimensionality problem: each word in our document
+is represented by a one-hot-encoded vector (dummy variable) with 10,000
+elements (one per word in the dictionary)! An approach that has become
+popular is to represent each word in a much lower-dimensional embeddingembeddingspace. This means that rather than representing each word by a binary
+vector with 9,999 zeros and a single one in some position, we will represent
+it instead by a set of mreal numbers, none of which are typically zero. Here
+mis the embedding dimension, and can be in the low 100s, or even less.
+This means (in our case) that we need a matrix Eof dimension m{\texttimes}10,000,
+15This is a sequence of vectors; each element xi{\ell}is ap-vector.
+10.5 Recurrent Neural Networks 419thisisoneofthebestfilmsactuallythebestIhaveeverseenthefilmstartsonefalldayOne{-}hotEmbedFIGURE 10.13. Depiction of a sequence of 20words representing a single doc-
+ument: one-hot encoded using a dictionary of 16words (top panel) and embedded
+in anm-dimensional space with m=5(bottom panel).
+where each column is indexed by one of the 10,000 words in our dictionary,
+and the values in that column give the mcoordinates for that word in the
+embedding space.
+Figure10.13illustrates the idea (with a dictionary of 16 rather than
+10,000, and m=5). Where does Ecome from? If we have a large corpus
+of labeled documents, we can have the neural network learnEas part
+of the optimization. In this case Eis referred to as an embedding layer,embedding
+layerand a specialized Eis learned for the task at hand. Otherwise we can
+insert a precomputed matrix Ein the embedding layer, a process known
+asweight freezing . Two pretrained embeddings, word2vec andGloVe, areweight
+freezing
+word2vec
+GloVewidely used.16These are built from a very large corpus of documents by
+a variant of principal components analysis (Section 12.2). The idea is that
+the positions of words in the embedding space preserve semantic meaning;
+e.g. synonyms should appear near each other.
+So far, so good. Each document is now represented as a sequence of m-
+vectors that represents the sequence of words. The next step is to limit
+each document to the last Lwords. Documents that are shorter than L
+get padded with zeros upfront. So now each document is represented by a
+series consisting of LvectorsX={\{}X1,X2,...,X L{\}}, and each X{\ell}in the
+sequence has mcomponents.
+We now use the RNN structure in Figure 10.12. The training corpus
+consists of nseparate series (documents) of length L, each of which gets
+processed sequentially from left to right. In the process, a parallel series of
+hidden activation vectors A{\ell},{\ell}=1,...,L is created as in ( 10.16) for each
+document. A{\ell}feedsintotheoutputlayertoproducetheevolvingprediction
+O{\ell}. We use the final value OLto predict the response: the sentiment of the
+review.
+16word2vec is described in Mikolov, Chen, Corrado, and Dean (2013), available
+athttps://code.google.com/archive/p/word2vec .GloVeis described in Pennington,
+Socher, and Manning (2014), available at https://nlp.stanford.edu/projects/glove .
+420 10. Deep Learning
+This is a simple RNN, and has relatively few parameters. If there are K
+hidden units, the common weight matrix WhasK{\texttimes}(m+ 1) parameters,
+the matrix UhasK{\texttimes}Kparameters, and Bhas2(K+ 1) for the two-class
+logistic regression as in ( 10.15). These are used repeatedly as we process
+the sequence X={\{}X{\ell}{\}}L
+1from left to right, much like we use a single
+convolution filter to process each patch in an image (Section 10.3.1). If the
+embedding layer Eis learned, that adds an additional m{\texttimes}Dparameters
+(D= 10 ,000here), and is by far the biggest cost.
+We fit the RNN as described in Figure 10.12and the accompaying text to
+theIMDbdata. The model had an embedding matrix Ewithm= 32 (which
+was learned in training as opposed to precomputed), followed by a single
+recurrent layer with K= 32 hidden units. The model was trained with
+dropout regularization on the 25,000 reviews in the designated training
+set, and achieved a disappointing 76{\%} accuracy on the IMDbtest data. A
+network using the GloVepretrained embedding matrix Eperformed slightly
+worse.
+For ease of exposition we have presented a very simple RNN. More elab-
+orate versions use long term andshort term memory (LSTM). Two tracks
+of hidden-layer activations are maintained, so that when the activation A{\ell}
+is computed, it gets input from hidden units both further back in time,
+and closer in time {\textemdash} a so-called LSTM RNN . With long sequences, thisLSTM RNNovercomes the problem of early signals being washed out by the time they
+get propagated through the chain to the final activation vector AL.
+When we refit our model using the LSTM architecture for the hidden
+layer, the performance improved to 87{\%} on the IMDbtest data. This is com-
+parable with the 88{\%} achieved by the bag-of-words model in Section 10.4.
+We give details on fitting these models in Section 10.9.6.
+Despite this added LSTM complexity, our RNN is still somewhat {\textquotedblleft}entry
+level{\textquotedblright}. We could probably achieve slightly better results by changing the
+size of the model, changing the regularization, and including additional
+hidden layers. However, LSTM models take a long time to train, which
+makes exploring many architectures and parameter optimization tedious.
+RNNs provide a rich framework for modeling data sequences, and they
+continue to evolve. There have been many advances in the development
+of RNNs {\textemdash} in architecture, data augmentation, and in the learning algo-
+rithms. At the time of this writing (early 2020) the leading RNN configura-
+tions report accuracy above 95{\%} on the IMDbdata. The details are beyond
+the scope of this book.17
+10.5.2 Time Series Forecasting
+Figure10.14shows historical trading statistics from the New York Stock
+Exchange. Shown are three daily time series covering the period December
+3, 1962 to December 31, 1986:18
+17AnIMDbleaderboard can be found at https://paperswithcode.com/sota/
+sentiment-analysis-on-imdb .
+18These data were assembled by LeBaron and Weigend (1998) IEEE Transactions on
+Neural Networks , 9(1): 213{\textendash}220.
+10.5 Recurrent Neural Networks 421Log(Trading Volume){-}1.0 0.0 0.5 1.0Dow Jones Return{-}0.04 0.00 0.04
+19651970197519801985{-}13 {-}11 {-}9 {-}8Log(Volatility)FIGURE 10.14. Historical trading statistics from the New York Stock Exchange.
+Daily values of the normalized log trading volume, DJIA return, and log volatility
+are shown for a 24-year period from 1962{\textendash}1986. We wish to predict trading volume
+on any day, given the history on all earlier days. To the left of the red bar (January
+2, 1980) is training data, and to the right test data.
+Log trading volume .Thisisthefractionofalloutstandingsharesthat
+are traded on that day, relative to a 100-day moving average of past
+turnover, on the log scale.
+Dow Jones return . This is the difference between the log of the Dow
+Jones Industrial Index on consecutive trading days.
+Log volatility . This is based on the absolute values of daily price
+movements.
+Predicting stock prices is a notoriously hard problem, but it turns out that
+predicting trading volume based on recent past history is more manageable
+(and is useful for planning trading strategies).
+An observation here consists of the measurements (vt,rt,zt)on dayt, in
+this case the values for log{\_}volume ,DJ{\_}return andlog{\_}volatility . There
+areatotalof T=6,051suchtriples,eachofwhichisplottedasatimeseries
+in Figure 10.14. One feature that strikes us immediately is that the day-
+to-day observations are not independent of each other. The series exhibit
+auto-correlation {\textemdash} in this case values nearby in time tend to be similarauto-
+correlation to each other. This distinguishes time series from other data sets we have
+encountered, in which observations can be assumed to be independent of
+422 10. Deep Learning
+0 5 10 15 20 25 30 350.0 0.4 0.8Log( Trading Volume)
+LagAutocorrelation FunctionFIGURE 10.15. The autocorrelation function for log{\_}volume . We see that
+nearby values are fairly strongly correlated, with correlations above 0.2as far as
+20 days apart.
+each other. To be clear, consider pairs of observations (vt,vt{-}{\ell}),alagof{\ell}lagdays apart. If we take all such pairs in the vtseries and compute their corre-
+lation coefficient, this gives the autocorrelation at lag {\ell}. Figure10.15shows
+the autocorrelation function for all lags up to 37, and we see considerable
+correlation.
+Another interesting characteristic of this forecasting problem is that the
+response variable vt{\textemdash}log{\_}volume {\textemdash} is also a predictor! In particular, we
+will use the past values of log{\_}volume to predict values in the future.
+RNN forecaster
+We wish to predict a value vtfrom past values vt{-}1,vt{-}2,..., and also to
+make use of past values of the other series rt{-}1,rt{-}2,...andzt{-}1,zt{-}2,....
+Although our combined data is quite a long series with 6,051 trading
+days, the structure of the problem is different from the previous document-
+classification example.
+ We only have one series of data, not 25,000.
+ We have an entire seriesof targets vt, and the inputs include past
+values of this series.
+How do we represent this problem in terms of the structure displayed in
+Figure10.12? The idea is to extract many short mini-series of input se-
+quencesX={\{}X1,X2,...,X L{\}}with a predefined length L(called the laglagin this context), and a corresponding target Y. They have the form
+X1=
+vt{-}L
+rt{-}L
+zt{-}L
+,X2=
+vt{-}L+1
+rt{-}L+1
+zt{-}L+1
+,{\textperiodcentered}{\textperiodcentered}{\textperiodcentered},XL=
+vt{-}1
+rt{-}1
+zt{-}1
+,andY=vt.
+(10.20)
+So here the target Yis the value of log{\_}volume vtat a single timepoint t,
+and the input sequence Xis the series of 3-vectors {\{}X{\ell}{\}}L
+1each consisting
+of the three measurements log{\_}volume ,DJ{\_}return andlog{\_}volatility from
+dayt{-}L,t{-}L+1, up tot{-}1. Each value of tmakes a separate (X,Y)
+pair, for trunning from L+1toT. For the NYSEdata we will use the past
+10.5 Recurrent Neural Networks 423
+1980198219841986{-}1.0 0.0 0.5 1.0Test Period: Observed and Predicted
+Yearlog(Trading Volume)FIGURE 10.16. RNN forecast of log{\_}volume on theNYSEtest data. The black
+lines are the true volumes, and the superimposed orange the forecasts. The fore-
+casted series accounts for 42{\%} of the variance of log{\_}volume .
+five trading days to predict the next day`s trading volume. Hence, we use
+L=5. SinceT=6,051, we can create 6,046 such (X,Y)pairs. Clearly L
+is a parameter that should be chosen with care, perhaps using validation
+data.
+We fit this model with K= 12 hidden units using the 4,281 training
+sequences derived from the data before January 2, 1980 (see Figure 10.14),
+and then used it to forecast the 1,770 values of log{\_}volume after this date.
+We achieve an R2=0.42on the test data. Details are given in Sec-
+tion10.9.6. As astraw man ,19using yesterday`s value for log{\_}volume as
+the prediction for today has R2=0.18. Figure 10.16shows the forecast
+results. We have plotted the observed values of the daily log{\_}volume for the
+test period 1980{\textendash}1986 in black, and superimposed the predicted series in
+orange. The correspondence seems rather good.
+In forecasting the value of log{\_}volume in the test period, we have to use
+the test data itself in forming the input sequences X. This may feel like
+cheating, but in fact it is not; we are always using past data to predict the
+future.
+Autoregression
+The RNN we just fit has much in common with a traditional autoregressionauto-
+regression (AR) linear model, which we present now for comparison. We first consider
+the response sequence vtalone, and construct a response vector yand a
+matrixMof predictors for least squares regression as follows:
+y=
+vL+1
+vL+2
+vL+3
+...
+vT
+M=
+1 vLvL{-}1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} v1
+1vL+1 vL{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} v2
+1vL+2vL+1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} v3
+...............
+1vT{-}1vT{-}2{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}vT{-}L
+.(10.21)
+Mandyeach have T{-}Lrows, one per observation. We see that the
+predictors for any given response vton daytare the previous Lvalues
+19A straw man here refers to a simple and sensible prediction that can be used as a
+baseline for comparison.
+424 10. Deep Learning
+of the same series. Fitting a regression of yonMamounts to fitting the
+model
+{\textasciicircum}vt={\textasciicircum}{\beta}0+{\textasciicircum}{\beta}1vt{-}1+{\textasciicircum}{\beta}2vt{-}2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\textasciicircum}{\beta}Lvt{-}L, (10.22)
+and is called an order- Lautoregressive model, or simply AR( L). For the
+NYSEdata we can include lagged versions of DJ{\_}return andlog{\_}volatility ,
+rtandzt, in the predictor matrix M, resulting in 3L+1columns. An AR
+model with L=5 achieves a test R2of0.41, slightly inferior to the 0.42
+achieved by the RNN.
+Of course the RNN and AR models are very similar. They both use
+the same response Yand input sequences Xof length L=5 and dimen-
+sionp=3 in this case. The RNN processes this sequence from left to
+right with the same weights W(for the input layer), while the AR model
+simply treats all Lelements of the sequence equally as a vector of L{\texttimes}p
+predictors {\textemdash} a process called flattening in the neural network literature.flatteningOf course the RNN also includes the hidden layer activations A{\ell}which
+transfer information along the sequence, and introduces additional nonlin-
+earity. From ( 10.19) withK= 12 hidden units, we see that the RNN has
+13 + 12 {\texttimes}(1 + 3 + 12) = 205 parameters, compared to the 16 for the AR( 5)
+model.
+An obvious extension of the AR model is to use the set of lagged predic-
+tors as the input vector to an ordinary feedforward neural network ( 10.1),
+and hence add more flexibility. This achieved a test R2=0.42, slightly
+better than the linear AR, and the same as the RNN.
+All the models can be improved by including the variable day{\_}of{\_}week
+corresponding to the day tof the target vt(which can be learned from the
+calendar dates supplied with the data); trading volume is often higher on
+Mondays and Fridays. Since there are five trading days, this one-hot en-
+codes to five binary variables. The performance of the AR model improved
+toR2=0.46as did the RNN, and the nonlinear AR model improved to
+R2=0.47.
+We used the most simple version of the RNN in our examples here.
+AdditionalexperimentswiththeLSTMextensionoftheRNNyieldedsmall
+improvements, typically of up to 1{\%} in R2in these examples.
+We give details of how we fit all three models in Section 10.9.6.
+10.5.3 Summary of RNNs
+We have illustrated RNNs through two simple use cases, and have only
+scratched the surface.
+There are many variations and enhancements of the simple RNN we
+used for sequence modeling. One approach we did not discuss uses a one-
+dimensional convolutional neural network, treating the sequence of vectors
+(say words, as represented in the embedding space) as an image. The con-
+volution filter slides along the sequence in a one-dimensional fashion, with
+the potential to learn particular phrases or short subsequences relevant to
+the learning task.
+One can also have additional hidden layers in an RNN. For example,
+with two hidden layers, the sequence A{\ell}is treated as an input sequence to
+the next hidden layer in an obvious fashion.
+10.6 When to Use Deep Learning 425
+The RNN we used scanned the document from beginning to end; alter-
+nativebidirectional RNNs scan the sequences in both directions.bidirectionalIn language translation the target is also a sequence of words, in a
+language different from that of the input sequence. Both the input se-
+quence and the target sequence are represented by a structure similar to
+Figure10.12, and they share the hidden units. In this so-called Seq2SeqSeq2Seqlearning, the hidden units are thought to capture the semantic meaning
+of the sentences. Some of the big breakthroughs in language modeling and
+translation resulted from the relatively recent improvements in such RNNs.
+Algorithms used to fit RNNs can be complex and computationally costly.
+Fortunately, good software protects users somewhat from these complexi-
+ties,andmakesspecifyingandfittingthesemodelsrelativelypainless.Many
+of the models that we enjoy in daily life (like Google Translate ) use state-
+of-the-art architectures developed by teams of highly skilled engineers, and
+have been trained using massive computational and data resources.
+10.6 When to Use Deep Learning
+The performance of deep learning in this chapter has been rather impres-
+sive. It nailed the digit classification problem, and deep CNNs have really
+revolutionized image classification. We see daily reports of new success sto-
+ries for deep learning. Many of these are related to image classification
+tasks, such as machine diagnosis of mammograms or digital X-ray images,
+ophthalmology eye scans, annotations of MRI scans, and so on. Likewise
+there are numerous successes of RNNs in speech and language translation,
+forecasting, and document modeling. The question that then begs an an-
+swer is:should we discard all our older tools, and use deep learning on every
+problem with data? To address this question, we revisit our Hittersdataset
+from Chapter 6.
+This is a regression problem, where the goal is to predict the Salaryof
+a baseball player in 1987 using his performance statistics from 1986. After
+removing players with missing responses, we are left with 263 players and
+19 variables. We randomly split the data into a training set of 176 players
+(twothirds),andatestsetof87players(onethird).Weusedthreemethods
+for fitting a regression model to these data.
+ Alinearmodelwasusedtofitthetrainingdata,andmakepredictions
+on the test data. The model has 20 parameters.
+ The same linear model was fit with lasso regularization. The tuning
+parameter was selected by 10-fold cross-validation on the training
+data.Itselectedamodelwith12variableshavingnonzerocoefficients.
+ A neural network with one hidden layer consisting of 64 ReLUunits
+was fit to the data. This model has 1,345 parameters.20
+20The model was fit by stochastic gradient descent with a batch size of 32 for 1,000
+epochs, and 10{\%} dropout regularization. The test error performance flattened out and
+started to slowly increase after 1,000 epochs. These fitting details are discussed in Sec-
+tion10.7.
+426 10. Deep Learning
+Model {\#} Parameters Mean Abs. Error Test Set R2
+Linear Regression 20 254.7 0.56
+Lasso 12 252.3 0.51
+Neural Network 1345 257.4 0.54
+TABLE 10.2. Prediction results on the Hitters test data for linear models fit
+by ordinary least squares and lasso, compared to a neural network fit by stochastic
+gradient descent with dropout regularization.
+Coefficient Std. error t-statistic p-value
+Intercept -226.67 86.26 -2.63 0.0103
+Hits 3.06 1.02 3.00 0.0036
+Walks 0.181 2.04 0.09 0.9294
+CRuns 0.859 0.12 7.09 {<}0.0001
+PutOuts 0.465 0.13 3.60 0.0005
+TABLE 10.3. Least squares coefficient estimates associated with the regres-
+sion ofSalaryon four variables chosen by lasso on the Hitters data set. This
+model achieved the best performance on the test data, with a mean absolute error
+of 224.8. The results reported here were obtained from a regression on the test
+data, which was not used in fitting the lasso model.
+Table10.2compares the results. We see similar performance for all three
+models. We report the mean absolute error on the test data, as well as
+the test R2for each method, which are all respectable (see Exercise 5).
+We spent a fair bit of time fiddling with the configuration parameters of
+the neural network to achieve these results. It is possible that if we were to
+spend more time, and got the form and amount of regularization just right,
+that we might be able to match or even outperform linear regression and
+the lasso. But with great ease we obtained linear models that work well.
+Linear models are much easier to present and understand than the neural
+network, which is essentially a black box. The lasso selected 12 of the 19
+variables in making its prediction. So in cases like this we are much better
+off following the Occam`s razor principle: when faced with several methodsOccam`s
+razorthat give roughly equivalent performance, pick the simplest.
+After a bit more exploration with the lasso model, we identified an even
+simpler model with four variables. We then refit the linear model with these
+fourvariablestothetrainingdata(theso-called relaxed lasso ),andachieved
+a test mean absolute error of 224.8, the overall winner! It is tempting to
+present the summary table from this fit, so we can see coefficients and p-
+values; however, since the model was selected on the training data, there
+would be selection bias . Instead, we refit the model on the test data, which
+was not used in the selection. Table 10.3shows the results.
+Wehaveanumberofverypowerfultoolsatourdisposal,includingneural
+networks, random forests and boosting, support vector machines and gen-
+eralized additive models, to name a few. And then we have linear models,
+and simple variants of these. When faced with new data modeling and pre-
+diction problems, it`s tempting to always go for the trendy new methods.
+Often they give extremely impressive results, especially when the datasets
+are very large and can support the fitting of high-dimensional nonlinear
+models. However, ifwe can produce models with the simpler tools that
+10.7 Fitting a Neural Network 427
+perform as well, they are likely to be easier to fit and understand, and po-
+tentially less fragile than the more complex approaches. Wherever possible,
+it makes sense to try the simpler models as well, and then make a choice
+based on the performance/complexity tradeoff.
+Typically we expect deep learning to be an attractive choice when the
+sample size of the training set is extremely large, and when interpretability
+of the model is not a high priority.
+10.7 Fitting a Neural Network
+Fitting neural networks is somewhat complex, and we give a brief overview
+here. The ideas generalize to much more complex networks. Readers who
+find this material challenging can safely skip it. Fortunately, as we see in
+the lab at the end of this chapter, good software is available to fit neural
+network models in a relatively automated way, without worrying about the
+technical details of the model-fitting procedure.
+We start with the simple network depicted in Figure 10.1in Section 10.1.
+In model ( 10.1) the parameters are {\beta}=({\beta}0,{\beta}1,...,{\beta}K), as well as each of
+thewk=(wk0,wk1,...,w kp),k=1,...,K . Givenobservations (xi,yi),i=
+1, . . . , n, wecouldfitthemodelbysolvinganonlinearleastsquaresproblem
+minimize
+{\{}wk{\}}K
+1,{\beta}1
+2n{\sum}
+i=1(yi{-}f(xi))2, (10.23)
+where
+f(xi)={\beta}0+K{\sum}
+k=1{\beta}kg(
+wk0+p{\sum}
+j=1wkjxij)
+. (10.24)
+The objective in ( 10.23) looks simple enough, but because of the nested
+arrangement of the parameters and the symmetry of the hidden units, it is
+not straightforward to minimize. The problem is nonconvex in the param-
+eters, and hence there are multiple solutions. As an example, Figure 10.17
+shows a simple nonconvex function of a single variable {\theta}; there are two
+solutions: one is a local minimum and the other is a global minimum . Fur-local
+minimum
+global
+minimumthermore, ( 10.1) is the very simplest of neural networks; in this chapter we
+have presented much more complex ones where these problems are com-
+pounded. To overcome some of these issues and to protect from overfitting,
+two general strategies are employed when fitting neural networks.
+Slow Learning: the model is fit in a somewhat slow iterative fash-
+ion, using gradient descent . The fitting process is then stopped whengradient
+descentoverfitting is detected.
+Regularization: penaltiesareimposedontheparameters,usuallylasso
+or ridge as discussed in Section 6.2.
+Suppose we represent all the parameters in one long vector {\theta}. Then we
+can rewrite the objective in ( 10.23) as
+R({\theta})=1
+2n{\sum}
+i=1(yi{-}f{\theta}(xi))2, (10.25)
+428 10. Deep Learning
+FIGURE 10.17. Illustration of gradient descent for one-dimensional {\theta}. The
+objective function R({\theta})is not convex, and has two minima, one at {\theta}={-}0.46
+(local), the other at {\theta}=1.02(global). Starting at some value {\theta}0(typically ran-
+domly chosen), each step in {\theta}moves downhill {\textemdash} against the gradient {\textemdash} until it
+cannot go down any further. Here gradient descent reached the global minimum
+in7steps.
+where we make explicit the dependence of fon the parameters. The idea
+of gradient descent is very simple.
+1. Start with a guess {\theta}0for all the parameters in {\theta}, and set t=0.
+2. Iterate until the objective ( 10.25) fails to decrease:
+(a) Findavector {\delta}thatreflectsasmallchangein {\theta},suchthat {\theta}t+1=
+{\theta}t+{\delta}reducesthe objective; i.e. such that R({\theta}t+1){<}R({\theta}t).
+(b) Sett{\textleftarrow}t+1.
+One can visualize (Figure 10.17) standing in a mountainous terrain, and
+the goal is to get to the bottom through a series of steps. As long as each
+step goes downhill, we must eventually get to the bottom. In this case we
+were lucky, because with our starting guess {\theta}0we end up at the global
+minimum. In general we can hope to end up at a (good) local minimum.
+10.7.1 Backpropagation
+Howdowefindthedirectionstomove {\theta}soastodecreasetheobjective R({\theta})
+in (10.25)? Thegradient ofR({\theta}), evaluated at some current value {\theta}={\theta}m,gradientis the vector of partial derivatives at that point:
+{\nabla}R({\theta}m)={\partial}R({\theta})
+{\partial}{\theta}
+{\theta}={\theta}m. (10.26)
+The subscript {\theta}={\theta}mmeans that after computing the vector of derivatives,
+we evaluate it at the current guess, {\theta}m. This gives the direction in {\theta}-space
+in which R({\theta})increases most rapidly. The idea of gradient descent is to
+move{\theta}a little in the opposite direction (since we wish to go downhill):
+{\theta}m+1{\textleftarrow}{\theta}m{-}{\rho}{\nabla}R({\theta}m). (10.27){-}1.0 {-}0.5 0.0 0.5 1.00123456
+{\theta}R({\theta})
+{\theta}0{\theta}1{\theta}2{\theta}7/uni25CF/uni25CF/uni25CF/uni25CFR({\theta}0)R({\theta}1)R({\theta}2)R({\theta}7)
+10.7 Fitting a Neural Network 429
+For a small enough value of the learning rate {\rho}, this step will decrease thelearning rateobjective R({\theta}); i.e.R({\theta}m+1){\leq}R({\theta}m). If the gradient vector is zero, then
+we may have arrived at a minimum of the objective.
+How complicated is the calculation ( 10.26)? It turns out that it is quite
+simple here, and remains simple even for much more complex networks,
+because of the chain rule of differentiation.chain ruleSinceR({\theta})={\sum}n
+i=1Ri({\theta})=1
+2{\sum}n
+i=1(yi{-}f{\theta}(xi))2is a sum, its gradient
+is also a sum over the nobservations, so we will just examine one of these
+terms,
+Ri({\theta})=1
+2(
+yi{-}{\beta}0{-}K{\sum}
+k=1{\beta}kg(
+wk0+p{\sum}
+j=1wkjxij))2
+. (10.28)
+To simplify the expressions to follow, we write zik=wk0+{\sum}p
+j=1wkjxij.
+First we take the derivative with respect to {\beta}k:
+{\partial}Ri({\theta})
+{\partial}{\beta}k={\partial}Ri({\theta})
+{\partial}f{\theta}(xi){\textperiodcentered}{\partial}f{\theta}(xi)
+{\partial}{\beta}k
+={-}(yi{-}f{\theta}(xi)){\textperiodcentered}g(zik). (10.29)
+And now we take the derivative with respect to wkj:
+{\partial}Ri({\theta})
+{\partial}wkj={\partial}Ri({\theta})
+{\partial}f{\theta}(xi){\textperiodcentered}{\partial}f{\theta}(xi)
+{\partial}g(zik){\textperiodcentered}{\partial}g(zik)
+{\partial}zik{\textperiodcentered}{\partial}zik
+{\partial}wkj
+={-}(yi{-}f{\theta}(xi)){\textperiodcentered}{\beta}k{\textperiodcentered}g{'}(zik){\textperiodcentered}xij. (10.30)
+Notice that both these expressions contain the residual yi{-}f{\theta}(xi). In
+(10.29) we see that a fraction of that residual gets attributed to each of
+the hidden units according to the value of g(zik). Then in ( 10.30) we see
+a similar attribution to input jvia hidden unit k. So the act of differen-
+tiation assigns a fraction of the residual to each of the parameters via the
+chain rule {\textemdash} a process known as backpropagation in the neural networkbackprop-
+agationliterature. Although these calculations are straightforward, it takes careful
+bookkeeping to keep track of all the pieces.
+10.7.2 Regularization and Stochastic Gradient Descent
+Gradient descent usually takes many steps to reach a local minimum. In
+practice, there are a number of approaches for accelerating the process.
+Also, when nis large, instead of summing ( 10.29){\textendash}(10.30) over all nob-
+servations, we can sample a small fraction or minibatch of them each timeminibatchwe compute a gradient step. This process is known as stochastic gradient
+descent(SGD) and is the state of the art for learning deep neural networks.stochastic
+gradient
+descentFortunately, there is very good software for setting up deep learning mod-
+els, and for fitting them to data, so most of the technicalities are hidden
+from the user.
+We now turn to the multilayer network (Figure 10.4) used in the digit
+recognitionproblem.Thenetworkhasover235,000weights,whichisaround
+four times the number of training examples. Regularization is essential here
+430 10. Deep Learning
+0 5 10 15 20 25 300.1 0.2 0.3 0.4EpochsValue of Objective FunctionTraining SetValidation Set
+0 5 10 15 20 25 300.00 0.02 0.04 0.06 0.08 0.10 0.12EpochsClassification ErrorFIGURE 10.18. Evolution of training and validation errors for the MNISTneural
+network depicted in Figure 10.4, as a function of training epochs. The objective
+refers to the log-likelihood ( 10.14).
+to avoid overfitting. The first row in Table 10.1uses ridge regularization on
+the weights. This is achieved by augmenting the objective function ( 10.14)
+with a penalty term:
+R({\theta};{\lambda})={-}n{\sum}
+i=19{\sum}
+m=0yimlog(fm(xi)) + {\lambda}{\sum}
+j{\theta}2
+j. (10.31)
+The parameter {\lambda}is often preset at a small value, or else it is found using the
+validation-set approach of Section 5.3.1. We can also use different values of
+{\lambda}for the groups of weights from different layers; in this case W1andW2
+were penalized, while the relatively few weights Bof the output layer were
+not penalized at all. Lasso regularization is also popular as an additional
+form of regularization, or as an alternative to ridge.
+Figure10.18shows some metrics that evolve during the training of the
+network on the MNISTdata. It turns out that SGD naturally enforces its
+own form of approximately quadratic regularization.21Here the minibatch
+sizewas128observationspergradientupdate.Theterm epochslabelingtheepochshorizontal axis in Figure 10.18counts the number of times an equivalent of
+the full training set has been processed. For this network, 20{\%} of the 60,000
+training observations were used as a validation set in order to determine
+when training should stop. So in fact 48,000 observations were used for
+training, and hence there are 48,000/128{\approx}375minibatch gradient updates
+per epoch. We see that the value of the validation objective actually starts
+to increase by 30 epochs, so early stopping can also be used as an additionalearly
+stoppingform of regularization.
+21This and other properties of SGD for deep learning are the subject of much research
+in the machine learning literature at the time of writing.
+10.7 Fitting a Neural Network 431
+FIGURE 10.19. Dropout Learning. Left: a fully connected network. Right: net-
+work with dropout in the input and hidden layer. The nodes in grey are selected
+at random, and ignored in an instance of training.
+10.7.3 Dropout Learning
+The second row in Table 10.1is labeled dropout. This is a relatively newdropoutand efficient form of regularization, similar in some respects to ridge reg-
+ularization. Inspired by random forests (Section 8.2), the idea is to ran-
+domly remove a fraction {\varphi}of the units in a layer when fitting the model.
+Figure10.19illustrates this. This is done separately each time a training
+observation is processed. The surviving units stand in for those missing,
+and their weights are scaled up by a factor of 1/(1{-}{\varphi})to compensate.
+This prevents nodes from becoming over-specialized, and can be seen as
+a form of regularization. In practice dropout is achieved by randomly set-
+ting the activations for the {\textquotedblleft}dropped out{\textquotedblright} units to zero, while keeping the
+architecture intact.
+10.7.4 Network Tuning
+The network in Figure 10.4is considered to be relatively straightforward;
+it nevertheless requires a number of choices that all have an effect on the
+performance:
+The number of hidden layers, and the number of units per layer.
+Modern thinking is that the number of units per hidden layer can
+be large, and overfitting can be controlled via the various forms of
+regularization.
+Regularization tuning parameters. These include the dropout rate {\varphi}
+and the strength {\lambda}of lasso and ridge regularization, and are typically
+set separately at each layer.
+Details of stochastic gradient descent. These include the batch size,
+the number of epochs, and if used, details of data augmentation (Sec-
+tion10.3.4.)
+Choices such as these can make a difference. In preparing this MNISTexam-
+ple, we achieved a respectable 1.8{\%}misclassification error after some trial
+and error. Finer tuning and training of a similar network can get under
+1{\%}error on these data, but the tinkering process can be tedious, and can
+result in overfitting if done carelessly.

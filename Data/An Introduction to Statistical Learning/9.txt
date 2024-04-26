@@ -1,0 +1,786 @@
+9
+Support Vector Machines
+In this chapter, we discuss the support vector machine (SVM), an approach
+for classification that was developed in the computer science community in
+the 1990s and that has grown in popularity since then. SVMs have been
+shown to perform well in a variety of settings, and are often considered one
+of the best {\textquotedblleft}out of the box{\textquotedblright} classifiers.
+The support vector machine is a generalization of a simple and intu-
+itive classifier called the maximal margin classifier , which we introduce in
+Section9.1. Though it is elegant and simple, we will see that this classifier
+unfortunately cannot be applied to most data sets, since it requires that
+the classes be separable by a linear boundary. In Section 9.2, we introduce
+thesupport vector classifier , an extension of the maximal margin classifier
+that can be applied in a broader range of cases. Section 9.3introduces the
+support vector machine , which is a further extension of the support vec-
+tor classifier in order to accommodate non-linear class boundaries. Support
+vector machines are intended for the binary classification setting in which
+there are two classes; in Section 9.4we discuss extensions of support vector
+machines to the case of more than two classes. In Section 9.5we discuss
+thecloseconnectionsbetweensupportvectormachinesandotherstatistical
+methods such as logistic regression.
+People often loosely refer to the maximal margin classifier, the support
+vector classifier, and the support vector machine as {\textquotedblleft}support vector
+machines{\textquotedblright}. To avoid confusion, we will carefully distinguish between these
+three notions in this chapter.
+9.1 Maximal Margin Classifier
+In this section, we define a hyperplane and introduce the concept of an
+optimal separating hyperplane.
+{\textcopyright} Springer Nature Switzerland AG 2023 
+G. James et al., An Introduction to Statistical Learning , Springer Texts in Statistics, 
+https://doi.org/10.1007/978-3-031-38747-0{\_}9  367
+368 9. Support Vector Machines
+9.1.1 What Is a Hyperplane?
+In ap-dimensional space, a hyperplane is a flat affine subspace ofhyperplanedimension p{-}1.1For instance, in two dimensions, a hyperplane is a flat
+one-dimensional subspace{\textemdash}in other words, a line. In three dimensions, a
+hyperplane is a flat two-dimensional subspace{\textemdash}that is, a plane. In p{>}3
+dimensions, it can be hard to visualize a hyperplane, but the notion of a
+(p{-}1)-dimensional flat subspace still applies.
+The mathematical definition of a hyperplane is quite simple. In two di-
+mensions, a hyperplane is defined by the equation
+{\beta}0+{\beta}1X1+{\beta}2X2=0 (9.1)
+for parameters {\beta}0,{\beta}1, and{\beta}2. When we say that ( 9.1) {\textquotedblleft}defines{\textquotedblright} the hyper-
+plane, we mean that any X=(X1,X2)Tfor which ( 9.1) holds is a point
+on the hyperplane. Note that ( 9.1) is simply the equation of a line, since
+indeed in two dimensions a hyperplane is a line.
+Equation 9.1can be easily extended to the p-dimensional setting:
+{\beta}0+{\beta}1X1+{\beta}2X2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pXp=0 (9.2)
+defines a p-dimensional hyperplane, again in the sense that if a point X=
+(X1,X2,...,X p)Tinp-dimensional space (i.e. a vector of length p) satisfies
+(9.2), thenXlies on the hyperplane.
+Now, suppose that Xdoes not satisfy ( 9.2); rather,
+{\beta}0+{\beta}1X1+{\beta}2X2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pXp{>}0. (9.3)
+Then this tells us that Xlies to one side of the hyperplane. On the other
+hand, if
+{\beta}0+{\beta}1X1+{\beta}2X2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pXp{<}0, (9.4)
+thenXlies on the other side of the hyperplane. So we can think of the
+hyperplane as dividing p-dimensional space into two halves. One can easily
+determineonwhichsideofthehyperplaneapointliesbysimplycalculating
+the sign of the left-hand side of ( 9.2). A hyperplane in two-dimensional
+space is shown in Figure 9.1.
+9.1.2 Classification Using a Separating Hyperplane
+Now suppose that we have an n{\texttimes}pdata matrix Xthat consists of n
+training observations in p-dimensional space,
+x1=
+x11
+...
+x1p
+,...,x n=
+xn1
+...
+xnp
+, (9.5)
+and that these observations fall into two classes{\textemdash}that is, y1,...,y n{\in}
+{\{}{-}1,1{\}}where{-}1represents one class and 1the other class. We also have a
+1The word affineindicates that the subspace need not pass through the origin.
+9.1 Maximal Margin Classifier 369
+{-}1.5 {-}1.0 {-}0.5 0.0 0.5 1.0 1.5{-}1.5 {-}1.0 {-}0.5 0.0 0.5 1.0 1.5X1X2
+FIGURE 9.1. The hyperplane 1+2 X1+3X2=0is shown. The blue region is
+the set of points for which 1+2 X1+3X2{>}0, and the purple region is the set of
+points for which 1+2 X1+3X2{<}0.
+test observation, a p-vector of observed features x{*}=(x{*}
+1... x{*}
+p)T. Our
+goal is to develop a classifier based on the training data that will correctly
+classify the test observation using its feature measurements. We have seen
+a number of approaches for this task, such as linear discriminant analysis
+and logistic regression in Chapter 4, and classification trees, bagging, and
+boosting in Chapter 8. We will now see a new approach that is based upon
+the concept of a separating hyperplane .separating
+hyperplaneSuppose that it is possible to construct a hyperplane that separates the
+training observations perfectly according to their class labels. Examples
+of three such separating hyperplanes are shown in the left-hand panel of
+Figure9.2. We can label the observations from the blue class as yi=1and
+those from the purple class as yi={-}1. Then a separating hyperplane has
+the property that
+{\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip{>}0 ifyi=1, (9.6)
+and
+{\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip{<}0 ifyi={-}1. (9.7)
+Equivalently, a separating hyperplane has the property that
+yi({\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip){>}0 (9.8)
+for alli=1,...,n .
+Ifaseparatinghyperplaneexists,wecanuseittoconstructaverynatural
+classifier: a test observation is assigned a class depending on which side of
+the hyperplane it is located. The right-hand panel of Figure 9.2shows
+an example of such a classifier. That is, we classify the test observation x{*}
+basedonthesignof f(x{*})={\beta}0+{\beta}1x{*}
+1+{\beta}2x{*}
+2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}px{*}
+p.Iff(x{*})ispositive,
+then we assign the test observation to class 1, and iff(x{*})is negative, then
+we assign it to class {-}1. We can also make use of the magnitude off(x{*}). If
+370 9. Support Vector Machines
+{-}1 0 1 2 3{-}1 0 1 2 3{-}1 0 1 2 3{-}1 0 1 2 3X1X1
+X2X2
+FIGURE 9.2. Left:There are two classes of observations, shown in blue and
+in purple, each of which has measurements on two variables. Three separating
+hyperplanes, out of many possible, are shown in black. Right:A separating hy-
+perplane is shown in black. The blue and purple grid indicates the decision rule
+made by a classifier based on this separating hyperplane: a test observation that
+falls in the blue portion of the grid will be assigned to the blue class, and a test
+observation that falls into the purple portion of the grid will be assigned to the
+purple class.
+f(x{*})is far from zero, then this means that x{*}lies far from the hyperplane,
+and so we can be confident about our class assignment for x{*}. On the other
+hand,iff(x{*})isclosetozero,then x{*}islocatednearthehyperplane,andso
+we are less certain about the class assignment for x{*}. Not surprisingly, and
+as we see in Figure 9.2, a classifier that is based on a separating hyperplane
+leads to a linear decision boundary.
+9.1.3 The Maximal Margin Classifier
+In general, if our data can be perfectly separated using a hyperplane, then
+there will in fact exist an infinite number of such hyperplanes. This is
+becauseagivenseparatinghyperplanecanusuallybeshiftedatinybitupor
+down,orrotated,withoutcomingintocontactwithanyoftheobservations.
+Three possible separating hyperplanes are shown in the left-hand panel
+of Figure 9.2. In order to construct a classifier based upon a separating
+hyperplane, we must have a reasonable way to decide which of the infinite
+possible separating hyperplanes to use.
+A natural choice is the maximal margin hyperplane (also known as themaximal
+margin
+hyperplaneoptimal separating hyperplane ), which is the separating hyperplane that
+optimal
+separating
+hyperplaneis farthest from the training observations. That is, we can compute the
+(perpendicular) distance from each training observation to a given separat-
+ing hyperplane; the smallest such distance is the minimal distance from the
+observations to the hyperplane, and is known as the margin. The maximal
+margin margin hyperplane is the separating hyperplane for which the margin is
+largest{\textemdash}that is, it is the hyperplane that has the farthest minimum dis-
+tance to the training observations. We can then classify a test observation
+basedonwhichsideofthemaximalmarginhyperplaneitlies.Thisisknown
+9.1 Maximal Margin Classifier 371
+{-}10123{-}10123
+X1X2
+FIGURE 9.3. There are two classes of observations, shown in blue and in
+purple. The maximal margin hyperplane is shown as a solid line. The margin
+is the distance from the solid line to either of the dashed lines. The two blue
+points and the purple point that lie on the dashed lines are the support vectors,
+and the distance from those points to the hyperplane is indicated by arrows. The
+purple and blue grid indicates the decision rule made by a classifier based on this
+separating hyperplane.
+as themaximal margin classifier . We hope that a classifier that has a largemaximal
+margin
+classifiermargin on the training data will also have a large margin on the test data,
+and hence will classify the test observations correctly. Although the maxi-
+mal margin classifier is often successful, it can also lead to overfitting when
+pis large.
+If{\beta}0,{\beta}1,...,{\beta}pare the coefficients of the maximal margin hyperplane,
+then the maximal margin classifier classifies the test observation x{*}based
+on the sign of f(x{*})={\beta}0+{\beta}1x{*}
+1+{\beta}2x{*}
+2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}px{*}
+p.
+Figure9.3shows the maximal margin hyperplane on the data set of
+Figure9.2. Comparing the right-hand panel of Figure 9.2to Figure 9.3,
+we see that the maximal margin hyperplane shown in Figure 9.3does in-
+deed result in a greater minimal distance between the observations and the
+separating hyperplane{\textemdash}that is, a larger margin. In a sense, the maximal
+margin hyperplane represents the mid-line of the widest {\textquotedblleft}slab{\textquotedblright} that we can
+insert between the two classes.
+ExaminingFigure 9.3,weseethatthreetrainingobservationsareequidis-
+tant from the maximal margin hyperplane and lie along the dashed lines
+indicating the width of the margin. These three observations are known as
+support vectors ,sincetheyarevectorsin p-dimensionalspace(inFigure 9.3,support
+vector p=2) and they {\textquotedblleft}support{\textquotedblright} the maximal margin hyperplane in the sense
+that if these points were moved slightly then the maximal margin hyper-
+plane would move as well. Interestingly, the maximal margin hyperplane
+depends directly on the support vectors, but not on the other observations:
+amovementtoanyoftheotherobservationswouldnotaffecttheseparating
+hyperplane, provided that the observation`s movement does not cause it to
+372 9. Support Vector Machines
+cross the boundary set by the margin. The fact that the maximal margin
+hyperplane depends directly on only a small subset of the observations is
+an important property that will arise later in this chapter when we discuss
+the support vector classifier and support vector machines.
+9.1.4 Construction of the Maximal Margin Classifier
+We now consider the task of constructing the maximal margin hyperplane
+based on a set of ntraining observations x1,...,x n{\in}Rpand associated
+class labels y1,...,y n{\in}{\{}{-}1,1{\}}. Briefly, the maximal margin hyperplane
+is the solution to the optimization problem
+maximize
+{\beta}0,{\beta}1,...,{\beta}p,MM (9.9)
+subject top{\sum}
+j=1{\beta}2
+j=1, (9.10)
+yi({\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip){\geq}M{\forall}i=1, . . . , n. (9.11)
+This optimization problem ( 9.9){\textendash}(9.11) is actually simpler than it looks.
+First of all, the constraint in ( 9.11) that
+yi({\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip){\geq}M{\forall}i=1,...,n
+guarantees that each observation will be on the correct side of the hyper-
+plane, provided that Mis positive. (Actually, for each observation to be
+on the correct side of the hyperplane we would simply need yi({\beta}0+{\beta}1xi1+
+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip){>}0, so the constraint in ( 9.11) in fact requires that each
+observation be on the correct side of the hyperplane, with some cushion,
+provided that Mis positive.)
+Second,notethat( 9.10)isnotreallyaconstraintonthehyperplane,since
+if{\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip=0defines a hyperplane, then so does
+k({\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip)=0 for anyk=0. However, ( 9.10) adds
+meaningto( 9.11);onecanshowthatwiththisconstrainttheperpendicular
+distance from the ith observation to the hyperplane is given by
+yi({\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip).
+Therefore, the constraints ( 9.10) and (9.11) ensure that each observation
+is on the correct side of the hyperplane and at least a distance Mfrom the
+hyperplane. Hence, Mrepresents the margin of our hyperplane, and the
+optimization problem chooses {\beta}0,{\beta}1,...,{\beta}pto maximize M. This is exactly
+the definition of the maximal margin hyperplane! The problem ( 9.9){\textendash}(9.11)
+can be solved efficiently, but details of this optimization are outside of the
+scope of this book.
+9.1.5 The Non-separable Case
+The maximal margin classifier is a very natural way to perform classifi-
+cation,if a separating hyperplane exists . However, as we have hinted, in
+many cases no separating hyperplane exists, and so there is no maximal
+9.2 Support Vector Classifiers 373
+0123{-}1.0 {-}0.5 0.0 0.5 1.0 1.5 2.0X1X2
+FIGURE 9.4. There are two classes of observations, shown in blue and in
+purple. In this case, the two classes are not separable by a hyperplane, and so the
+maximal margin classifier cannot be used.
+margin classifier. In this case, the optimization problem ( 9.9){\textendash}(9.11) has no
+solution with M{>} 0. An example is shown in Figure 9.4. In this case, we
+cannotexactlyseparate the two classes. However, as we will see in the next
+section, we can extend the concept of a separating hyperplane in order to
+develop a hyperplane that almostseparates the classes, using a so-called
+soft margin . The generalization of the maximal margin classifier to the
+non-separable case is known as the support vector classifier .
+9.2 Support Vector Classifiers
+9.2.1 Overview of the Support Vector Classifier
+In Figure 9.4, we see that observations that belong to two classes are not
+necessarily separable by a hyperplane. In fact, even if a separating hyper-
+plane does exist, then there are instances in which a classifier based on
+a separating hyperplane might not be desirable. A classifier based on a
+separating hyperplane will necessarily perfectly classify all of the training
+observations; this can lead to sensitivity to individual observations. An ex-
+ample is shown in Figure 9.5. The addition of a single observation in the
+right-hand panel of Figure 9.5leads to a dramatic change in the maxi-
+mal margin hyperplane. The resulting maximal margin hyperplane is not
+satisfactory{\textemdash}for one thing, it has only a tiny margin. This is problematic
+because as discussed previously, the distance of an observation from the
+hyperplane can be seen as a measure of our confidence that the obser-
+vation was correctly classified. Moreover, the fact that the maximal mar-
+gin hyperplane is extremely sensitive to a change in a single observation
+suggests that it may have overfit the training data.
+In this case, we might be willing to consider a classifier based on a hy-
+perplane that does notperfectly separate the two classes, in the interest of
+374 9. Support Vector Machines
+{-}1 0 1 2 3{-}1 0 1 2 3{-}1 0 1 2 3{-}1 0 1 2 3X1X1X2X2
+FIGURE 9.5. Left:Two classes of observations are shown in blue and in
+purple, along with the maximal margin hyperplane. Right:An additional blue
+observation has been added, leading to a dramatic shift in the maximal margin
+hyperplane shown as a solid line. The dashed line indicates the maximal margin
+hyperplane that was obtained in the absence of this additional point.
+ Greater robustness to individual observations, and
+ Better classification of mostof the training observations.
+That is, it could be worthwhile to misclassify a few training observations
+in order to do a better job in classifying the remaining observations.
+Thesupport vector classifier , sometimes called a soft margin classifier ,support
+vector
+classifier
+soft margin
+classifierdoes exactly this. Rather than seeking the largest possible margin so that
+every observation is not only on the correct side of the hyperplane but
+also on the correct side of the margin, we instead allow some observations
+to be on the incorrect side of the margin, or even the incorrect side of
+the hyperplane. (The margin is softbecause it can be violated by some
+of the training observations.) An example is shown in the left-hand panel
+ofFigure 9.6.Mostoftheobservationsareonthecorrectsideofthemargin.
+However, a small subset of the observations are on the wrong side of the
+margin.
+An observation can be not only on the wrong side of the margin, but also
+on the wrong side of the hyperplane. In fact, when there is no separating
+hyperplane,suchasituationisinevitable.Observationsonthewrongsideof
+thehyperplanecorrespondtotrainingobservationsthataremisclassifiedby
+the support vector classifier. The right-hand panel of Figure 9.6illustrates
+such a scenario.
+9.2.2 Details of the Support Vector Classifier
+The support vector classifier classifies a test observation depending on
+which side of a hyperplane it lies. The hyperplane is chosen to correctly
+separate most of the training observations into the two classes, but may
+9.2 Support Vector Classifiers 375
+{-}0.50.0 0.5 1.0 1.5 2.0 2.5{-}1 0 1 2 3 412345678910
+{-}0.50.0 0.5 1.0 1.5 2.0 2.5{-}1 0 1 2 3 4123456789101112X1X1
+X2X2
+FIGURE 9.6. Left:A support vector classifier was fit to a small data set. The
+hyperplane is shown as a solid line and the margins are shown as dashed lines.
+Purple observations: Observations 3,4,5, and6are on the correct side of the
+margin, observation 2is on the margin, and observation 1 is on the wrong side of
+the margin. Blue observations: Observations 7and10are on the correct side of
+the margin, observation 9is on the margin, and observation 8is on the wrong side
+of the margin. No observations are on the wrong side of the hyperplane. Right:
+Same as left panel with two additional points, 11and12. These two observations
+are on the wrong side of the hyperplane and the wrong side of the margin.
+misclassifyafewobservations.Itisthesolutiontotheoptimizationproblem
+maximize
+{\beta}0,{\beta}1,...,{\beta}p,{\epsilon}1,...,{\epsilon}n,MM (9.12)
+subject top{\sum}
+j=1{\beta}2
+j=1, (9.13)
+yi({\beta}0+{\beta}1xi1+{\beta}2xi2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip){\geq}M(1{-}{\epsilon}i),(9.14)
+{\epsilon}i{\geq}0,n{\sum}
+i=1{\epsilon}i{\leq}C, (9.15)
+whereCis a nonnegative tuning parameter. As in ( 9.11),Mis the width
+of the margin; we seek to make this quantity as large as possible. In ( 9.14),
+{\epsilon}1,...,{\epsilon}nareslack variables that allow individual observations to be onslack
+variablethe wrong side of the margin or the hyperplane; we will explain them in
+greater detail momentarily. Once we have solved ( 9.12){\textendash}(9.15), we classify
+a test observation x{*}as before, by simply determining on which side of the
+hyperplane it lies. That is, we classify the test observation based on the
+sign off(x{*})={\beta}0+{\beta}1x{*}
+1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}px{*}
+p.
+The problem ( 9.12){\textendash}(9.15) seems complex, but insight into its behavior
+can be made through a series of simple observations presented below. First
+of all, the slack variable {\epsilon}itells us where the ith observation is located,
+relative to the hyperplane and relative to the margin. If {\epsilon}i=0then the ith
+observation is on the correct side of the margin, as we saw in Section 9.1.4.
+If{\epsilon}i{>}0then the ith observation is on the wrong side of the margin, and
+we say that the ith observation has violatedthe margin. If {\epsilon}i{>}1then it is
+on the wrong side of the hyperplane.
+376 9. Support Vector Machines
+We now consider the role of the tuning parameter C. In (9.15),Cbounds
+the sum of the {\epsilon}i`s, and so it determines the number and severity of the vio-
+lations to the margin (and to the hyperplane) that we will tolerate. We can
+think of Cas abudgetfor the amount that the margin can be violated
+by thenobservations. If C=0 then there is no budget for violations to
+the margin, and it must be the case that {\epsilon}1={\textperiodcentered}{\textperiodcentered}{\textperiodcentered}={\epsilon}n=0, in which case
+(9.12){\textendash}(9.15) simply amounts to the maximal margin hyperplane optimiza-
+tion problem ( 9.9){\textendash}(9.11). (Of course, a maximal margin hyperplane exists
+only if the two classes are separable.) For C{>}0no more than Cobserva-
+tions can be on the wrong side of the hyperplane, because if an observation
+is on the wrong side of the hyperplane then {\epsilon}i{>}1, and (9.15) requires
+that{\sum}n
+i=1{\epsilon}i{\leq}C. As the budget Cincreases, we become more tolerant of
+violations to the margin, and so the margin will widen. Conversely, as C
+decreases, we become less tolerant of violations to the margin and so the
+margin narrows. An example is shown in Figure 9.7.
+Inpractice, Cistreatedasatuningparameterthatisgenerallychosenvia
+cross-validation. As with the tuning parameters that we have seen through-
+out this book, Ccontrols the bias-variance trade-off of the statistical learn-
+ing technique. When Cis small, we seek narrow margins that are rarely
+violated; this amounts to a classifier that is highly fit to the data, which
+may have low bias but high variance. On the other hand, when Cis larger,
+the margin is wider and we allow more violations to it; this amounts to
+fitting the data less hard and obtaining a classifier that is potentially more
+biased but may have lower variance.
+The optimization problem ( 9.12){\textendash}(9.15) has a very interesting property:
+it turns out that only observations that either lie on the margin or that
+violate the margin will affect the hyperplane, and hence the classifier ob-
+tained. In other words, an observation that lies strictly on the correct side
+of the margin does not affect the support vector classifier! Changing the
+position of that observation would not change the classifier at all, provided
+that its position remains on the correct side of the margin. Observations
+that lie directly on the margin, or on the wrong side of the margin for
+their class, are known as support vectors . These observations do affect the
+support vector classifier.
+The fact that only support vectors affect the classifier is in line with our
+previous assertion that Ccontrols the bias-variance trade-off of the support
+vector classifier. When the tuning parameter Cis large, then the margin is
+wide, many observations violate the margin, and so there are many support
+vectors. In this case, many observations are involved in determining the
+hyperplane. The top left panel in Figure 9.7illustrates this setting: this
+classifier has low variance (since many observations are support vectors)
+but potentially high bias. In contrast, if Cis small, then there will be fewer
+support vectors and hence the resulting classifier will have low bias but
+high variance. The bottom right panel in Figure 9.7illustrates this setting,
+with only eight support vectors.
+The fact that the support vector classifier`s decision rule is based only
+on a potentially small subset of the training observations (the support vec-
+tors) means that it is quite robust to the behavior of observations that
+are far away from the hyperplane. This property is distinct from some of
+9.3 Support Vector Machines 377
+{-}1012{-}3 {-}2 {-}1 0 1 2 3{-}1012{-}3 {-}2 {-}1 0 1 2 3
+{-}1012{-}3 {-}2 {-}1 0 1 2 3{-}1012{-}3 {-}2 {-}1 0 1 2 3X1X1X1X1X2X2
+X2X2
+FIGURE 9.7. A support vector classifier was fit using four different values
+of the tuning parameter Cin (9.12){\textendash}(9.15). The largest value of Cwas used
+in the top left panel, and smaller values were used in the top right, bottom left,
+and bottom right panels. When Cis large, then there is a high tolerance for
+observations being on the wrong side of the margin, and so the margin will be
+large. As Cdecreases, the tolerance for observations being on the wrong side of
+the margin decreases, and the margin narrows.
+the other classification methods that we have seen in preceding chapters,
+such as linear discriminant analysis. Recall that the LDA classification rule
+depends on the mean of allof the observations within each class, as well as
+the within-class covariance matrix computed using allof the observations.
+In contrast, logistic regression, unlike LDA, has very low sensitivity to ob-
+servations far from the decision boundary. In fact we will see in Section 9.5
+that the support vector classifier and logistic regression are closely related.
+9.3 Support Vector Machines
+We first discuss a general mechanism for converting a linear classifier into
+one that produces non-linear decision boundaries. We then introduce the
+support vector machine, which does this in an automatic way.
+378 9. Support Vector Machines
+{-}4 {-}2 0 2 4{-}4 {-}2 0 2 4{-}4 {-}2 0 2 4{-}4 {-}2 0 2 4X1X1X2X2
+FIGURE 9.8. Left:The observations fall into two classes, with a non-lin-
+ear boundary between them. Right:The support vector classifier seeks a linear
+boundary, and consequently performs very poorly.
+9.3.1 Classification with Non-Linear Decision Boundaries
+The support vector classifier is a natural approach for classification in the
+two-class setting, if the boundary between the two classes is linear. How-
+ever, in practice we are sometimes faced with non-linear class boundaries.
+For instance, consider the data in the left-hand panel of Figure 9.8. It is
+clear that a support vector classifier or any linear classifier will perform
+poorly here. Indeed, the support vector classifier shown in the right-hand
+panel of Figure 9.8is useless here.
+In Chapter 7, we are faced with an analogous situation. We see there
+that the performance of linear regression can suffer when there is a non-
+linear relationship between the predictors and the outcome. In that case,
+we consider enlarging the feature space using functions of the predictors,
+such as quadratic and cubic terms, in order to address this non-linearity.
+In the case of the support vector classifier, we could address the prob-
+lem of possibly non-linear boundaries between classes in a similar way, by
+enlarging the feature space using quadratic, cubic, and even higher-order
+polynomial functions of the predictors. For instance, rather than fitting a
+support vector classifier using pfeatures
+X1,X2,...,X p,
+we could instead fit a support vector classifier using 2pfeatures
+X1,X2
+1,X2,X2
+2,...,X p,X2
+p.
+9.3 Support Vector Machines 379
+Then (9.12){\textendash}(9.15) would become
+maximize
+{\beta}0,{\beta}11,{\beta}12,...,{\beta}p1,{\beta}p2,{\epsilon}1,...,{\epsilon}n,MM (9.16)
+subject to yi
+{\beta}0+p{\sum}
+j=1{\beta}j1xij+p{\sum}
+j=1{\beta}j2x2
+ij
+{\geq}M(1{-}{\epsilon}i),
+n{\sum}
+i=1{\epsilon}i{\leq}C,{\epsilon}i{\geq}0,p{\sum}
+j=12{\sum}
+k=1{\beta}2
+jk=1.
+Why does this lead to a non-linear decision boundary? In the enlarged
+feature space, the decision boundary that results from ( 9.16) is in fact lin-
+ear. But in the original feature space, the decision boundary is of the form
+q(x)=0 , whereqis a quadratic polynomial, and its solutions are gener-
+ally non-linear. One might additionally want to enlarge the feature space
+with higher-order polynomial terms, or with interaction terms of the form
+XjXj{'}forj=j{'}. Alternatively, other functions of the predictors could
+be considered rather than polynomials. It is not hard to see that there
+are many possible ways to enlarge the feature space, and that unless we
+are careful, we could end up with a huge number of features. Then compu-
+tations would become unmanageable. The support vector machine, which
+we present next, allows us to enlarge the feature space used by the support
+vector classifier in a way that leads to efficient computations.
+9.3.2 The Support Vector Machine
+Thesupport vector machine (SVM) is an extension of the support vectorsupport
+vector
+machineclassifier that results from enlarging the feature space in a specific way,
+usingkernels. We will now discuss this extension, the details of which are
+kernel somewhat complex and beyond the scope of this book. However, the main
+idea is described in Section 9.3.1: we may want to enlarge our feature space
+in order to accommodate a non-linear boundary between the classes. The
+kernel approach that we describe here is simply an efficient computational
+approach for enacting this idea.
+We have not discussed exactly how the support vector classifier is com-
+puted because the details become somewhat technical. However, it turns
+out that the solution to the support vector classifier problem ( 9.12){\textendash}(9.15)
+involves only the inner products of the observations (as opposed to the
+observations themselves). The inner product of two r-vectors aandbis
+defined as {\langle}a, b{\rangle}={\sum}r
+i=1aibi. Thus the inner product of two observations
+xi,xi{'}is given by
+{\langle}xi,xi{'}{\rangle}=p{\sum}
+j=1xijxi{'}j. (9.17)
+It can be shown that
+ The linear support vector classifier can be represented as
+f(x)={\beta}0+n{\sum}
+i=1{\alpha}i{\langle}x, x i{\rangle}, (9.18)
+380 9. Support Vector Machines
+where there are nparameters {\alpha}i,i=1,...,n , one per training
+observation.
+ To estimate the parameters {\alpha}1,...,{\alpha}nand{\beta}0, all we need are the(n
+2)
+inner products {\langle}xi,xi{'}{\rangle}between all pairs of training observations.
+(The notation(n
+2)
+meansn(n{-}1)/2, and gives the number of pairs
+among a set of nitems.)
+Notice that in ( 9.18), in order to evaluate the function f(x), we need to
+computetheinnerproductbetweenthenewpoint xandeachofthetraining
+pointsxi. However, it turns out that {\alpha}iis nonzero only for the support
+vectors in the solution{\textemdash}that is, if a training observation is not a support
+vector, then its {\alpha}iequals zero. So if Sis the collection of indices of these
+support points, we can rewrite any solution function of the form ( 9.18) as
+f(x)={\beta}0+{\sum}
+i{\in}S{\alpha}i{\langle}x, x i{\rangle}, (9.19)
+which typically involves far fewer terms than in ( 9.18).2
+Tosummarize,inrepresentingthelinearclassifier f(x),andincomputing
+its coefficients, all we need are inner products.
+Now suppose that every time the inner product ( 9.17) appears in the
+representation ( 9.18), or in a calculation of the solution for the support
+vector classifier, we replace it with a generalization of the inner product of
+the form
+K(xi,xi{'}), (9.20)
+whereKis some function that we will refer to as a kernel. A kernel is akernelfunction that quantifies the similarity of two observations. For instance, we
+could simply take
+K(xi,xi{'})=p{\sum}
+j=1xijxi{'}j, (9.21)
+which would just give us back the support vector classifier. Equation 9.21
+is known as a linearkernel because the support vector classifier is linear
+in the features; the linear kernel essentially quantifies the similarity of a
+pair of observations using Pearson (standard) correlation. But one could
+instead choose another form for ( 9.20). For instance, one could replace
+every instance of{\sum}p
+j=1xijxi{'}jwith the quantity
+K(xi,xi{'}) = (1 +p{\sum}
+j=1xijxi{'}j)d. (9.22)
+This is known as a polynomial kernel of degree d, wheredis a positivepolynomial
+kernelinteger. Using such a kernel with d{>} 1, instead of the standard linear
+kernel(9.21),inthesupportvectorclassifieralgorithmleadstoamuchmore
+flexibledecision boundary.Itessentiallyamountstofitting a support vector
+2By expanding each of the inner products in ( 9.19), it is easy to see that f(x)is
+a linear function of the coordinates of x. Doing so also establishes the correspondence
+between the {\alpha}iand the original parameters {\beta}j.
+9.3 Support Vector Machines 381
+{-}4 {-}2 0 2 4{-}4 {-}2 0 2 4      
+      
+{-}4 {-}2 0 2 4{-}4 {-}2 0 2 4    
+    
+X1X1X2X2
+FIGURE 9.9. Left:An SVM with a polynomial kernel of degree 3 is applied to
+the non-linear data from Figure 9.8, resulting in a far more appropriate decision
+rule.Right:An SVM with a radial kernel is applied. In this example, either kernel
+is capable of capturing the decision boundary.
+classifier in a higher-dimensional space involving polynomials of degree d,
+rather than in the original feature space. When the support vector classifier
+iscombinedwithanon-linearkernelsuchas( 9.22),theresultingclassifieris
+known as a support vector machine. Note that in this case the (non-linear)
+function has the form
+f(x)={\beta}0+{\sum}
+i{\in}S{\alpha}iK(x, x i). (9.23)
+The left-hand panel of Figure 9.9shows an example of an SVM with a
+polynomial kernel applied to the non-linear data from Figure 9.8. The fit is
+a substantial improvement over the linear support vector classifier. When
+d=1, then the SVM reduces to the support vector classifier seen earlier in
+this chapter.
+The polynomial kernel shown in ( 9.22) is one example of a possible
+non-linear kernel, but alternatives abound. Another popular choice is the
+radial kernel , which takes the formradial kernel
+K(xi,xi{'}) = exp( {-}{\gamma}p{\sum}
+j=1(xij{-}xi{'}j)2). (9.24)
+In (9.24),{\gamma}is a positive constant. The right-hand panel of Figure 9.9shows
+an example of an SVM with a radial kernel on this non-linear data; it also
+does a good job in separating the two classes.
+How does the radial kernel ( 9.24) actually work? If a given test obser-
+vationx{*}=(x{*}
+1,...,x{*}
+p)Tis far from a training observation xiin terms of
+Euclidean distance, then{\sum}p
+j=1(x{*}
+j{-}xij)2will be large, and so K(x{*},xi)=
+exp({-}{\gamma}{\sum}p
+j=1(x{*}
+j{-}xij)2)will be tiny. This means that in ( 9.23),xiwill
+play virtually no role in f(x{*}). Recall that the predicted class label for the
+test observation x{*}is based on the sign of f(x{*}). In other words, training
+observations that are far from x{*}will play essentially no role in the pre-
+dicted class label for x{*}. This means that the radial kernel has very local
+382 9. Support Vector Machines
+False positive rateTrue positive rate0.0 0.2 0.4 0.6 0.8 1.00.0 0.2 0.4 0.6 0.8 1.0Support Vector ClassifierLDAFalse positive rateTrue positive rate0.0 0.2 0.4 0.6 0.8 1.00.0 0.2 0.4 0.6 0.8 1.0Support Vector ClassifierSVM: {\gamma}=10{-}3SVM: {\gamma}=10{-}2SVM: {\gamma}=10{-}1FIGURE 9.10. ROC curves for the Heartdata training set. Left:The support
+vector classifier and LDA are compared. Right:The support vector classifier is
+compared to an SVM using a radial basis kernel with {\gamma}= 10{-}3,10{-}2, and10{-}1.
+behavior, in the sense that only nearby training observations have an effect
+on the class label of a test observation.
+What is the advantage of using a kernel rather than simply enlarging
+the feature space using functions of the original features, as in ( 9.16)? One
+advantage is computational, and it amounts to the fact that using kernels,
+one need only compute K(xi,x{'}
+i)for all(n
+2)
+distinct pairs i, i{'}. This can be
+done without explicitly working in the enlarged feature space. This is im-
+portant because in many applications of SVMs, the enlarged feature space
+is so large that computations are intractable. For some kernels, such as the
+radial kernel ( 9.24), the feature space is implicitand infinite-dimensional,
+so we could never do the computations there anyway!
+9.3.3 An Application to the Heart Disease Data
+InChapter 8weapplydecisiontreesandrelatedmethodstothe Heartdata.
+Theaim isto use 13predictorssuchas Age,Sex,andCholinorderto predict
+whether an individual has heart disease. We now investigate how an SVM
+compares to LDA on this data. After removing 6 missing observations, the
+data consist of 297 subjects, which we randomly split into 207 training and
+90 test observations.
+We first fit LDA and the support vector classifier to the training data.
+NotethatthesupportvectorclassifierisequivalenttoanSVMusingapoly-
+nomial kernel of degree d=1. The left-hand panel of Figure 9.10displays
+ROC curves (described in Section 4.4.2) for the training set predictions for
+both LDA and the support vector classifier. Both classifiers compute scores
+of the form {\textasciicircum}f(X)={\textasciicircum}{\beta}0+{\textasciicircum}{\beta}1X1+{\textasciicircum}{\beta}2X2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\textasciicircum}{\beta}pXpfor each observation.
+For any given cutoff t, we classify observations into the heart disease or
+no heart disease categories depending on whether {\textasciicircum}f(X){<}tor{\textasciicircum}f(X){\geq}t.
+The ROC curve is obtained by forming these predictions and computing
+the false positive and true positive rates for a range of values of t. An opti-
+mal classifier will hug the top left corner of the ROC plot. In this instance
+9.4 SVMs with More than Two Classes 383
+False positive rateTrue positive rate0.0 0.2 0.4 0.6 0.8 1.00.0 0.2 0.4 0.6 0.8 1.0Support Vector ClassifierLDAFalse positive rateTrue positive rate0.0 0.2 0.4 0.6 0.8 1.00.0 0.2 0.4 0.6 0.8 1.0Support Vector ClassifierSVM: {\gamma}=10{-}3SVM: {\gamma}=10{-}2SVM: {\gamma}=10{-}1FIGURE 9.11. ROC curves for the test set of the Heartdata.Left:The support
+vector classifier and LDA are compared. Right:The support vector classifier is
+compared to an SVM using a radial basis kernel with {\gamma}= 10{-}3,10{-}2, and10{-}1.
+LDA and the support vector classifier both perform well, though there is a
+suggestion that the support vector classifier may be slightly superior.
+The right-hand panel of Figure 9.10displays ROC curves for SVMs using
+a radial kernel, with various values of {\gamma}. As{\gamma}increases and the fit becomes
+more non-linear, the ROC curves improve. Using {\gamma}= 10{-}1appears to give
+an almost perfect ROC curve. However, these curves represent training
+error rates, which can be misleading in terms of performance on new test
+data. Figure 9.11displays ROC curves computed on the 90test observa-
+tions. We observe some differences from the training ROC curves. In the
+left-hand panel of Figure 9.11, the support vector classifier appears to have
+a small advantage over LDA (although these differences are not statisti-
+cally significant). In the right-hand panel, the SVM using {\gamma}= 10{-}1, which
+showed the best results on the training data, produces the worst estimates
+on the test data. This is once again evidence that while a more flexible
+method will often produce lower training error rates, this does not neces-
+sarily lead to improved performance on test data. The SVMs with {\gamma}= 10{-}2
+and{\gamma}= 10{-}3perform comparably to the support vector classifier, and all
+three outperform the SVM with {\gamma}= 10{-}1.
+9.4 SVMs with More than Two Classes
+So far, our discussion has been limited to the case of binary classification:
+that is, classification in the two-class setting. How can we extend SVMs
+to the more general case where we have some arbitrary number of classes?
+It turns out that the concept of separating hyperplanes upon which SVMs
+are based does not lend itself naturally to more than two classes. Though
+a number of proposals for extending SVMs to the K-class case have been
+made, the two most popular are the one-versus-one andone-versus-all
+approaches. We briefly discuss those two approaches here.
+384 9. Support Vector Machines
+9.4.1 One-Versus-One Classification
+Suppose that we would like to perform classification using SVMs, and there
+areK{>} 2classes. A one-versus-one orall-pairs approach constructs(K
+2)
+one-versus-
+one SVMs, each of which compares a pair of classes. For example, one such
+SVM might compare the kth class, coded as +1, to thek{'}th class, coded
+as{-}1. We classify a test observation using each of the(K
+2)
+classifiers, and
+we tally the number of times that the test observation is assigned to each
+of theKclasses. The final classification is performed by assigning the test
+observation to the class to which it was most frequently assigned in these(K
+2)
+pairwise classifications.
+9.4.2 One-Versus-All Classification
+Theone-versus-all approach (also referred to as one-versus-rest ) is an al-one-versus-
+all
+one-versus-
+restternative procedure for applying SVMs in the case of K{>} 2classes. We
+fitKSVMs, each time comparing one of the Kclasses to the remaining
+K{-}1classes. Let {\beta}0k,{\beta}1k,...,{\beta}pkdenote the parameters that result from
+fitting an SVM comparing the kth class (coded as +1) to the others (coded
+as{-}1). Letx{*}denote a test observation. We assign the observation to the
+class for which {\beta}0k+{\beta}1kx{*}
+1+{\beta}2kx{*}
+2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pkx{*}
+pis largest, as this amounts
+to a high level of confidence that the test observation belongs to the kth
+class rather than to any of the other classes.
+9.5 Relationship to Logistic Regression
+When SVMs were first introduced in the mid-1990s, they made quite a
+splash in the statistical and machine learning communities. This was due
+in part to their good performance, good marketing, and also to the fact
+that the underlying approach seemed both novel and mysterious. The idea
+of finding a hyperplane that separates the data as well as possible, while al-
+lowing some violations to this separation, seemed distinctly different from
+classical approaches for classification, such as logistic regression and lin-
+ear discriminant analysis. Moreover, the idea of using a kernel to expand
+the feature space in order to accommodate non-linear class boundaries ap-
+peared to be a unique and valuable characteristic.
+However, since that time, deep connections between SVMs and other
+more classical statistical methods have emerged. It turns out that one can
+rewrite the criterion ( 9.12){\textendash}(9.15) for fitting the support vector classifier
+f(X)={\beta}0+{\beta}1X1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pXpas
+minimize
+{\beta}0,{\beta}1,...,{\beta}p
+
+n{\sum}
+i=1max [0 ,1{-}yif(xi)] +{\lambda}p{\sum}
+j=1{\beta}2
+j
+
+, (9.25)
+where{\lambda}is a nonnegative tuning parameter. When {\lambda}is large then {\beta}1,...,{\beta}p
+are small, more violations to the margin are tolerated, and a low-variance
+but high-bias classifier will result. When {\lambda}is small then few violations
+to the margin will occur; this amounts to a high-variance but low-bias
+9.5 Relationship to Logistic Regression 385
+classifier. Thus, a small value of {\lambda}in (9.25) amounts to a small value of C
+in (9.15). Note that the {\lambda}{\sum}p
+j=1{\beta}2
+jterm in ( 9.25) is the ridge penalty term
+from Section 6.2.1, and plays a similar role in controlling the bias-variance
+trade-off for the support vector classifier.
+Now(9.25)takesthe{\textquotedblleft}Loss+Penalty{\textquotedblright}formthatwehaveseenrepeatedly
+throughout this book:
+minimize
+{\beta}0,{\beta}1,...,{\beta}p{\{}L(X,y,{\beta})+{\lambda}P({\beta}){\}}. (9.26)
+In (9.26),L(X,y,{\beta})is some loss function quantifying the extent to which
+the model, parametrized by {\beta}, fits the data (X,y), andP({\beta})is a penalty
+function on the parameter vector {\beta}whose effect is controlled by a nonneg-
+ative tuning parameter {\lambda}. For instance, ridge regression and the lasso both
+take this form with
+L(X,y,{\beta})=n{\sum}
+i=1
+yi{-}{\beta}0{-}p{\sum}
+j=1xij{\beta}j
+2
+and with P({\beta})={\sum}p
+j=1{\beta}2
+jfor ridge regression and P({\beta})={\sum}p
+j=1|{\beta}j|for
+the lasso. In the case of ( 9.25) the loss function instead takes the form
+L(X,y,{\beta})=n{\sum}
+i=1max [0 ,1{-}yi({\beta}0+{\beta}1xi1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip)].
+This is known as hinge loss , and is depicted in Figure 9.12. However, ithinge lossturns out that the hinge loss function is closely related to the loss function
+used in logistic regression, also shown in Figure 9.12.
+An interesting characteristic of the support vector classifier is that only
+support vectors play a role in the classifier obtained; observations on the
+correct side of the margin do not affect it. This is due to the fact that the
+loss function shown in Figure 9.12is exactly zero for observations for which
+yi({\beta}0+{\beta}1xi1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip){\geq}1; these correspond to observations that are
+on the correct side of the margin.3In contrast, the loss function for logistic
+regression shown in Figure 9.12is not exactly zero anywhere. But it is very
+small for observations that are far from the decision boundary. Due to the
+similarities between their loss functions, logistic regression and the support
+vector classifier often give very similar results. When the classes are well
+separated, SVMs tend to behave better than logistic regression; in more
+overlapping regimes, logistic regression is often preferred.
+When the support vector classifier and SVM were first introduced, it was
+thought that the tuning parameter Cin (9.15) was an unimportant {\textquotedblleft}nui-
+sance{\textquotedblright} parameter that could be set to some default value, like 1. However,
+the {\textquotedblleft}Loss + Penalty{\textquotedblright} formulation ( 9.25) for the support vector classifier
+indicates that this is not the case. The choice of tuning parameter is very
+important and determines the extent to which the model underfits or over-
+fits the data, as illustrated, for example, in Figure 9.7.
+3With this hinge-loss + penalty representation, the margin corresponds to the value
+one, and the width of the margin is determined by{\sum}{\beta}2
+j.
+386 9. Support Vector Machines
+{-}6 {-}4 {-}2 0 202468LossSVM LossLogistic Regression Loss
+yi({\beta}0+{\beta}1xi1+...+{\beta}pxip)FIGURE 9.12. The SVM and logistic regression loss functions are compared,
+as a function of yi({\beta}0+{\beta}1xi1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip). Whenyi({\beta}0+{\beta}1xi1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\beta}pxip)is
+greater than 1, then the SVM loss is zero, since this corresponds to an observation
+that is on the correct side of the margin. Overall, the two loss functions have quite
+similar behavior.
+We have established that the support vector classifier is closely related
+to logistic regression and other preexisting statistical methods. Is the SVM
+unique in its use of kernels to enlarge the feature space to accommodate
+non-linear class boundaries? The answer to this question is {\textquotedblleft}no{\textquotedblright}. We could
+just as well perform logistic regression or many of the other classification
+methods seen in this book using non-linear kernels; this is closely related
+to some of the non-linear approaches seen in Chapter 7. However, for his-
+torical reasons, the use of non-linear kernels is much more widespread in
+the context of SVMs than in the context of logistic regression or other
+methods.
+Though we have not addressed it here, there is in fact an extension
+of the SVM for regression (i.e. for a quantitative rather than a qualita-
+tive response), called support vector regression . In Chapter 3, we saw thatsupport
+vector
+regressionleast squares regression seeks coefficients {\beta}0,{\beta}1,...,{\beta}psuch that the sum
+of squared residuals is as small as possible. (Recall from Chapter 3that
+residuals are defined as yi{-}{\beta}0{-}{\beta}1xi1{-}{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}{-}{\beta}pxip.) Support vector
+regression instead seeks coefficients that minimize a different type of loss,
+where only residuals larger in absolute value than some positive constant
+contribute to the loss function. This is an extension of the margin used in
+support vector classifiers to the regression setting.

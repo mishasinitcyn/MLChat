@@ -1,0 +1,459 @@
+7.1 Optimization Using Gradient Descent 227
+Figure 7.2 Example
+objective function.
+Negative gradients
+are indicated by
+arrows, and the
+global minimum is
+indicated by the
+dashed blue line.
+{-}6{-}5{-}4{-}3{-}2{-}1 0 1 2
+Value of parameter{-}60{-}40{-}200204060Objectivex4+ 7x3+ 5x2{-}17x+ 3
+right, but not how far (this is called the step-size). Furthermore, if we According to the
+Abel{\textendash}Ruffini
+theorem, there is in
+general no algebraic
+solution for
+polynomials of
+degree 5 or more
+(Abel, 1826).had started at the right side (e.g., x0= 0) the negative gradient would
+have led us to the wrong minimum. Figure 7.2 illustrates the fact that for
+x {>}{-}1, the negative gradient points toward the minimum on the right of
+the figure, which has a larger objective value.
+In Section 7.3, we will learn about a class of functions, called convex
+functions, that do not exhibit this tricky dependency on the starting point
+of the optimization algorithm. For convex functions, all local minimums
+are global minimum. It turns out that many machine learning objective For convex functions
+all local minima are
+global minimum.functions are designed such that they are convex, and we will see an ex-
+ample in Chapter 12.
+The discussion in this chapter so far was about a one-dimensional func-
+tion, where we are able to visualize the ideas of gradients, descent direc-
+tions, and optimal values. In the rest of this chapter we develop the same
+ideas in high dimensions. Unfortunately, we can only visualize the con-
+cepts in one dimension, but some concepts do not generalize directly to
+higher dimensions, therefore some care needs to be taken when reading.
+7.1 Optimization Using Gradient Descent
+We now consider the problem of solving for the minimum of a real-valued
+function
+min
+xf(x), (7.4)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+228 Continuous Optimization
+where f:Rd{\textrightarrow}Ris an objective function that captures the machine
+learning problem at hand. We assume that our function fis differentiable,
+and we are unable to analytically find a solution in closed form.
+Gradient descent is a first-order optimization algorithm. To find a local
+minimum of a function using gradient descent, one takes steps propor-
+tional to the negative of the gradient of the function at the current point.
+Recall from Section 5.1 that the gradient points in the direction of the We use the
+convention of row
+vectors for
+gradients.steepest ascent. Another useful intuition is to consider the set of lines
+where the function is at a certain value ( f(x) =cfor some value c{\in}R),
+which are known as the contour lines. The gradient points in a direction
+that is orthogonal to the contour lines of the function we wish to optimize.
+Let us consider multivariate functions. Imagine a surface (described by
+the function f(x)) with a ball starting at a particular location x0. When
+the ball is released, it will move downhill in the direction of steepest de-
+scent. Gradient descent exploits the fact that f(x0)decreases fastest if one
+moves from x0in the direction of the negative gradient {-}(({\nabla}f)(x0)){\top}of
+fatx0. We assume in this book that the functions are differentiable, and
+refer the reader to more general settings in Section 7.4. Then, if
+x1=x0{-}{\gamma}(({\nabla}f)(x0)){\top}(7.5)
+for a small step-size {\gamma}{\geqslant}0, then f(x1){\leqslant}f(x0). Note that we use the
+transpose for the gradient since otherwise the dimensions will not work
+out.
+This observation allows us to define a simple gradient descent algo-
+rithm: If we want to find a local optimum f(x{*})of a function f:Rn{\textrightarrow}
+R,x7{\textrightarrow}f(x), we start with an initial guess x0of the parameters we wish
+to optimize and then iterate according to
+xi+1=xi{-}{\gamma}i(({\nabla}f)(xi)){\top}. (7.6)
+For suitable step-size {\gamma}i, the sequence f(x0){\geqslant}f(x1){\geqslant}. . .converges to
+a local minimum.
+Example 7.1
+Consider a quadratic function in two dimensions
+fx1
+x2
+=1
+2x1
+x2{\top}2 1
+1 20x1
+x2
+{-}5
+3{\top}x1
+x2
+(7.7)
+with gradient
+{\nabla}fx1
+x2
+=x1
+x2{\top}2 1
+1 20
+{-}5
+3{\top}
+. (7.8)
+Starting at the initial location x0= [{-}3,{-}1]{\top}, we iteratively apply (7.6)
+to obtain a sequence of estimates that converge to the minimum value
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+7.1 Optimization Using Gradient Descent 229
+Figure 7.3 Gradient
+descent on a
+two-dimensional
+quadratic surface
+(shown as a
+heatmap). See
+Example 7.1 for a
+description.
+{-}4{-}2 0 2 4
+x1{-}2{-}1012x20.0
+10.0
+20.030.0
+40.040.0
+50.050.0
+60.0 70.0
+80.0{-}150153045607590
+(illustrated in Figure 7.3). We can see (both from the figure and by plug-
+gingx0into (7.8) with {\gamma}= 0.085) that the negative gradient at x0points
+north and east, leading to x1= [{-}1.98,1.21]{\top}. Repeating that argument
+gives us x2= [{-}1.32,{-}0.42]{\top}, and so on.
+Remark. Gradient descent can be relatively slow close to the minimum:
+Its asymptotic rate of convergence is inferior to many other methods. Us-
+ing the ball rolling down the hill analogy, when the surface is a long, thin
+valley, the problem is poorly conditioned (Trefethen and Bau III, 1997).
+For poorly conditioned convex problems, gradient descent increasingly
+{\textquotedblleft}zigzags{\textquotedblright} as the gradients point nearly orthogonally to the shortest di-
+rection to a minimum point; see Figure 7.3. {\diamond}
+7.1.1 Step-size
+As mentioned earlier, choosing a good step-size is important in gradient
+descent. If the step-size is too small, gradient descent can be slow. If the The step-size is also
+called the learning
+rate.step-size is chosen too large, gradient descent can overshoot, fail to con-
+verge, or even diverge. We will discuss the use of momentum in the next
+section. It is a method that smoothes out erratic behavior of gradient up-
+dates and dampens oscillations.
+Adaptive gradient methods rescale the step-size at each iteration, de-
+pending on local properties of the function. There are two simple heuris-
+tics (Toussaint, 2012):
+When the function value increases after a gradient step, the step-size
+was too large. Undo the step and decrease the step-size.
+When the function value decreases the step could have been larger. Try
+to increase the step-size.
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+230 Continuous Optimization
+Although the {\textquotedblleft}undo{\textquotedblright} step seems to be a waste of resources, using this
+heuristic guarantees monotonic convergence.
+Example 7.2 (Solving a Linear Equation System)
+When we solve linear equations of the form Ax=b, in practice we solve
+Ax{-}b=0approximately by finding x{*}that minimizes the squared error
+{\parallel}Ax{-}b{\parallel}2= (Ax{-}b){\top}(Ax{-}b) (7.9)
+if we use the Euclidean norm. The gradient of (7.9) with respect to xis
+{\nabla}x= 2(Ax{-}b){\top}A. (7.10)
+We can use this gradient directly in a gradient descent algorithm. How-
+ever, for this particular special case, it turns out that there is an analytic
+solution, which can be found by setting the gradient to zero. We will see
+more on solving squared error problems in Chapter 9.
+Remark. When applied to the solution of linear systems of equations Ax=
+b, gradient descent may converge slowly. The speed of convergence of gra-
+dient descent is dependent on the condition number {\kappa}={\sigma}(A)max
+{\sigma}(A)min, which condition number
+is the ratio of the maximum to the minimum singular value (Section 4.5)
+ofA. The condition number essentially measures the ratio of the most
+curved direction versus the least curved direction, which corresponds to
+our imagery that poorly conditioned problems are long, thin valleys: They
+are very curved in one direction, but very flat in the other. Instead of di-
+rectly solving Ax=b, one could instead solve P{-}1(Ax{-}b) =0, where
+Pis called the preconditioner . The goal is to design P{-}1such that P{-}1A preconditioner
+has a better condition number, but at the same time P{-}1is easy to com-
+pute. For further information on gradient descent, preconditioning, and
+convergence we refer to Boyd and Vandenberghe (2004, chapter 9). {\diamond}
+7.1.2 Gradient Descent With Momentum
+As illustrated in Figure 7.3, the convergence of gradient descent may be
+very slow if the curvature of the optimization surface is such that there
+are regions that are poorly scaled. The curvature is such that the gradient
+descent steps hops between the walls of the valley and approaches the
+optimum in small steps. The proposed tweak to improve convergence is
+to give gradient descent some memory. Goh (2017) wrote
+an intuitive blog
+post on gradient
+descent with
+momentum.Gradient descent with momentum (Rumelhart et al., 1986) is a method
+that introduces an additional term to remember what happened in the
+previous iteration. This memory dampens oscillations and smoothes out
+the gradient updates. Continuing the ball analogy, the momentum term
+emulates the phenomenon of a heavy ball that is reluctant to change di-
+rections. The idea is to have a gradient update with memory to implement
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+7.1 Optimization Using Gradient Descent 231
+a moving average. The momentum-based method remembers the update
+{\Delta}xiat each iteration iand determines the next update as a linear combi-
+nation of the current and previous gradients
+xi+1=xi{-}{\gamma}i(({\nabla}f)(xi)){\top}+{\alpha}{\Delta}xi (7.11)
+{\Delta}xi=xi{-}xi{-}1={\alpha}{\Delta}xi{-}1{-}{\gamma}i{-}1(({\nabla}f)(xi{-}1)){\top}, (7.12)
+where {\alpha}{\in}[0,1]. Sometimes we will only know the gradient approxi-
+mately. In such cases, the momentum term is useful since it averages out
+different noisy estimates of the gradient. One particularly useful way to
+obtain an approximate gradient is by using a stochastic approximation,
+which we discuss next.
+7.1.3 Stochastic Gradient Descent
+Computing the gradient can be very time consuming. However, often it is
+possible to find a {\textquotedblleft}cheap{\textquotedblright} approximation of the gradient. Approximating
+the gradient is still useful as long as it points in roughly the same direction
+as the true gradient. stochastic gradient
+descent Stochastic gradient descent (often shortened as SGD) is a stochastic ap-
+proximation of the gradient descent method for minimizing an objective
+function that is written as a sum of differentiable functions. The word
+stochastic here refers to the fact that we acknowledge that we do not
+know the gradient precisely, but instead only know a noisy approxima-
+tion to it. By constraining the probability distribution of the approximate
+gradients, we can still theoretically guarantee that SGD will converge.
+In machine learning, given n= 1, . . . , N data points, we often consider
+objective functions that are the sum of the losses Lnincurred by each
+example n. In mathematical notation, we have the form
+L({\theta}) =NX
+n=1Ln({\theta}), (7.13)
+where {\theta}is the vector of parameters of interest, i.e., we want to find {\theta}that
+minimizes L. An example from regression (Chapter 9) is the negative log-
+likelihood, which is expressed as a sum over log-likelihoods of individual
+examples so that
+L({\theta}) ={-}NX
+n=1logp(yn|xn,{\theta}), (7.14)
+where xn{\in}RDare the training inputs, ynare the training targets, and {\theta}
+are the parameters of the regression model.
+Standard gradient descent, as introduced previously, is a {\textquotedblleft}batch{\textquotedblright} opti-
+mization method, i.e., optimization is performed using the full training set
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+232 Continuous Optimization
+by updating the vector of parameters according to
+{\theta}i+1={\theta}i{-}{\gamma}i({\nabla}L({\theta}i)){\top}={\theta}i{-}{\gamma}iNX
+n=1({\nabla}Ln({\theta}i)){\top}(7.15)
+for a suitable step-size parameter {\gamma}i. Evaluating the sum gradient may re-
+quire expensive evaluations of the gradients from all individual functions
+Ln. When the training set is enormous and/or no simple formulas exist,
+evaluating the sums of gradients becomes very expensive.
+Consider the termPN
+n=1({\nabla}Ln({\theta}i))in (7.15). We can reduce the amount
+of computation by taking a sum over a smaller set of Ln. In contrast to
+batch gradient descent, which uses all Lnforn= 1, . . . , N , we randomly
+choose a subset of Lnfor mini-batch gradient descent. In the extreme
+case, we randomly select only a single Lnto estimate the gradient. The
+key insight about why taking a subset of data is sensible is to realize that
+for gradient descent to converge, we only require that the gradient is an
+unbiased estimate of the true gradient. In fact the termPN
+n=1({\nabla}Ln({\theta}i))
+in (7.15) is an empirical estimate of the expected value (Section 6.4.1) of
+the gradient. Therefore, any other unbiased empirical estimate of the ex-
+pected value, for example using any subsample of the data, would suffice
+for convergence of gradient descent.
+Remark. When the learning rate decreases at an appropriate rate, and sub-
+ject to relatively mild assumptions, stochastic gradient descent converges
+almost surely to local minimum (Bottou, 1998). {\diamond}
+Why should one consider using an approximate gradient? A major rea-
+son is practical implementation constraints, such as the size of central
+processing unit (CPU)/graphics processing unit (GPU) memory or limits
+on computational time. We can think of the size of the subset used to esti-
+mate the gradient in the same way that we thought of the size of a sample
+when estimating empirical means (Section 6.4.1). Large mini-batch sizes
+will provide accurate estimates of the gradient, reducing the variance in
+the parameter update. Furthermore, large mini-batches take advantage of
+highly optimized matrix operations in vectorized implementations of the
+cost and gradient. The reduction in variance leads to more stable conver-
+gence, but each gradient calculation will be more expensive.
+In contrast, small mini-batches are quick to estimate. If we keep the
+mini-batch size small, the noise in our gradient estimate will allow us to
+get out of some bad local optima, which we may otherwise get stuck in.
+In machine learning, optimization methods are used for training by min-
+imizing an objective function on the training data, but the overall goal
+is to improve generalization performance (Chapter 8). Since the goal in
+machine learning does not necessarily need a precise estimate of the min-
+imum of the objective function, approximate gradients using mini-batch
+approaches have been widely used. Stochastic gradient descent is very
+effective in large-scale machine learning problems (Bottou et al., 2018),
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+7.2 Constrained Optimization and Lagrange Multipliers 233
+Figure 7.4
+Illustration of
+constrained
+optimization. The
+unconstrained
+problem (indicated
+by the contour
+lines) has a
+minimum on the
+right side (indicated
+by the circle). The
+box constraints
+({-}1{\leqslant}x{\leqslant}1and
+{-}1{\leqslant}y{\leqslant}1) require
+that the optimal
+solution is within
+the box, resulting in
+an optimal value
+indicated by the
+star.
+{-}3{-}2{-}1 0 1 2 3
+x1{-}3{-}2{-}10123x2
+such as training deep neural networks on millions of images (Dean et al.,
+2012), topic models (Hoffman et al., 2013), reinforcement learning (Mnih
+et al., 2015), or training of large-scale Gaussian process models (Hensman
+et al., 2013; Gal et al., 2014).
+7.2 Constrained Optimization and Lagrange Multipliers
+In the previous section, we considered the problem of solving for the min-
+imum of a function
+min
+xf(x), (7.16)
+where f:RD{\textrightarrow}R.
+In this section, we have additional constraints. That is, for real-valued
+functions gi:RD{\textrightarrow}Rfori= 1, . . . , m , we consider the constrained
+optimization problem (see Figure 7.4 for an illustration)
+min
+xf(x) (7.17)
+subject to gi(x){\leqslant}0for all i= 1, . . . , m .
+It is worth pointing out that the functions fandgicould be non-convex
+in general, and we will consider the convex case in the next section.
+One obvious, but not very practical, way of converting the constrained
+problem (7.17) into an unconstrained one is to use an indicator function
+J(x) =f(x) +mX
+i=11(gi(x)), (7.18)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+234 Continuous Optimization
+where 1(z)is an infinite step function
+1(z) =(
+0ifz{\leqslant}0
+{\infty}otherwise. (7.19)
+This gives infinite penalty if the constraint is not satisfied, and hence
+would provide the same solution. However, this infinite step function is
+equally difficult to optimize. We can overcome this difficulty by introduc-
+ingLagrange multipliers . The idea of Lagrange multipliers is to replace the Lagrange multiplier
+step function with a linear function.
+We associate to problem (7.17) the Lagrangian by introducing the La- Lagrangian
+grange multipliers {\lambda}i{\geqslant}0corresponding to each inequality constraint re-
+spectively (Boyd and Vandenberghe, 2004, chapter 4) so that
+L(x,{\lambda}) =f(x) +mX
+i=1{\lambda}igi(x) (7.20a)
+=f(x) +{\lambda}{\top}g(x), (7.20b)
+where in the last line we have concatenated all constraints gi(x)into a
+vector g(x), and all the Lagrange multipliers into a vector {\lambda}{\in}Rm.
+We now introduce the idea of Lagrangian duality. In general, duality
+in optimization is the idea of converting an optimization problem in one
+set of variables x(called the primal variables), into another optimization
+problem in a different set of variables {\lambda}(called the dual variables). We
+introduce two different approaches to duality: In this section, we discuss
+Lagrangian duality; in Section 7.3.3, we discuss Legendre-Fenchel duality.
+Definition 7.1. The problem in (7.17)
+min
+xf(x) (7.21)
+subject to gi(x){\leqslant}0for all i= 1, . . . , m
+is known as the primal problem , corresponding to the primal variables x. primal problem
+The associated Lagrangian dual problem is given by Lagrangian dual
+problem
+max
+{\lambda}{\in}RmD({\lambda})
+subject to {\lambda}{\geqslant}0,(7.22)
+where {\lambda}are the dual variables and D({\lambda}) = min x{\in}RdL(x,{\lambda}).
+Remark. In the discussion of Definition 7.1, we use two concepts that are
+also of independent interest (Boyd and Vandenberghe, 2004).
+First is the minimax inequality , which says that for any function with minimax inequality
+two arguments {\varphi}(x,y), the maximin is less than the minimax, i.e.,
+max
+ymin
+x{\varphi}(x,y){\leqslant}min
+xmax
+y{\varphi}(x,y). (7.23)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+7.2 Constrained Optimization and Lagrange Multipliers 235
+This inequality can be proved by considering the inequality
+For all x,y min
+x{\varphi}(x,y){\leqslant}max
+y{\varphi}(x,y). (7.24)
+Note that taking the maximum over yof the left-hand side of (7.24) main-
+tains the inequality since the inequality is true for all y. Similarly, we can
+take the minimum over xof the right-hand side of (7.24) to obtain (7.23).
+The second concept is weak duality , which uses (7.23) to show that weak duality
+primal values are always greater than or equal to dual values. This is de-
+scribed in more detail in (7.27). {\diamond}
+Recall that the difference between J(x)in (7.18) and the Lagrangian
+in (7.20b) is that we have relaxed the indicator function to a linear func-
+tion. Therefore, when {\lambda}{\geqslant}0, the Lagrangian L(x,{\lambda})is a lower bound of
+J(x). Hence, the maximum of L(x,{\lambda})with respect to {\lambda}is
+J(x) = max
+{\lambda}{\geqslant}0L(x,{\lambda}). (7.25)
+Recall that the original problem was minimizing J(x),
+min
+x{\in}Rdmax
+{\lambda}{\geqslant}0L(x,{\lambda}). (7.26)
+By the minimax inequality (7.23), it follows that swapping the order of
+the minimum and maximum results in a smaller value, i.e.,
+min
+x{\in}Rdmax
+{\lambda}{\geqslant}0L(x,{\lambda}){\geqslant}max
+{\lambda}{\geqslant}0min
+x{\in}RdL(x,{\lambda}). (7.27)
+This is also known as weak duality . Note that the inner part of the right- weak duality
+hand side is the dual objective function D({\lambda})and the definition follows.
+In contrast to the original optimization problem, which has constraints,
+minx{\in}RdL(x,{\lambda})is an unconstrained optimization problem for a given
+value of {\lambda}. If solving minx{\in}RdL(x,{\lambda})is easy, then the overall problem is
+easy to solve. We can see this by observing from (7.20b) that L(x,{\lambda})is
+affine with respect to {\lambda}. Therefore minx{\in}RdL(x,{\lambda})is a pointwise min-
+imum of affine functions of {\lambda}, and hence D({\lambda})is concave even though
+f({\textperiodcentered})andgi({\textperiodcentered})may be nonconvex. The outer problem, maximization over
+{\lambda}, is the maximum of a concave function and can be efficiently computed.
+Assuming f({\textperiodcentered})andgi({\textperiodcentered})are differentiable, we find the Lagrange dual
+problem by differentiating the Lagrangian with respect to x, setting the
+differential to zero, and solving for the optimal value. We will discuss two
+concrete examples in Sections 7.3.1 and 7.3.2, where f({\textperiodcentered})andgi({\textperiodcentered})are
+convex.
+Remark (Equality Constraints) .Consider (7.17) with additional equality
+constraints
+min
+xf(x)
+subject to gi(x){\leqslant}0for all i= 1, . . . , m
+hj(x) = 0 for all j= 1, . . . , n .(7.28)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+236 Continuous Optimization
+We can model equality constraints by replacing them with two inequality
+constraints. That is for each equality constraint hj(x) = 0 we equivalently
+replace it by two constraints hj(x){\leqslant}0andhj(x){\geqslant}0. It turns out that
+the resulting Lagrange multipliers are then unconstrained.
+Therefore, we constrain the Lagrange multipliers corresponding to the
+inequality constraints in (7.28) to be non-negative, and leave the La-
+grange multipliers corresponding to the equality constraints unconstrained.
+{\diamond}
+7.3 Convex Optimization
+We focus our attention of a particularly useful class of optimization prob-
+lems, where we can guarantee global optimality. When f({\textperiodcentered})is a convex
+function, and when the constraints involving g({\textperiodcentered})andh({\textperiodcentered})are convex sets,
+this is called a convex optimization problem . In this setting, we have strong convex optimization
+problem
+strong dualityduality : The optimal solution of the dual problem is the same as the opti-
+mal solution of the primal problem. The distinction between convex func-
+tions and convex sets are often not strictly presented in machine learning
+literature, but one can often infer the implied meaning from context.
+Definition 7.2. A setCis aconvex set if for any x, y{\in} Cand for any scalar convex set
+{\theta}with0{\leqslant}{\theta}{\leqslant}1, we have
+{\theta}x+ (1{-}{\theta})y{\in} C. (7.29)
+Figure 7.5 Example
+of a convex set.
+ Convex sets are sets such that a straight line connecting any two ele-
+ments of the set lie inside the set. Figures 7.5 and 7.6 illustrate convex
+and nonconvex sets, respectively.
+Figure 7.6 Example
+of a nonconvex set.
+Convex functions are functions such that a straight line between any
+two points of the function lie above the function. Figure 7.2 shows a non-
+convex function, and Figure 7.3 shows a convex function. Another convex
+function is shown in Figure 7.7.
+Definition 7.3. Let function f:RD{\textrightarrow}Rbe a function whose domain is a
+convex set. The function fis aconvex function if for all x,yin the domain
+convex functionoff, and for any scalar {\theta}with0{\leqslant}{\theta}{\leqslant}1, we have
+f({\theta}x+ (1{-}{\theta})y){\leqslant}{\theta}f(x) + (1 {-}{\theta})f(y). (7.30)
+Remark. Aconcave function is the negative of a convex function. {\diamond}
+concave functionThe constraints involving g({\textperiodcentered})andh({\textperiodcentered})in (7.28) truncate functions at a
+scalar value, resulting in sets. Another relation between convex functions
+and convex sets is to consider the set obtained by {\textquotedblleft}filling in{\textquotedblright} a convex
+function. A convex function is a bowl-like object, and we imagine pouring
+water into it to fill it up. This resulting filled-in set, called the epigraph of epigraph
+the convex function, is a convex set.
+If a function f:Rn{\textrightarrow}Ris differentiable, we can specify convexity in
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .

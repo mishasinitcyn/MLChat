@@ -1,0 +1,163 @@
+8.3 Bayesian Methods 267
+Let`s return to our smoothing example to see what maximum lik elihood
+yields. The parameters are {\theta}= ({\beta},{\sigma}2). The log-likelihood is
+{\ell}({\theta}) ={-}N
+2log{\sigma}22{\pi}{-}1
+2{\sigma}2N{\sum}
+i=1(yi{-}h(xi)T{\beta})2. (8.20)
+The maximum likelihood estimate is obtained by setting {\partial}{\ell}/{\partial}{\beta}= 0 and
+{\partial}{\ell}/{\partial}{\sigma}2= 0, giving
+{\textasciicircum}{\beta}= (HTH){-}1HTy,
+{\textasciicircum}{\sigma}2=1
+N{\sum}
+(yi{-}{\textasciicircum}{\textmu}(xi))2,(8.21)
+which are the same as the usual estimates given in (8.2) and be low (8.3).
+The information matrix for {\theta}= ({\beta},{\sigma}2) is block-diagonal, and the block
+corresponding to {\beta}is
+I({\beta}) = (HTH)/{\sigma}2, (8.22)
+so that the estimated variance ( HTH){-}1{\textasciicircum}{\sigma}2agrees with the least squares
+estimate (8.3).
+8.2.3 Bootstrap versus Maximum Likelihood
+In essence the bootstrap is a computer implementation of non parametric or
+parametric maximum likelihood. The advantage of the bootst rap over the
+maximum likelihood formula is that it allows us to compute ma ximum like-
+lihood estimates of standard errors and other quantities in settings where
+no formulas are available.
+In our example, suppose that we adaptively choose by cross-v alidation
+the number and position of the knots that define the B-splines, rather
+than fix them in advance. Denote by {\lambda}the collection of knots and their
+positions. Then the standard errors and confidence bands sho uld account
+for the adaptive choice of {\lambda}, but there is no way to do this analytically.
+With the bootstrap, we compute the B-spline smooth with an adaptive
+choice of knots for each bootstrap sample. The percentiles o f the resulting
+curves capture the variability from both the noise in the tar gets as well as
+that from {\textasciicircum}{\lambda}. In this particular example the confidence bands (not shown)
+don`t look much different than the fixed {\lambda}bands. But in other problems,
+where more adaptation is used, this can be an important effect to capture.
+8.3 Bayesian Methods
+In the Bayesian approach to inference, we specify a sampling model Pr( Z|{\theta})
+(density or probability mass function) for our data given th e parameters,
+268 8. Model Inference and Averaging
+and a prior distribution for the parameters Pr( {\theta}) re{fl}ecting our knowledge
+about{\theta}before we see the data. We then compute the posterior distrib ution
+Pr({\theta}|Z) =Pr(Z|{\theta}){\textperiodcentered}Pr({\theta}){\int}
+Pr(Z|{\theta}){\textperiodcentered}Pr({\theta})d{\theta}, (8.23)
+which represents our updated knowledge about {\theta}after we see the data. To
+understand this posterior distribution, one might draw sam ples from it or
+summarize by computing its mean or mode. The Bayesian approa ch differs
+from the standard ({\textquotedblleft}frequentist{\textquotedblright}) method for inference in i ts use of a prior
+distribution to express the uncertainty present before see ing the data, and
+to allow the uncertainty remaining after seeing the data to b e expressed in
+the form of a posterior distribution.
+Theposteriordistributionalsoprovidesthebasisforpred ictingthevalues
+of a future observation znew, via the predictive distribution :
+Pr(znew|Z) ={\int}
+Pr(znew|{\theta}){\textperiodcentered}Pr({\theta}|Z)d{\theta}. (8.24)
+In contrast, the maximum likelihood approach would use Pr( znew|{\textasciicircum}{\theta}),
+the data density evaluated at the maximum likelihood estima te, to predict
+future data. Unlike the predictive distribution (8.24), th is does not account
+for the uncertainty in estimating {\theta}.
+Let`s walk through the Bayesian approach in our smoothing ex ample.
+We start with the parametric model given by equation (8.5), a nd assume
+for the moment that {\sigma}2is known. We assume that the observed feature
+valuesx1,x2,...,x Nare fixed, so that the randomness in the data comes
+solely from yvarying around its mean {\textmu}(x).
+The second ingredient we need is a prior distribution. Distr ibutions on
+functions are fairly complex entities: one approach is to us e a Gaussian
+process prior in which we specify the prior covariance betwe en any two
+function values {\textmu}(x) and{\textmu}(x{'}) (Wahba, 1990; Neal, 1996).
+Here we take a simpler route: by considering a finite B-spline basis for
+{\textmu}(x),wecaninsteadprovideapriorforthecoefficients {\beta},andthisimplicitly
+defines a prior for {\textmu}(x). We choose a Gaussian prior centered at zero
+{\beta}{\sim}N(0,{\tau}{\Sigma}) (8.25)
+with the choices of the prior correlation matrix {\Sigma}and variance {\tau}to be
+discussed below. The implicit process prior for {\textmu}(x) is hence Gaussian,
+with covariance kernel
+K(x,x{'}) = cov[ {\textmu}(x),{\textmu}(x{'})]
+={\tau}{\textperiodcentered}h(x)T{\Sigma}h(x{'}). (8.26)
+8.3 Bayesian Methods 269
+0.0 0.5 1.0 1.5 2.0 2.5 3.0-3 -2 -1 0 1 2 3{\textmu}(x)
+x
+FIGURE 8.3. Smoothing example: Ten draws from the Gaussian prior distri-
+bution for the function {\textmu}(x).
+The posterior distribution for {\beta}is also Gaussian, with mean and covariance
+E({\beta}|Z) =(
+HTH+{\sigma}2
+{\tau}{\Sigma}{-}1){-}1
+HTy,
+cov({\beta}|Z) =(
+HTH+{\sigma}2
+{\tau}{\Sigma}{-}1){-}1
+{\sigma}2,(8.27)
+with the corresponding posterior values for {\textmu}(x),
+E({\textmu}(x)|Z) =h(x)T(
+HTH+{\sigma}2
+{\tau}{\Sigma}{-}1){-}1
+HTy,
+cov[{\textmu}(x),{\textmu}(x{'})|Z] =h(x)T(
+HTH+{\sigma}2
+{\tau}{\Sigma}{-}1){-}1
+h(x{'}){\sigma}2.(8.28)
+How do we choose the prior correlation matrix {\Sigma}? In some settings the
+prior can be chosen from subject matter knowledge about the p arameters.
+Here we are willing to say the function {\textmu}(x) should be smooth, and have
+guaranteed this by expressing {\textmu}in a smooth low-dimensional basis of B-
+splines. Hence we can take the prior correlation matrix to be the identity
+{\Sigma}=I. When the number of basis functions is large, this might not b e suf-
+ficient, and additional smoothness can be enforced by imposi ng restrictions
+on{\Sigma}; this is exactly the case with smoothing splines (Section 5. 8.1).
+Figure 8.3 shows ten draws from the corresponding prior for {\textmu}(x). To
+generateposteriorvaluesofthefunction {\textmu}(x),wegeneratevalues {\beta}{'}fromits
+posterior (8.27), giving corresponding posterior value {\textmu}{'}(x) ={\sum}7
+1{\beta}{'}
+jhj(x).
+Ten such posterior curves are shown in Figure 8.4. Two differe nt values
+were used for the prior variance {\tau}, 1 and 1000. Notice how similar the
+right panel looks to the bootstrap distribution in the botto m left panel
+270 8. Model Inference and Averaging
+0.0 0.5 1.0 1.5 2.0 2.5 3.0-1 0 1 2 3 4 5
+
+
+
+
+
+
+
+
+
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0-1 0 1 2 3 4 5
+
+
+
+
+
+
+
+
+
+{\textmu}(x){\textmu}(x)
+x x{\tau}= 1 {\tau}= 1000
+FIGURE 8.4. Smoothing example: Ten draws from the posterior distributio n
+for the function {\textmu}(x), for two different values of the prior variance {\tau}. The purple
+curves are the posterior means.
+of Figure 8.2 on page 263. This similarity is no accident. As {\tau}{\textrightarrow}{\infty}, the
+posterior distribution (8.27) and the bootstrap distribut ion (8.7) coincide.
+On the other hand, for {\tau}= 1, the posterior curves {\textmu}(x) in the left panel
+of Figure 8.4 are smoother than the bootstrap curves, becaus e we have
+imposed more prior weight on smoothness.
+The distribution (8.25) with {\tau}{\textrightarrow}{\infty}is called a noninformative prior for
+{\theta}.InGaussianmodels,maximumlikelihoodandparametricboo tstrapanal-
+yses tend to agree with Bayesian analyses that use a noninfor mative prior
+for the free parameters. These tend to agree, because with a c onstant prior,
+the posterior distribution is proportional to the likeliho od. This correspon-
+dence also extends to the nonparametric case, where the nonp arametric
+bootstrap approximates a noninformative Bayes analysis; S ection 8.4 has
+the details.
+We have, however, done some things that are not proper from a B ayesian
+point of view. We have used a noninformative (constant) prio r for{\sigma}2and
+replaced it with the maximum likelihood estimate {\textasciicircum} {\sigma}2in the posterior. A
+more standard Bayesian analysis would also put a prior on {\sigma}(typically
+g({\sigma}){\propto}1/{\sigma}), calculate a joint posterior for {\textmu}(x) and{\sigma}, and then integrate
+out{\sigma}, rather than just extract the maximum of the posterior distr ibution
+({\textquotedblleft}MAP{\textquotedblright} estimate).

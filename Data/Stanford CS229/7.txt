@@ -1,0 +1,694 @@
+Chapter 7
+Deep learning
+We now begin our study of deep learning. In this set of notes, we give an
+overview of neural networks, discuss vectorization and discuss training neural
+networks with backpropagation.
+7.1 Supervised learning with non-linear mod-
+els
+In the supervised learning setting (predicting yfrom the input x), suppose
+our model/hypothesis is h{\theta}(x). In the past lectures, we have considered the
+cases when h{\theta}(x) ={\theta}{\top}x(in linear regression) or h{\theta}(x) ={\theta}{\top}{\varphi}(x) (where{\varphi}(x)
+is the feature map). A commonality of these two models is that they are
+linear in the parameters {\theta}. Next we will consider learning general family of
+models that are non-linear in both the parameters {\theta}and the inputs x. The
+most common non-linear models are neural networks, which we will define
+staring from the next section. For this section, it suffices to think h{\theta}(x) as
+an abstract non-linear model.1
+Suppose{\{}(x(i),y(i)){\}}n
+i=1are the training examples. We will define the
+nonlinear model and the loss/cost function for learning it.
+Regression problems. For simplicity, we start with the case where the
+output is a real number, that is, y(i){\in}R, and thus the model h{\theta}also outputs
+a real number h{\theta}(x){\in}R. We define the least square cost function for the
+1If a concrete example is helpful, perhaps think about the model h{\theta}(x) ={\theta}2
+1x2
+1+{\theta}2
+2x2
+2+
+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\theta}2
+dx2
+din this subsection, even though it`s not a neural network.
+80
+81
+i-th example ( x(i),y(i)) as
+J(i)({\theta}) =1
+2(h{\theta}(x(i)){-}y(i))2, (7.1)
+and define the mean-square cost function for the dataset as
+J({\theta}) =1
+nn{\sum}
+i=1J(i)({\theta}), (7.2)
+which is same as in linear regression except that we introduce a constant
+1/nin front of the cost function to be consistent with the convention. Note
+that multiplying the cost function with a scalar will not change the local
+minima or global minima of the cost function. Also note that the underlying
+parameterization for h{\theta}(x) is different from the case of linear regression,
+even though the form of the cost function is the same mean-squared loss.
+Throughout the notes, we use the words {\textquotedblleft}loss{\textquotedblright} and {\textquotedblleft}cost{\textquotedblright} interchangeably.
+Binary classification. Next we define the model and loss function for
+binary classification. Suppose the inputs x{\in}Rd. Let {\textasciimacron}h{\theta}:Rd{\textrightarrow}Rbe a
+parameterized model (the analog of {\theta}{\top}xin logistic linear regression). We
+call the output {\textasciimacron}h{\theta}(x){\in}Rthe logit. Analogous to Section 2.1, we use the
+logistic function g({\textperiodcentered}) to turn the logit {\textasciimacron}h{\theta}(x) to a probability h{\theta}(x){\in}[0,1]:
+h{\theta}(x) =g({\textasciimacron}h{\theta}(x)) = 1/(1 + exp({-}{\textasciimacron}h{\theta}(x)). (7.3)
+We model the conditional distribution of ygivenxand{\theta}by
+P(y= 1|x;{\theta}) =h{\theta}(x)
+P(y= 0|x;{\theta}) = 1{-}h{\theta}(x)
+Following the same derivation in Section 2.1 and using the derivation in
+Remark 2.1.1, the negative likelihood loss function is equal to:
+J(i)({\theta}) ={-}logp(y(i)|x(i);{\theta}) ={\ell}logistic ({\textasciimacron}h{\theta}(x(i)),y(i)) (7.4)
+As done in equation (7.2), the total loss function is also defined as the average
+of the loss function over individual training examples, J({\theta}) =1
+n{\sum}n
+i=1J(i)({\theta}).
+82
+Multi-class classification. Following Section 2.3, we consider a classifica-
+tion problem where the response variable ycan take on any one of kvalues,
+i.e.y{\in}{\{}1,2,...,k{\}}. Let {\textasciimacron}h{\theta}:Rd{\textrightarrow}Rkbe a parameterized model. We
+call the outputs {\textasciimacron}h{\theta}(x){\in}Rkthe logits. Each logit corresponds to the predic-
+tion for one of the kclasses. Analogous to Section 2.3, we use the softmax
+function to turn the logits {\textasciimacron}h{\theta}(x) into a probability vector with non-negative
+entries that sum up to 1:
+P(y=j|x;{\theta}) =exp({\textasciimacron}h{\theta}(x)j)
+{\sum}k
+s=1exp({\textasciimacron}h{\theta}(x)s), (7.5)
+where {\textasciimacron}h{\theta}(x)sdenotes the s-th coordinate of {\textasciimacron}h{\theta}(x).
+Similarly to Section 2.3, the loss function for a single training example
+(x(i),y(i)) is its negative log-likelihood:
+J(i)({\theta}) ={-}logp(y(i)|x(i);{\theta}) ={-}log(
+exp({\textasciimacron}h{\theta}(x(i))y(i))
+{\sum}k
+s=1exp({\textasciimacron}h{\theta}(x(i))s))
+. (7.6)
+Using the notations of Section 2.3, we can simply write in an abstract way:
+J(i)({\theta}) ={\ell}ce({\textasciimacron}h{\theta}(x(i)),y(i)). (7.7)
+The loss function is also defined as the average of the loss function of indi-
+vidual training examples, J({\theta}) =1
+n{\sum}n
+i=1J(i)({\theta}).
+We also note that the approach above can also be generated to any con-
+ditional probabilistic model where we have an exponential distribution for
+y, Exponential-family( y;{\eta}), where{\eta}={\textasciimacron}h{\theta}(x) is a parameterized nonlinear
+function of x. However, the most widely used situations are the three cases
+discussed above.
+Optimizers (SGD). Commonly, people use gradient descent (GD), stochas-
+tic gradient (SGD), or their variants to optimize the loss function J({\theta}). GD`s
+update rule can be written as2
+{\theta}:={\theta}{-}{\alpha}{\nabla}{\theta}J({\theta}) (7.8)
+where{\alpha} {>} 0 is often referred to as the learning rate or step size. Next, we
+introduce a version of the SGD (Algorithm 1), which is lightly different from
+that in the first lecture notes.
+2Recall that, as defined in the previous lecture notes, we use the notation {\textquotedblleft} a:=b{\textquotedblright} to
+denote an operation (in a computer program) in which we setthe value of a variable ato
+be equal to the value of b. In other words, this operation overwrites awith the value of
+b. In contrast, we will write {\textquotedblleft} a=b{\textquotedblright} when we are asserting a statement of fact, that the
+value ofais equal to the value of b.
+83
+Algorithm 1 Stochastic Gradient Descent
+1:Hyperparameter: learning rate {\alpha}, number of total iteration niter.
+2:Initialize{\theta}randomly.
+3:fori= 1 toniterdo
+4: Samplejuniformly from{\{}1,...,n{\}}, and update {\theta}by
+{\theta}:={\theta}{-}{\alpha}{\nabla}{\theta}J(j)({\theta}) (7.9)
+Oftentimes computing the gradient of Bexamples simultaneously for the
+parameter {\theta}can be faster than computing Bgradients separately due to
+hardware parallelization. Therefore, a mini-batch version of SGD is most
+commonly used in deep learning, as shown in Algorithm 2. There are also
+other variants of the SGD or mini-batch SGD with slightly different sampling
+schemes.
+Algorithm 2 Mini-batch Stochastic Gradient Descent
+1:Hyperparameters: learning rate {\alpha}, batch size B, {\#} iterations niter.
+2:Initialize{\theta}randomly
+3:fori= 1 toniterdo
+4: SampleBexamplesj1,...,jB(without replacement) uniformly from
+{\{}1,...,n{\}}, and update {\theta}by
+{\theta}:={\theta}{-}{\alpha}
+BB{\sum}
+k=1{\nabla}{\theta}J(jk)({\theta}) (7.10)
+With these generic algorithms, a typical deep learning model is learned
+with the following steps. 1. Define a neural network parametrization h{\theta}(x),
+which we will introduce in Section 7.2, and 2. write the backpropagation
+algorithm to compute the gradient of the loss function J(j)({\theta}) efficiently,
+which will be covered in Section 7.4, and 3. run SGD or mini-batch SGD (or
+other gradient-based optimizers) with the loss function J({\theta}).
+84
+7.2 Neural networks
+Neural networks refer to a broad type of non-linear models/parametrizations
+{\textasciimacron}h{\theta}(x) that involve combinations of matrix multiplications and other entry-
+wise non-linear operations. To have a unified treatment for regression prob-
+lem and classification problem, here we consider {\textasciimacron}h{\theta}(x) as the output of the
+neural network. For regression problem, the final prediction h{\theta}(x) ={\textasciimacron}h{\theta}(x),
+and for classification problem, {\textasciimacron}h{\theta}(x) is the logits and the predicted probability
+will beh{\theta}(x) = 1/(1+exp({-}{\textasciimacron}h{\theta}(x)) (see equation 7.3) for binary classification
+orh{\theta}(x) = softmax( {\textasciimacron}h{\theta}(x)) for multi-class classification (see equation 7.5).
+We will start small and slowly build up a neural network, step by step.
+A Neural Network with a Single Neuron. Recall the housing price
+prediction problem from before: given the size of the house, we want to
+predict the price. We will use it as a running example in this subsection.
+Previously, we fit a straight line to the graph of size vs. housing price.
+Now, instead of fitting a straight line, we wish to prevent negative housing
+prices by setting the absolute minimum price as zero. This produces a {\textquotedblleft}kink{\textquotedblright}
+in the graph as shown in Figure 7.1. How do we represent such a function
+with a single kink as {\textasciimacron}h{\theta}(x) with unknown parameter? (After doing so, we
+can invoke the machinery in Section 7.1.)
+We define a parameterized function {\textasciimacron}h{\theta}(x) with input x, parameterized by
+{\theta}, which outputs the price of the house y. Formally, {\textasciimacron}h{\theta}:x{\textrightarrow}y. Perhaps
+one of the simplest parametrization would be
+{\textasciimacron}h{\theta}(x) = max(wx+b,0),where{\theta}= (w,b){\in}R2(7.11)
+Here {\textasciimacron}h{\theta}(x) returns a single value: ( wx+b) or zero, whichever is greater. In
+the context of neural networks, the function max {\{}t,0{\}}is called a ReLU (pro-
+nounced {\textquotedblleft}ray-lu{\textquotedblright}), or rectified linear unit, and often denoted by ReLU( t){\triangleq}
+max{\{}t,0{\}}.
+Generally, a one-dimensional non-linear function that maps RtoRsuch as
+ReLU is often referred to as an activation function . The model {\textasciimacron}h{\theta}(x) is said
+to have a single neuron partly because it has a single non-linear activation
+function. (We will discuss more about why a non-linear activation is called
+neuron.)
+When the input x{\in}Rdhas multiple dimensions, a neural network with
+a single neuron can be written as
+{\textasciimacron}h{\theta}(x) = ReLU(w{\top}x+b),wherew{\in}Rd,b{\in}R, and{\theta}= (w,b) (7.12)
+85
+500 1000 1500 2000 2500 3000 3500 4000 4500 500001002003004005006007008009001000housing prices 
+square feet price (in {\$}1000) 
+Figure 7.1: Housing prices with a {\textquotedblleft}kink{\textquotedblright} in the graph.
+The termbis often referred to as the {\textquotedblleft}bias{\textquotedblright}, and the vector wis referred
+to as the weight vector. Such a neural network has 1 layer. (We will define
+what multiple layers mean in the sequel.)
+Stacking Neurons. A more complex neural network may take the single
+neuron described above and {\textquotedblleft}stack{\textquotedblright} them together such that one neuron
+passes its output as input into the next neuron, resulting in a more complex
+function.
+Let us now deepen the housing prediction example. In addition to the size
+of the house, suppose that you know the number of bedrooms, the zip code
+and the wealth of the neighborhood. Building neural networks is analogous
+to Lego bricks: you take individual bricks and stack them together to build
+complex structures. The same applies to neural networks: we take individual
+neurons and stack them together to create complex neural networks.
+Given these features (size, number of bedrooms, zip code, and wealth),
+we might then decide that the price of the house depends on the maximum
+family size it can accommodate. Suppose the family size is a function of the
+size of the house and number of bedrooms (see Figure 7.2). The zip code
+may provide additional information such as how walkable the neighborhood
+is (i.e., can you walk to the grocery store or do you need to drive everywhere).
+Combining the zip code with the wealth of the neighborhood may predict
+the quality of the local elementary school. Given these three derived features
+(family size, walkable, school quality), we may conclude that the price of the
+86
+home ultimately depends on these three features.
+Family Size 
+School Quality Walkable Size 
+{\#} Bedrooms 
+Zip Code 
+Wealth Price 
+y
+Figure 7.2: Diagram of a small neural network for predicting housing prices.
+Formally, the input to a neural network is a set of input features
+x1,x2,x3,x4. We denote the intermediate variables for {\textquotedblleft}family size{\textquotedblright}, {\textquotedblleft}walk-
+able{\textquotedblright}, and {\textquotedblleft}school quality{\textquotedblright} by a1,a2,a3(theseai`s are often referred to as
+{\textquotedblleft}hidden units{\textquotedblright} or {\textquotedblleft}hidden neurons{\textquotedblright}). We represent each of the ai`s as a neu-
+ral network with a single neuron with a subset of x1,...,x 4as inputs. Then
+as in Figure 7.1, we will have the parameterization:
+a1= ReLU({\theta}1x1+{\theta}2x2+{\theta}3)
+a2= ReLU({\theta}4x3+{\theta}5)
+a3= ReLU({\theta}6x3+{\theta}7x4+{\theta}8)
+where ({\theta}1,{\textperiodcentered}{\textperiodcentered}{\textperiodcentered},{\theta}8) are parameters. Now we represent the final output {\textasciimacron}h{\theta}(x)
+as another linear function with a1,a2,a3as inputs, and we get3
+{\textasciimacron}h{\theta}(x) ={\theta}9a1+{\theta}10a2+{\theta}11a3+{\theta}12 (7.13)
+where{\theta}contains all the parameters ( {\theta}1,{\textperiodcentered}{\textperiodcentered}{\textperiodcentered},{\theta}12).
+Now we represent the output as a quite complex function of xwith pa-
+rameters{\theta}. Then you can use this parametrization {\textasciimacron}h{\theta}with the machinery of
+Section 7.1 to learn the parameters {\theta}.
+Inspiration from Biological Neural Networks. As the name suggests,
+artificial neural networks were inspired by biological neural networks. The
+hidden units a1,...,amcorrespond to the neurons in a biological neural net-
+work, and the parameters {\theta}i`s correspond to the synapses. However, it`s
+unclear how similar the modern deep artificial neural networks are to the bi-
+ological ones. For example, perhaps not many neuroscientists think biological
+3Typically, for multi-layer neural network, at the end, near the output, we don`t apply
+ReLU, especially when the output is not necessarily a positive number.
+87
+neural networks could have 1000 layers, while some modern artificial neural
+networks do (we will elaborate more on the notion of layers.) Moreover, it`s
+an open question whether human brains update their neural networks in a
+way similar to the way that computer scientists learn artificial neural net-
+works (using backpropagation, which we will introduce in the next section.).
+Two-layer Fully-Connected Neural Networks. We constructed the
+neural network in equation (7.13) using a significant amount of prior knowl-
+edge/belief about how the {\textquotedblleft}family size{\textquotedblright}, {\textquotedblleft}walkable{\textquotedblright}, and {\textquotedblleft}school quality{\textquotedblright} are
+determined by the inputs. We implicitly assumed that we know the family
+size is an important quantity to look at and that it can be determined by
+only the {\textquotedblleft}size{\textquotedblright} and {\textquotedblleft}{\#} bedrooms{\textquotedblright}. Such a prior knowledge might not be
+available for other applications. It would be more {fl}exible and general to have
+a generic parameterization. A simple way would be to write the intermediate
+variablea1as a function of all x1,...,x 4:
+a1= ReLU(w{\top}
+1x+b1),wherew1{\in}R4andb1{\in}R (7.14)
+a2= ReLU(w{\top}
+2x+b2),wherew2{\in}R4andb2{\in}R
+a3= ReLU(w{\top}
+3x+b3),wherew3{\in}R4andb3{\in}R
+We still define {\textasciimacron}h{\theta}(x) using equation (7.13) with a1,a2,a3being defined as
+above. Thus we have a so-called fully-connected neural network because
+all the intermediate variables ai`s depend on all the inputs xi`s.
+For full generality, a two-layer fully-connected neural network with m
+hidden units and ddimensional input x{\in}Rdis defined as
+{\forall}j{\in}[1,...,m ], zj=w[1]
+j{\top}x+b[1]
+jwherew[1]
+j{\in}Rd,b[1]
+j{\in}R (7.15)
+aj= ReLU(zj),
+a= [a1,...,am]{\top}{\in}Rm
+{\textasciimacron}h{\theta}(x) =w[2]{\top}a+b[2]wherew[2]{\in}Rm,b[2]{\in}R, (7.16)
+Note that by default the vectors in Rdare viewed as column vectors, and
+in particular ais a column vector with components a1,a2,...,am. The indices
+[1]and[2]are used to distinguish two sets of parameters: the w[1]
+j`s (each of
+which is a vector in Rd) andw[2](which is a vector in Rm). We will have
+more of these later.
+Vectorization. Before we introduce neural networks with more layers and
+more complex structures, we will simplify the expressions for neural networks
+88
+with more matrix and vector notations. Another important motivation of
+vectorization is the speed perspective in the implementation. In order to
+implement a neural network efficiently, one must be careful when using for
+loops. The most natural way to implement equation (7.15) in code is perhaps
+to use a for loop. In practice, the dimensionalities of the inputs and hidden
+units are high. As a result, code will run very slowly if you use for loops.
+Leveraging the parallelism in GPUs is/was crucial for the progress of deep
+learning.
+This gave rise to vectorization . Instead of using for loops, vectorization
+takes advantage of matrix algebra and highly optimized numerical linear
+algebra packages (e.g., BLAS) to make neural network computations run
+quickly. Before the deep learning era, a for loop may have been sufficient
+on smaller datasets, but modern deep networks and state-of-the-art datasets
+will be infeasible to run with for loops.
+We vectorize the two-layer fully-connected neural network as below. We
+define a weight matrix W[1]inRm{\texttimes}das the concatenation of all the vectors
+w[1]
+j`s in the following way:
+W[1]=
+{\textemdash}w[1]
+1{\top}{\textemdash}
+{\textemdash}w[1]
+2{\top}{\textemdash}
+...
+{\textemdash}w[1]
+m{\top}{\textemdash}
+{\in}Rm{\texttimes}d(7.17)
+Now by the definition of matrix vector multiplication, we can write z=
+[z1,...,zm]{\top}{\in}Rmas
+
+z1
+...
+...
+zm
+
+
+z{\in}Rm{\texttimes}1=
+{\textemdash}w[1]
+1{\top}{\textemdash}
+{\textemdash}w[1]
+2{\top}{\textemdash}
+...
+{\textemdash}w[1]
+m{\top}{\textemdash}
+
+
+W[1]{\in}Rm{\texttimes}d
+x1
+x2
+...
+xd
+
+
+x{\in}Rd{\texttimes}1+
+b[1]
+1
+b[1]
+2...
+b[1]
+m
+
+
+b[1]{\in}Rm{\texttimes}1(7.18)
+Or succinctly,
+z=W[1]x+b[1](7.19)
+We remark again that a vector in Rdin this notes, following the conventions
+previously established, is automatically viewed as a column vector, and can
+89
+also be viewed as a d{\texttimes}1 dimensional matrix. (Note that this is different
+from numpy where a vector is viewed as a row vector in broadcasting.)
+Computing the activations a{\in}Rmfromz{\in}Rminvolves an element-
+wise non-linear application of the ReLU function, which can be computed in
+parallel efficiently. Overloading ReLU for element-wise application of ReLU
+(meaning, for a vector t{\in}Rd, ReLU(t) is a vector such that ReLU( t)i=
+ReLU(ti)), we have
+a= ReLU(z) (7.20)
+DefineW[2]= [w[2]{\top}]{\in}R1{\texttimes}msimilarly. Then, the model in equa-
+tion (7.16) can be summarized as
+a= ReLU(W[1]x+b[1])
+{\textasciimacron}h{\theta}(x) =W[2]a+b[2](7.21)
+Here{\theta}consists of W[1],W[2](often referred to as the weight matrices) and
+b[1],b[2](referred to as the biases). The collection of W[1],b[1]is referred to as
+the first layer, and W[2],b[2]the second layer. The activation ais referred to as
+the hidden layer. A two-layer neural network is also called one-hidden-layer
+neural network.
+Multi-layer fully-connected neural networks. With this succinct no-
+tations, we can stack more layers to get a deeper fully-connected neu-
+ral network. Let rbe the number of layers (weight matrices). Let
+W[1],...,W[r],b[1],...,b[r]be the weight matrices and biases of all the layers.
+Then a multi-layer neural network can be written as
+a[1]= ReLU(W[1]x+b[1])
+a[2]= ReLU(W[2]a[1]+b[2])
+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}
+a[r{-}1]= ReLU(W[r{-}1]a[r{-}2]+b[r{-}1])
+{\textasciimacron}h{\theta}(x) =W[r]a[r{-}1]+b[r](7.22)
+We note that the weight matrices and biases need to have compatible
+dimensions for the equations above to make sense. If a[k]has dimension mk,
+then the weight matrix W[k]should be of dimension mk{\texttimes}mk{-}1, and the bias
+b[k]{\in}Rmk. Moreover, W[1]{\in}Rm1{\texttimes}dandW[r]{\in}R1{\texttimes}mr{-}1.
+90
+The total number of neurons in the network is m1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+mr, and the
+total number of parameters in this network is ( d+ 1)m1+ (m1+ 1)m2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+
+(mr{-}1+ 1)mr.
+Sometimes for notational consistency we also write a[0]=x, anda[r]=
+h{\theta}(x). Then we have simple recursion that
+a[k]= ReLU(W[k]a[k{-}1]+b[k]),{\forall}k= 1,...,r{-}1 (7.23)
+Note that this would have be true for k=rif there were an additional
+ReLU in equation (7.22), but often people like to make the last layer linear
+(aka without a ReLU) so that negative outputs are possible and it`s easier
+to interpret the last layer as a linear model. (More on the interpretability at
+the {\textquotedblleft}connection to kernel method{\textquotedblright} paragraph of this section.)
+Other activation functions. The activation function ReLU can be re-
+placed by many other non-linear function {\sigma}({\textperiodcentered}) that maps RtoRsuch as
+{\sigma}(z) =1
+1 +e{-}z(sigmoid) (7.24)
+{\sigma}(z) =ez{-}e{-}z
+ez+e{-}z(tanh) (7.25)
+{\sigma}(z) = max{\{}z,{\gamma}z{\}},{\gamma}{\in}(0,1) (leaky ReLU) (7.26)
+{\sigma}(z) =z
+2[
+1 + erf(z{\sqrt{}}
+2)]
+(GELU) (7.27)
+{\sigma}(z) =1
+{\beta}log(1 + exp( {\beta}z)),{\beta} {>} 0 (Softplus) (7.28)
+The activation functions are plotted in Figure 7.3. Sigmoid and tanh are
+less and less used these days partly because their are bounded from both sides
+and the gradient of them vanishes as zgoes to both positive and negative
+infinity (whereas all the other activation functions still have gradients as the
+input goes to positive infinity.) Softplus is not used very often either in
+practice and can be viewed as a smoothing of the ReLU so that it has a
+proper second order derivative. GELU and leaky ReLU are both variants of
+ReLU but they have some non-zero gradient even when the input is negative.
+GELU (or its slight variant) is used in NLP models such as BERT and GPT
+(which we will discuss in Chapter 14.)
+Why do we not use the identity function for {\sigma}(z)?That is, why
+not use{\sigma}(z) =z? Assume for sake of argument that b[1]andb[2]are zeros.
+91
+Figure 7.3: Activation functions in deep learning.
+Suppose{\sigma}(z) =z, then for two-layer neural network, we have that
+{\textasciimacron}h{\theta}(x) =W[2]a[1](7.29)
+=W[2]{\sigma}(z[1]) by definition (7.30)
+=W[2]z[1]since{\sigma}(z) =z (7.31)
+=W[2]W[1]x from Equation (7.18) (7.32)
+={\textasciitilde}Wx where {\textasciitilde}W=W[2]W[1](7.33)
+Notice how W[2]W[1]collapsed into {\textasciitilde}W.
+This is because applying a linear function to another linear function will
+result in a linear function over the original input (i.e., you can construct a {\textasciitilde}W
+such that {\textasciitilde}Wx=W[2]W[1]x). This loses much of the representational power
+of the neural network as often times the output we are trying to predict
+has a non-linear relationship with the inputs. Without non-linear activation
+functions, the neural network will simply perform linear regression.
+Connection to the Kernel Method. In the previous lectures, we covered
+the concept of feature maps. Recall that the main motivation for feature
+maps is to represent functions that are non-linear in the input xby{\theta}{\top}{\varphi}(x),
+where{\theta}are the parameters and {\varphi}(x), the feature map, is a handcrafted
+function non-linear in the raw input x. The performance of the learning
+algorithms can significantly depends on the choice of the feature map {\varphi}(x).
+Oftentimes people use domain knowledge to design the feature map {\varphi}(x) that
+92
+suits the particular applications. The process of choosing the feature maps
+is often referred to as feature engineering .
+We can view deep learning as a way to automatically learn the right
+feature map (sometimes also referred to as {\textquotedblleft}the representation{\textquotedblright}) as follows.
+Suppose we denote by {\beta}the collection of the parameters in a fully-connected
+neural networks (equation (7.22)) except those in the last layer. Then we
+can abstract right a[r{-}1]as a function of the input xand the parameters in
+{\beta}:a[r{-}1]={\varphi}{\beta}(x). Now we can write the model as
+{\textasciimacron}h{\theta}(x) =W[r]{\varphi}{\beta}(x) +b[r](7.34)
+When{\beta}is fixed, then {\varphi}{\beta}({\textperiodcentered}) can viewed as a feature map, and therefore {\textasciimacron}h{\theta}(x)
+is just a linear model over the features {\varphi}{\beta}(x). However, we will train the
+neural networks, both the parameters in {\beta}and the parameters W[r],b[r]are
+optimized, and therefore we are not learning a linear model in the feature
+space, but also learning a good feature map {\varphi}{\beta}({\textperiodcentered}) itself so that it`s possi-
+ble to predict accurately with a linear model on top of the feature map.
+Therefore, deep learning tends to depend less on the domain knowledge of
+the particular applications and requires often less feature engineering. The
+penultimate layer a[r]is often (informally) referred to as the learned features
+or representations in the context of deep learning.
+In the example of house price prediction, a fully-connected neural network
+does not need us to specify the intermediate quantity such {\textquotedblleft}family size{\textquotedblright}, and
+may automatically discover some useful features in the last penultimate layer
+(the activation a[r{-}1]), and use them to linearly predict the housing price.
+Often the feature map / representation obtained from one datasets (that is,
+the function {\varphi}{\beta}({\textperiodcentered}) can be also useful for other datasets, which indicates they
+contain essential information about the data. However, oftentimes, the neural
+network will discover complex features which are very useful for predicting
+the output but may be difficult for a human to understand or interpret. This
+is why some people refer to neural networks as a black box , as it can be
+difficult to understand the features it has discovered.
+7.3 Modules in Modern Neural Networks
+The multi-layer neural network introduced in equation (7.22) of Section 7.2
+is often called multi-layer perceptron (MLP) these days. Modern neural net-
+works used in practice are often much more complex and consist of multiple
+building blocks or multiple layers of building blocks. In this section, we will
+93
+introduce some of the other building blocks and discuss possible ways to
+combine them.
+First, each matrix multiplication can be viewed as a building block. Con-
+sider a matrix multiplication operation with parameters ( W,b) whereWis
+the weight matrix and bis the bias vector, operating on an input z,
+MMW,b(z) =Wz+b. (7.35)
+Note that we implicitly assume all the dimensions are chosen to be compat-
+ible. We will also drop the subscripts under MM when they are clear in the
+context or just for convenience when they are not essential to the discussion.
+Then, the MLP can be written as as a composition of multiple matrix
+multiplication modules and nonlinear activation modules (which can also be
+viewed as a building block):
+MLP(x) = MMW[r],b[r]({\sigma}(MMW[r{-}1],b[r{-}1]({\sigma}({\textperiodcentered}{\textperiodcentered}{\textperiodcentered}MMW[1],b[1](x)))).(7.36)
+Alternatively, when we drop the subscripts that indicate the parameters for
+convenience, we can write
+MLP(x) = MM({\sigma}(MM{\sigma}({\textperiodcentered}{\textperiodcentered}{\textperiodcentered}MM(x)))). (7.37)
+Note that in this lecture notes, by default, all the modules have different
+sets of parameters, and the dimensions of the parameters are chosen such
+that the composition is meaningful.
+Larger modules can be defined via smaller modules as well, e.g., one
+activation layer {\sigma}and a matrix multiplication layer MM are often combined
+and called a {\textquotedblleft}layer{\textquotedblright} in many papers. People often draw the architecture
+with the basic modules in a figure by indicating the dependency between
+these modules. E.g., see an illustration of an MLP in Figure 7.4, Left.
+Residual connections. One of the very in{fl}uential neural network archi-
+tecture for vision application is ResNet, which uses the residual connections
+that are essentially used in almost all large-scale deep learning architectures
+these days. Using our notation above, a very much simplified residual block
+can be defined as
+Res(z) =z+{\sigma}(MM({\sigma}(MM(z)))). (7.38)
+A much simplified ResNet is a composition of many residual blocks followed
+by a matrix multiplication,
+ResNet-S(x) = MM(Res(Res( {\textperiodcentered}{\textperiodcentered}{\textperiodcentered}Res(x)))). (7.39)
+94
+{\mathit{x}}Layer {\mathit{r}}{-}1Layer {\mathit{i}}...Layer 1MLP({\mathit{x}})...Layer{\mathit{i}}MM![{''}],{\#}[{''}]MM![{\$}],{\#}[{\$}]
+{\mathit{x}}ResRes...ResResNet-S({\mathit{x}})...Res
+MMMM
+Figure 7.4: Illustrative Figures for Architecture. Left: An MLP with r
+layers. Right : A residual network.
+We also draw the dependency of these modules in Figure 7.4, Right.
+We note that the ResNet-S is still not the same as the ResNet architec-
+ture introduced in the seminal paper [He et al., 2016] because ResNet uses
+convolution layers instead of vanilla matrix multiplication, and adds batch
+normalization between convolutions and activations. We will introduce con-
+volutional layers and some variants of batch normalization below. ResNet-S
+and layer normalization are part of the Transformer architecture that are
+widely used in modern large language models.
+Layer normalization. Layer normalization, denoted by LN in this text,
+is a module that maps a vector z{\in}Rmto a more normalized vector LN( z){\in}
+Rm. It is oftentimes used after the nonlinear activations.
+We first define a sub-module of the layer normalization, denoted by LN-S.
+LN-S(z) =
+z1{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma}z2{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma}...
+zm{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma}
+, (7.40)
+where {\textasciicircum}{\textmu}={\sum}m
+i=1zi
+mis the empirical mean of the vector zand {\textasciicircum}{\sigma}={\sqrt{}}{\sum}m
+i=1(zi{-}{\textasciicircum}{\textmu}2)
+m
+is the empirical standard deviation of the entries of z.4Intuitively, LN-S( z)
+is a vector that is normalized to having empirical mean zero and empirical
+standard deviation 1.
+4Note that we divide by minstead ofm{-}1 in the empirical standard deviation here
+because we are interested in making the output of LN-S( z) have sum of squares equal to
+1 (as opposed to estimating the standard deviation in statistics.)
+95
+Oftentimes zero mean and standard deviation 1 is not the most desired
+normalization scheme, and thus layernorm introduces to parameters learnable
+scalars{\beta}and{\gamma}as the desired mean and standard deviation, and use an affine
+transformation to turn the output of LN-S( z) into a vector with mean {\beta}and
+standard deviation {\gamma}.
+LN(z) ={\beta}+{\gamma}{\textperiodcentered}LN-S(z) =
+{\beta}+{\gamma}(z1{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma})
+{\beta}+{\gamma}(z2{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma})
+...
+{\beta}+{\gamma}(zm{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma})
+. (7.41)
+Here the first occurrence of {\beta}should be technically interpreted as a vector
+with all the entries being {\beta}. in We also note that {\textasciicircum} {\textmu}and {\textasciicircum}{\sigma}are also functions
+ofzand shouldn`t be treated as constants when computing the derivatives of
+layernorm. Moreover, {\beta}and{\gamma}are learnable parameters and thus layernorm
+is a parameterized module (as opposed to the activation layer which doesn`t
+have any parameters.)
+Scaling-invariant property. One important property of layer normalization
+is that it will make the model invariant to scaling of the parameters in the
+following sense. Suppose we consider composing LN with MM W,band get
+a subnetwork LN(MM W,b(z)). Then, we have that the output of this sub-
+network does not change when the parameter in MM W,bis scaled:
+LN(MM {\alpha}W,{\alpha}b (z)) = LN(MM W,b(z)),{\forall}{\alpha}{>}0. (7.42)
+To see this, we first know that LN-S( {\textperiodcentered}) is scale-invariant
+LN-S({\alpha}z) =
+{\alpha}z1{-}{\alpha}{\textasciicircum}{\textmu}
+{\alpha}{\textasciicircum}{\sigma}{\alpha}z2{-}{\alpha}{\textasciicircum}{\textmu}
+{\alpha}{\textasciicircum}{\sigma}...
+{\alpha}zm{-}{\alpha}{\textasciicircum}{\textmu}
+{\alpha}{\textasciicircum}{\sigma}
+=
+z1{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma}z2{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma}...
+zm{-}{\textasciicircum}{\textmu}
+{\textasciicircum}{\sigma}
+= LN-S(z). (7.43)
+Then we have
+LN(MM {\alpha}W,{\alpha}b (z)) ={\beta}+{\gamma}LN-S(MM {\alpha}W,{\alpha}b (z)) (7.44)
+={\beta}+{\gamma}LN-S({\alpha}MMW,b(z)) (7.45)
+={\beta}+{\gamma}LN-S(MM W,b(z)) (7.46)
+= LN(MM W,b(z)). (7.47)
+Due to this property, most of the modern DL architectures for large-scale
+computer vision and language applications have the following scale-invariant
+96
+property w.r.t all the weights that are not at the last layer. Suppose the
+networkfhas last layer` weights Wlast, and all the rest of the weights are
+denote byW. Then, we have fWlast,{\alpha}W(x) =fWlast,W(x) for all{\alpha}{>}0. Here,
+the last layers weights are special because there are typically no layernorm
+or batchnorm after the last layer`s weights.
+Other normalization layers. There are several other normalization layers that
+aim to normalize the intermediate layers of the neural networks to a more
+fixed and controllable scaling, such as batch-normalization [ ?], and group
+normalization [ ?]. Batch normalization and group normalization are more
+often used in computer vision applications whereas layer norm is used more
+often in language applications.
+Convolutional Layers. Convolutional Neural Networks are neural net-
+works that consist of convolution layers (and many other modules), and are
+particularly useful for computer vision applications. For the simplicity of
+exposition, we focus on 1-D convolution in this text and only brie{fl}y mention
+2-D convolution informally at the end of this subsection. (2-D convolution
+is more suitable for images which have two dimensions. 1-D convolution is
+also used in natural language processing.)
+We start by introducing a simplified version of the 1-D convolution layer,
+denoted by Conv1D-S( {\textperiodcentered}) which is a type of matrix multiplication layer with
+a special structure. The parameters of Conv1D-S are a filter vector w{\in}Rk
+wherekis called the filter size (oftentimes k{\ll}m), and a bias scalar b.
+Oftentimes the filter is also called a kernel (but it does not have much to do
+with the kernel in kernel method.) For simplicity, we assume k= 2{\ell}+ 1 is
+an odd number. We first pad zeros to the input vector zin the sense that we
+letz1{-}{\ell}=z1{-}{\ell}+1=..=z0= 0 andzm+1=zm+2=..=zm+{\ell}= 0, and treat
+zas an (m+ 2{\ell})-dimension vector. Conv1D-S outputs a vector of dimension
+Rmwhere each output dimension is a linear combination of subsets of zj`s
+with coefficients from w,
+Conv1D-S(z)i=w1zi{-}{\ell}+w2zi{-}{\ell}+1+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+w2{\ell}+1zi+{\ell}=2{\ell}+1{\sum}
+j=1wjzi{-}{\ell}+(j{-}1).
+(7.48)
+Therefore, one can view Conv1D-S as a matrix multiplication with shared
+97
+parameters: Conv1D-S( z) =Qz, where
+Q=
+w{\ell}+1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}w2{\ell}+1 0 0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0
+w{\ell}{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}w2{\ell}w2{\ell}+1 0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0
+...
+w1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}w{\ell}+1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} w2{\ell}+1 0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0
+0w1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} w2{\ell}w2{\ell}+1 0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0
+...
+...
+0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0w1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} w2{\ell}+1
+...
+0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} {\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0w1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}w{\ell}+1
+.(7.49)
+Note thatQi,j=Qi{-}1,j{-}1for alli,j{\in}{\{}2,...,m{\}}, and thus convoluation is a
+matrix multiplication with parameter sharing. We also note that computing
+the convolution only takes O(km) times but computing a generic matrix
+multiplication takes O(m2) time. Convolution has kparameters but generic
+matrix multiplication will have m2parameters. Thus convolution is supposed
+to be much more efficient than a generic matrix multiplication (as long as
+the additional structure imposed does not hurt the {fl}exibility of the model
+to fit the data).
+We also note that in practice there are many variants of the convolutional
+layers that we define here, e.g., there are other ways to pad zeros or sometimes
+the dimension of the output of the convolutional layers could be different from
+the input. We omit some of this subtleties here for simplicity.
+The convolutional layers used in practice have also many {\textquotedblleft}channels{\textquotedblright} and
+the simplified version above corresponds to the 1-channel version. Formally,
+Conv1D takes in Cvectorsz1,...,zC{\in}Rmas inputs, where Cis referred
+to as the number of channels. In other words, the more general version,
+denoted by Conv1D, takes in a matrix as input, which is the concatenation
+ofz1,...,zCand has dimension m{\texttimes}C. It can output C{'}vectors of dimension
+m, denoted by Conv1D( z)1,..., Conv1D(z)C{'}, whereC{'}is referred to as the
+output channel, or equivalently a matrix of dimension m{\texttimes}C{'}. Each of the
+output is a sum of the simplified convolutions applied on various channels.
+{\forall}i{\in}[C{'}],Conv1D(z)i=C{\sum}
+j=1Conv1D-S i,j(zj). (7.50)
+Note that each Conv1D-S i,jare modules with different parameters, and
+thus the total number of parameters is k(the number of parameters in a
+Conv1D-S){\texttimes}CC{'}(the number of Conv1D-S i.j`s) =kCC{'}. In contrast, a
+generic linear mapping from Rm{\texttimes}CandRm{\texttimes}C{'}hasm2CC{'}parameters. The
+98
+parameters can also be represented as a three-dimensional tensor of dimen-
+sionk{\texttimes}C{\texttimes}C{'}.
+2-D convolution (brief). A 2-D convolution with one channel, denoted by
+Conv2D-S, is analogous to the Conv1D-S, but takes a 2-dimensional input
+z{\in}Rm{\texttimes}mand applies a filter of size k{\texttimes}k, and outputs Conv2D-S( z){\in}
+Rm{\texttimes}m. The full 2-D convolutional layer, denoted by Conv2D, takes in
+a sequence of matrices z1,...,zC{\in}Rm{\texttimes}m, or equivalently a 3-D ten-
+sorz= (z1,...,zC){\in}Rm{\texttimes}m{\texttimes}Cand outputs a sequence of matrices,
+Conv2D(z)1,..., Conv2D(z)C{'}{\in}Rm{\texttimes}m, which can also be viewed as a 3D
+tensor in Rm{\texttimes}m{\texttimes}C{'}. Each channel of the output is sum of the outcomes of
+applying Conv2D-S layers on all the input channels.
+{\forall}i{\in}[C{'}],Conv2D(z)i=C{\sum}
+j=1Conv2D-S i,j(zj). (7.51)
+Because there are CC{'}number of Conv2D-S modules and each of the
+Conv2D-S module has k2parameters, the total number of parameters is
+CC{'}k2. The parameters can also be viewed as a 4D tensor of dimension
+C{\texttimes}C{'}{\texttimes}k{\texttimes}k.
+7.4 Backpropagation
+In this section, we introduce backpropgation or auto-differentiation, which
+computes the gradient of the loss {\nabla}J({\theta}) efficiently. We will start with an
+informal theorem that states that as long as a real-valued function fcan be
+efficiently computed/evaluated by a differentiable network or circuit, then its
+gradient can be efficiently computed in a similar time. We will then show
+how to do this concretely for neural networks.
+Because the formality of the general theorem is not the main focus here,
+we will introduce the terms with informal definitions. By a differentiable
+circuit or a differentiable network, we mean a composition of a sequence of
+differentiable arithmetic operations (additions, subtraction, multiplication,
+divisions, etc) and elementary differentiable functions (ReLU, exp, log, sin,
+cos, etc.). Let the size of the circuit be the total number of such operations
+and elementary functions. We assume that each of the operations and func-
+tions, and their derivatives or partial derivatives ecan be computed in O(1)
+time.
+Theorem 7.4.1: [backpropagation or auto-differentiation, informally stated]
+Suppose a differentiable circuit of size Ncomputes a real-valued function

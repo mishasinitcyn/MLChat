@@ -1,0 +1,63 @@
+Chapter 14
+Autoencoders
+An autoencoder is a neural network that is trained to attempt to copy its input
+to its output. Internally, it has a hidden layer h that describes a code used to
+represent the input. The network may be viewed as consisting of two parts: an
+encoder function h = f(x) and a decoder that produces a reconstruction r = g(h). This architecture is presented in figure 14.1. If an autoencoder succeeds in simply
+learning to set g(f(x)) = x everywhere, then it is not especially useful. Instead,
+autoencoders are designed to be unable to learn to copy perfectly. Usually they are
+restricted in ways that allow them to copy only approximately, and to copy only
+input that resembles the training data. Because the model is forced to prioritize
+which aspects of the input should be copied, it often learns useful properties of the
+data.
+Modern autoencoders have generalized the idea of an encoder and a decoder beyond deterministic functions to stochastic mappings pencoder(h | x) and
+pdecoder (x | h). The idea of autoencoders has been part of the historical landscape of neural
+networks for decades (LeCun, 1987; Bourlard and Kamp, 1988; Hinton and Zemel, 1994). Traditionally, autoencoders were used for dimensionality reduction or
+feature learning. Recently, theoretical connections between autoencoders and
+latent variable models have brought autoencoders to the forefront of generative
+modeling, as we will see in chapter 20. Autoencoders may be thought of as being
+a special case of feedforward networks, and may be trained with all of the same
+techniques, typically minibatch gradient descent following gradients computed
+by back-propagation. Unlike general feedforward networks, autoencoders may
+also be trained using recirculation (Hinton and McClelland, 1988), a learning
+algorithm based on comparing the activations of the network on the original input
+502
+CHAPTER 14. AUTOENCODERS
+to the activations on the reconstructed input. Recirculation is regarded as more
+biologically plausible than back-propagation, but is rarely used for machine learning
+applications.
+x r
+h
+f g
+Figure 14.1: The general structure of an autoencoder, mapping an input x to an output
+(called reconstruction) r through an internal representation or code h. The autoencoder
+has two components: the encoder f (mapping x to h) and the decoder g (mapping h to
+r).
+14.1 Undercomplete Autoencoders
+Copying the input to the output may sound useless, but we are typically not
+interested in the output of the decoder. Instead, we hope that training the
+autoencoder to perform the input copying task will result in h taking on useful
+properties. One way to obtain useful features from the autoencoder is to constrain h to
+have smaller dimension than x. An autoencoder whose code dimension is less
+than the input dimension is called undercomplete. Learning an undercomplete
+representation forces the autoencoder to capture the most salient features of the
+training data.
+The learning process is described simply as minimizing a loss function
+L(x, g(f(x))) (14.1)
+where L is a loss function penalizing g(f(x)) for being dissimilar from x, such as
+the mean squared error.
+When the decoder is linear and L is the mean squared error, an undercomplete
+autoencoder learns to span the same subspace as PCA. In this case, an autoencoder
+trained to perform the copying task has learned the principal subspace of the
+training data as a side-effect.
+Autoencoders with nonlinear encoder functions f and nonlinear decoder functions g can thus learn a more powerful nonlinear generalization of PCA. Unfortu503
+CHAPTER 14. AUTOENCODERS
+nately, if the encoder and decoder are allowed too much capacity, the autoencoder
+can learn to perform the copying task without extracting useful information about
+the distribution of the data. Theoretically, one could imagine that an autoencoder
+with a one-dimensional code but a very powerful nonlinear encoder could learn to
+represent each training example x
+(i) with the code i. The decoder could learn to
+map these integer indices back to the values of specific training examples. This
+specific scenario does not occur in practice, but it illustrates clearly that an autoencoder trained to perform the copying task can fail to learn anything useful about
+the dataset if the capacity of the autoencoder is allowed to become too great.

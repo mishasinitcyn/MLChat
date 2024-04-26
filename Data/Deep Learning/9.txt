@@ -1,0 +1,313 @@
+Chapter 9
+Convolutional Networks
+Convolutional networks (LeCun, 1989), also known as convolutional neural
+networks or CNNs, are a specialized kind of neural network for processing data
+that has a known, grid-like topology. Examples include time-series data, which can
+be thought of as a 1D grid taking samples at regular time intervals, and image data,
+which can be thought of as a 2D grid of pixels. Convolutional networks have been
+tremendously successful in practical applications. The name {\textquotedblleft}convolutional neural
+network{\textquotedblright} indicates that the network employs a mathematical operation called
+convolution. Convolution is a specialized kind of linear operation. Convolutional
+networks are simply neural networks that use convolution in place of general matrix
+multiplication in at least one of their layers.
+In this chapter, we will first describe what convolution is. Next, we will
+explain the motivation behind using convolution in a neural network. We will then
+describe an operation called pooling, which almost all convolutional networks
+employ. Usually, the operation used in a convolutional neural network does not
+correspond precisely to the definition of convolution as used in other fields such
+as engineering or pure mathematics. We will describe several variants on the
+convolution function that are widely used in practice for neural networks. We
+will also show how convolution may be applied to many kinds of data, with
+different numbers of dimensions. We then discuss means of making convolution
+more efficient. Convolutional networks stand out as an example of neuroscientific
+principles influencing deep learning. We will discuss these neuroscientific principles, then conclude with comments about the role convolutional networks have played
+in the history of deep learning. One topic this chapter does not address is how to
+choose the architecture of your convolutional network. The goal of this chapter is
+to describe the kinds of tools that convolutional networks provide, while chapter 11
+330
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+describes general guidelines for choosing which tools to use in which circumstances.
+Research into convolutional network architectures proceeds so rapidly that a new
+best architecture for a given benchmark is announced every few weeks to months, rendering it impractical to describe the best architecture in print. However, the
+best architectures have consistently been composed of the building blocks described
+here.
+9.1 The Convolution Operation
+In its most general form, convolution is an operation on two functions of a realvalued argument. To motivate the definition of convolution, we start with examples
+of two functions we might use. Suppose we are tracking the location of a spaceship with a laser sensor. Our
+laser sensor provides a single output x(t), the position of the spaceship at time
+t. Both x and t are real-valued, i.e., we can get a different reading from the laser
+sensor at any instant in time.
+Now suppose that our laser sensor is somewhat noisy. To obtain a less noisy
+estimate of the spaceship`s position, we would like to average together several
+measurements. Of course, more recent measurements are more relevant, so we will
+want this to be a weighted average that gives more weight to recent measurements. We can do this with a weighting function w(a), where a is the age of a measurement.
+If we apply such a weighted average operation at every moment, we obtain a new
+function s providing a smoothed estimate of the position of the spaceship:
+s(t) =
+ x(a)w(t {-} a)da (9.1)
+This operation is called convolution. The convolution operation is typically
+denoted with an asterisk:
+s(t) = (x {*} w)(t) (9.2)
+In our example, w needs to be a valid probability density function, or the
+output is not a weighted average. Also, w needs to be 0 for all negative arguments, or it will look into the future, which is presumably beyond our capabilities. These
+limitations are particular to our example though. In general, convolution is defined
+for any functions for which the above integral is defined, and may be used for other
+purposes besides taking weighted averages.
+In convolutional network terminology, the first argument (in this example, the
+function x) to the convolution is often referred to as the input and the second
+331
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+argument (in this example, the function w) as the kernel. The output is sometimes
+referred to as the feature map.
+In our example, the idea of a laser sensor that can provide measurements
+at every instant in time is not realistic. Usually, when we work with data on a
+computer, time will be discretized, and our sensor will provide data at regular
+intervals. In our example, it might be more realistic to assume that our laser
+provides a measurement once per second. The time index t can then take on only
+integer values. If we now assume that x and w are defined only on integer t, we
+can define the discrete convolution:
+s(t) = (x {*} w)(t) = {\infty}
+a={-}{\infty}
+x(a)w(t {-} a) (9.3)
+In machine learning applications, the input is usually a multidimensional array
+of data and the kernel is usually a multidimensional array of parameters that are
+adapted by the learning algorithm. We will refer to these multidimensional arrays
+as tensors. Because each element of the input and kernel must be explicitly stored
+separately, we usually assume that these functions are zero everywhere but the
+finite set of points for which we store the values. This means that in practice we
+can implement the infinite summation as a summation over a finite number of
+array elements. Finally, we often use convolutions over more than one axis at a time. For
+example, if we use a two-dimensional image I as our input, we probably also want
+to use a two-dimensional kernel K:
+S(i, j) = (I {*} K)(i, j) = 
+m 
+n
+I(m, n)K(i {-} m, j {-} n). (9.4)
+Convolution is commutative, meaning we can equivalently write:
+S(i, j) = (K {*} I)(i, j) = 
+m 
+n
+I(i {-} m, j {-} n)K(m, n). (9.5)
+Usually the latter formula is more straightforward to implement in a machine
+learning library, because there is less variation in the range of valid values of m
+and n. The commutative property of convolution arises because we have flipped the
+kernel relative to the input, in the sense that as m increases, the index into the
+input increases, but the index into the kernel decreases. The only reason to flip
+the kernel is to obtain the commutative property. While the commutative property
+332
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+is useful for writing proofs, it is not usually an important property of a neural
+network implementation. Instead, many neural network libraries implement a
+related function called the cross-correlation, which is the same as convolution
+but without flipping the kernel:
+S(i, j) = (I {*} K)(i, j) = 
+m 
+n
+I(i + m, j + n)K(m, n). (9.6)
+Many machine learning libraries implement cross-correlation but call it convolution.
+In this text we will follow this convention of calling both operations convolution,
+and specify whether we mean to flip the kernel or not in contexts where kernel
+flipping is relevant. In the context of machine learning, the learning algorithm will
+learn the appropriate values of the kernel in the appropriate place, so an algorithm
+based on convolution with kernel flipping will learn a kernel that is flipped relative
+to the kernel learned by an algorithm without the flipping. It is also rare for
+convolution to be used alone in machine learning; instead convolution is used
+simultaneously with other functions, and the combination of these functions does
+not commute regardless of whether the convolution operation flips its kernel or
+not.
+See figure 9.1 for an example of convolution (without kernel flipping) applied
+to a 2-D tensor.
+Discrete convolution can be viewed as multiplication by a matrix. However, the
+matrix has several entries constrained to be equal to other entries. For example,
+for univariate discrete convolution, each row of the matrix is constrained to be
+equal to the row above shifted by one element. This is known as a Toeplitz
+matrix. In two dimensions, a doubly block circulant matrix corresponds to
+convolution. In addition to these constraints that several elements be equal to
+each other, convolution usually corresponds to a very sparse matrix (a matrix
+whose entries are mostly equal to zero). This is because the kernel is usually much
+smaller than the input image. Any neural network algorithm that works with
+matrix multiplication and does not depend on specific properties of the matrix
+structure should work with convolution, without requiring any further changes
+to the neural network. Typical convolutional neural networks do make use of
+further specializations in order to deal with large inputs efficiently, but these are
+not strictly necessary from a theoretical perspective.
+333
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+a b c d
+e f g h
+i j k l
+w x
+y z
+aw + bx +
+ey + fz aw + bx +
+ey + fz
+bw + cx +
+fy + gz
+bw + cx +
+fy + gz
+cw + dx +
+gy + hz
+cw + dx +
+gy + hz
+ew + fx +
+iy + jz
+ew + fx +
+iy + jz fw + gx +
+jy + kz fw + gx +
+jy + kz gw + hx +
+ky + lz gw + hx +
+ky + lz
+Input
+Kernel
+Output
+Figure 9.1: An example of 2-D convolution without kernel-flipping. In this case we restrict
+the output to only positions where the kernel lies entirely within the image, called {\textquotedblleft}valid{\textquotedblright} convolution in some contexts. We draw boxes with arrows to indicate how the upper-left
+element of the output tensor is formed by applying the kernel to the corresponding
+upper-left region of the input tensor.
+334
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+9.2 Motivation
+Convolution leverages three important ideas that can help improve a machine
+learning system: sparse interactions, parameter sharing and equivariant
+representations. Moreover, convolution provides a means for working with
+inputs of variable size. We now describe each of these ideas in turn.
+Traditional neural network layers use matrix multiplication by a matrix of
+parameters with a separate parameter describing the interaction between each input
+unit and each output unit. This means every output unit interacts with every input
+unit. Convolutional networks, however, typically have sparse interactions (also
+referred to as sparse connectivity or sparse weights). This is accomplished by
+making the kernel smaller than the input. For example, when processing an image,
+the input image might have thousands or millions of pixels, but we can detect small,
+meaningful features such as edges with kernels that occupy only tens or hundreds of
+pixels. This means that we need to store fewer parameters, which both reduces the
+memory requirements of the model and improves its statistical efficiency. It also
+means that computing the output requires fewer operations. These improvements
+in efficiency are usually quite large. If there are m inputs and n outputs, then
+matrix multiplication requires m{\texttimes}n parameters and the algorithms used in practice
+have O(m {\texttimes} n) runtime (per example). If we limit the number of connections
+each output may have to k, then the sparsely connected approach requires only
+k {\texttimes} n parameters and O(k {\texttimes} n) runtime. For many practical applications, it is
+possible to obtain good performance on the machine learning task while keeping
+k several orders of magnitude smaller than m. For graphical demonstrations of
+sparse connectivity, see figure 9.2 and figure 9.3. In a deep convolutional network,
+units in the deeper layers may indirectly interact with a larger portion of the input,
+as shown in figure 9.4. This allows the network to efficiently describe complicated
+interactions between many variables by constructing such interactions from simple
+building blocks that each describe only sparse interactions. Parameter sharing refers to using the same parameter for more than one
+function in a model. In a traditional neural net, each element of the weight matrix
+is used exactly once when computing the output of a layer. It is multiplied by
+one element of the input and then never revisited. As a synonym for parameter
+sharing, one can say that a network has tied weights, because the value of the
+weight applied to one input is tied to the value of a weight applied elsewhere. In
+a convolutional neural net, each member of the kernel is used at every position
+of the input (except perhaps some of the boundary pixels, depending on the
+design decisions regarding the boundary). The parameter sharing used by the
+convolution operation means that rather than learning a separate set of parameters
+335
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+x1 x2 x3
+s1 s2 s3
+x4
+s4
+x5
+s5
+x1 x2 x3
+s1 s2 s3
+x4
+s4
+x5
+s5
+Figure 9.2: Sparse connectivity, viewed from below: We highlight one input unit, x3, and also highlight the output units in s that are affected by this unit. (Top)When s is
+formed by convolution with a kernel of width 3, only three outputs are affected by x. (Bottom)When s is formed by matrix multiplication, connectivity is no longer sparse, so
+all of the outputs are affected by x3.
+336
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+x1 x2 x3
+s1 s2 s3
+x4
+s4
+x5
+s5
+x1 x2 x3
+s1 s2 s3
+x4
+s4
+x5
+s5
+Figure 9.3: Sparse connectivity, viewed from above: We highlight one output unit, s3, and also highlight the input units in x that affect this unit. These units are known
+as the receptive field of s3. (Top)When s is formed by convolution with a kernel of
+width 3, only three inputs affect s3. (Bottom)When s is formed by matrix multiplication, connectivity is no longer sparse, so all of the inputs affect s3.
+x1 x2 x3
+h1 h2 h3
+x4
+h4
+x5
+h5
+g1 g2 g3 g4 g5
+Figure 9.4: The receptive field of the units in the deeper layers of a convolutional network
+is larger than the receptive field of the units in the shallow layers. This effect increases if
+the network includes architectural features like strided convolution (figure 9.12) or pooling
+(section 9.3). This means that even though direct connections in a convolutional net are
+very sparse, units in the deeper layers can be indirectly connected to all or most of the
+input image.
+337
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+x1 x2 x3
+s1 s2 s3
+x4
+s4
+x5
+s5
+x1 x2 x3 x4 x5
+s1 s2 s3 s4 s5
+Figure 9.5: Parameter sharing: Black arrows indicate the connections that use a particular
+parameter in two different models. (Top)The black arrows indicate uses of the central
+element of a 3-element kernel in a convolutional model. Due to parameter sharing, this
+single parameter is used at all input locations. (Bottom)The single black arrow indicates
+the use of the central element of the weight matrix in a fully connected model. This model
+has no parameter sharing so the parameter is used only once.
+for every location, we learn only one set. This does not affect the runtime of
+forward propagation{\textemdash}it is still O(k {\texttimes} n){\textemdash}but it does further reduce the storage
+requirements of the model to k parameters. Recall that k is usually several orders
+of magnitude less than m. Since m and n are usually roughly the same size, k is
+practically insignificant compared to m{\texttimes}n. Convolution is thus dramatically more
+efficient than dense matrix multiplication in terms of the memory requirements
+and statistical efficiency. For a graphical depiction of how parameter sharing works, see figure 9.5. As an example of both of these first two principles in action, figure 9.6 shows
+how sparse connectivity and parameter sharing can dramatically improve the
+efficiency of a linear function for detecting edges in an image.
+In the case of convolution, the particular form of parameter sharing causes the
+layer to have a property called equivariance to translation. To say a function is
+equivariant means that if the input changes, the output changes in the same way. Specifically, a function f(x) is equivariant to a function g if f(g(x)) = g(f (x)). In the case of convolution, if we let g be any function that translates the input,
+i.e., shifts it, then the convolution function is equivariant to g. For example, let I
+be a function giving image brightness at integer coordinates. Let g be a function
+338
+CHAPTER 9. CONVOLUTIONAL NETWORKS
+mapping one image function to another image function, such that I
+ = g(I ) is
+the image function with I
+(x, y) = I(x {-} 1, y). This shifts every pixel of I one
+unit to the right. If we apply this transformation to I, then apply convolution,
+the result will be the same as if we applied convolution to I
+, then applied the
+transformation g to the output. When processing time series data, this means
+that convolution produces a sort of timeline that shows when different features
+appear in the input. If we move an event later in time in the input, the exact
+same representation of it will appear in the output, just later in time. Similarly
+with images, convolution creates a 2-D map of where certain features appear in
+the input. If we move the object in the input, its representation will move the
+same amount in the output. This is useful for when we know that some function
+of a small number of neighboring pixels is useful when applied to multiple input
+locations. For example, when processing images, it is useful to detect edges in
+the first layer of a convolutional network. The same edges appear more or less
+everywhere in the image, so it is practical to share parameters across the entire
+image. In some cases, we may not wish to share parameters across the entire
+image. For example, if we are processing images that are cropped to be centered
+on an individual`s face, we probably want to extract different features at different
+locations{\textemdash}the part of the network processing the top of the face needs to look for
+eyebrows, while the part of the network processing the bottom of the face needs to
+look for a chin.
+Convolution is not naturally equivariant to some other transformations, such
+as changes in the scale or rotation of an image. Other mechanisms are necessary
+for handling these kinds of transformations. Finally, some kinds of data cannot be processed by neural networks defined by
+matrix multiplication with a fixed-shape matrix. Convolution enables processing
+of some of these kinds of data.

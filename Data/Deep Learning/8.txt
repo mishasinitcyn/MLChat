@@ -1,0 +1,1037 @@
+Chapter 8
+Optimization for Training Deep
+Models
+Deep learning algorithms involve optimization in many contexts. For example,
+performing inference in models such as PCA involves solving an optimization
+problem. We often use analytical optimization to write proofs or design algorithms. Of all of the many optimization problems involved in deep learning, the most
+difficult is neural network training. It is quite common to invest days to months of
+time on hundreds of machines in order to solve even a single instance of the neural
+network training problem. Because this problem is so important and so expensive, a specialized set of optimization techniques have been developed for solving it.
+This chapter presents these optimization techniques for neural network training.
+If you are unfamiliar with the basic principles of gradient-based optimization,
+we suggest reviewing chapter 4. That chapter includes a brief overview of numerical
+optimization in general.
+This chapter focuses on one particular case of optimization: finding the parameters {\theta} of a neural network that significantly reduce a cost function J({\theta}), which
+typically includes a performance measure evaluated on the entire training set as
+well as additional regularization terms. We begin with a description of how optimization used as a training algorithm
+for a machine learning task differs from pure optimization. Next, we present several
+of the concrete challenges that make optimization of neural networks difficult. We
+then define several practical algorithms, including both optimization algorithms
+themselves and strategies for initializing the parameters. More advanced algorithms
+adapt their learning rates during training or leverage information contained in
+the second derivatives of the cost function. Finally, we conclude with a review of
+several optimization strategies that are formed by combining simple optimization
+algorithms into higher-level procedures.
+
+
+
+8.1 How Learning Differs from Pure Optimization
+Optimization algorithms used for training of deep models differ from traditional
+optimization algorithms in several ways. Machine learning usually acts indirectly. In most machine learning scenarios, we care about some performance measure
+P, that is defined with respect to the test set and may also be intractable. We
+therefore optimize P only indirectly. We reduce a different cost function J({\theta}) in
+the hope that doing so will improve P . This is in contrast to pure optimization,
+where minimizing J is a goal in and of itself. Optimization algorithms for training
+deep models also typically include some specialization on the specific structure of
+machine learning objective functions. Typically, the cost function can be written as an average over the training set, such as
+J({\theta}) = E(x,y){\sim}p{\textasciicircum}dataL(f(x; {\theta}), y), (8.1)
+where L is the per-example loss function, f (x; {\theta}) is the predicted output when
+the input is x, p{\textasciicircum}data is the empirical distribution. In the supervised learning case, y is the target output. Throughout this chapter, we develop the unregularized
+supervised case, where the arguments to L are f(x; {\theta}) and y. However, it is trivial
+to extend this development, for example, to include {\theta} or x as arguments, or to
+exclude y as arguments, in order to develop various forms of regularization or
+unsupervised learning.
+Equation 8.1 defines an objective function with respect to the training set. We
+would usually prefer to minimize the corresponding objective function where the
+expectation is taken across the data generating distribution pdata rather than just
+over the finite training set:
+J
+{*}({\theta}) = E(x,y){\sim}pdataL(f(x; {\theta}), y). (8.2)
+
+
+
+8.1.1 Empirical Risk Minimization
+The goal of a machine learning algorithm is to reduce the expected generalization
+error given by equation 8.2. This quantity is known as the risk. We emphasize here
+that the expectation is taken over the true underlying distribution pdata. If we knew
+the true distribution pdata(x, y), risk minimization would be an optimization task
+solvable by an optimization algorithm. However, when we do not know pdata(x, y)
+but only have a training set of samples, we have a machine learning problem.
+The simplest way to convert a machine learning problem back into an optimization problem is to minimize the expected loss on the training set. This
+means replacing the true distribution p(x, y) with the empirical distribution p{\textasciicircum}(x, y)
+defined by the training set. We now minimize the empirical risk
+Ex,y{\sim}p{\textasciicircum}data(x,y)
+[L(f(x; {\theta}), y)] =
+1
+m m
+i=1
+L(f(x
+(i)
+; {\theta}), y
+(i) ) (8.3)
+where m is the number of training examples. The training process based on minimizing this average training error is known
+as empirical risk minimization. In this setting, machine learning is still very
+similar to straightforward optimization. Rather than optimizing the risk directly, we optimize the empirical risk, and hope that the risk decreases significantly as
+well. A variety of theoretical results establish conditions under which the true risk
+can be expected to decrease by various amounts. However, empirical risk minimization is prone to overfitting. Models with
+high capacity can simply memorize the training set. In many cases, empirical
+risk minimization is not really feasible. The most effective modern optimization
+algorithms are based on gradient descent, but many useful loss functions, such
+as 0-1 loss, have no useful derivatives (the derivative is either zero or undefined
+everywhere). These two problems mean that, in the context of deep learning, we
+rarely use empirical risk minimization. Instead, we must use a slightly different
+approach, in which the quantity that we actually optimize is even more different
+from the quantity that we truly want to optimize.
+
+
+8.1.2 Surrogate Loss Functions and Early Stopping
+Sometimes, the loss function we actually care about (say classification error) is not
+one that can be optimized efficiently. For example, exactly minimizing expected 0-1
+loss is typically intractable (exponential in the input dimension), even for a linear
+classifier (Marcotte and Savard, 1992). In such situations, one typically optimizes
+a surrogate loss function instead, which acts as a proxy but has advantages. For example, the negative log-likelihood of the correct class is typically used as a
+surrogate for the 0-1 loss. The negative log-likelihood allows the model to estimate
+the conditional probability of the classes, given the input, and if the model can
+do that well, then it can pick the classes that yield the least classification error in
+expectation.
+
+
+
+
+
+In some cases, a surrogate loss function actually results in being able to learn
+more. For example, the test set 0-1 loss often continues to decrease for a long
+time after the training set 0-1 loss has reached zero, when training using the
+log-likelihood surrogate. This is because even when the expected 0-1 loss is zero,
+one can improve the robustness of the classifier by further pushing the classes apart
+from each other, obtaining a more confident and reliable classifier, thus extracting
+more information from the training data than would have been possible by simply
+minimizing the average 0-1 loss on the training set. A very important difference between optimization in general and optimization
+as we use it for training algorithms is that training algorithms do not usually halt
+at a local minimum. Instead, a machine learning algorithm usually minimizes
+a surrogate loss function but halts when a convergence criterion based on early
+stopping (section 7.8) is satisfied. Typically the early stopping criterion is based
+on the true underlying loss function, such as 0-1 loss measured on a validation set, and is designed to cause the algorithm to halt whenever overfitting begins to occur.
+Training often halts while the surrogate loss function still has large derivatives, which is very different from the pure optimization setting, where an optimization
+algorithm is considered to have converged when the gradient becomes very small.
+
+
+
+
+8.1.3 Batch and Minibatch Algorithms
+One aspect of machine learning algorithms that separates them from general
+optimization algorithms is that the objective function usually decomposes as a sum
+over the training examples. Optimization algorithms for machine learning typically
+compute each update to the parameters based on an expected value of the cost
+function estimated using only a subset of the terms of the full cost function.
+For example, maximum likelihood estimation problems, when viewed in log
+space, decompose into a sum over each example:
+{\theta}ML = arg max
+{\theta} m
+i=1
+log pmodel(x
+(i)
+, y
+(i)
+; {\theta}). (8.4)
+Maximizing this sum is equivalent to maximizing the expectation over the
+empirical distribution defined by the training set:
+J({\theta}) = Ex,y{\sim}p{\textasciicircum}data
+log pmodel(x, y; {\theta}). (8.5)
+Most of the properties of the objective function J used by most of our optimization algorithms are also expectations over the training set. For example, the
+most commonly used property is the gradient:
+{\nabla}{\theta}J({\theta}) = Ex,y{\sim}p{\textasciicircum}data{\nabla}{\theta} log pmodel(x, y; {\theta}). (8.6)
+Computing this expectation exactly is very expensive because it requires
+evaluating the model on every example in the entire dataset. In practice, we can
+compute these expectations by randomly sampling a small number of examples
+from the dataset, then taking the average over only those examples. Recall that the standard error of the mean (equation 5.46) estimated from n
+samples is given by {\sigma}/ {\sqrt{}}
+n, where {\sigma} is the true standard deviation of the value of
+the samples. The denominator of {\sqrt{}}
+n shows that there are less than linear returns
+to using more examples to estimate the gradient. Compare two hypothetical
+estimates of the gradient, one based on 100 examples and another based on 10,000
+examples. The latter requires 100 times more computation than the former, but
+reduces the standard error of the mean only by a factor of 10. Most optimization
+algorithms converge much faster (in terms of total computation, not in terms of
+number of updates) if they are allowed to rapidly compute approximate estimates
+of the gradient rather than slowly computing the exact gradient.
+Another consideration motivating statistical estimation of the gradient from a
+small number of samples is redundancy in the training set. In the worst case, all
+m samples in the training set could be identical copies of each other. A samplingbased estimate of the gradient could compute the correct gradient with a single
+sample, using m times less computation than the naive approach. In practice, we
+are unlikely to truly encounter this worst-case situation, but we may find large
+numbers of examples that all make very similar contributions to the gradient. Optimization algorithms that use the entire training set are called batch or
+deterministic gradient methods, because they process all of the training examples
+simultaneously in a large batch. This terminology can be somewhat confusing
+because the word {\textquotedblleft}batch{\textquotedblright} is also often used to describe the minibatch used by
+minibatch stochastic gradient descent. Typically the term {\textquotedblleft}batch gradient descent{\textquotedblright}
+implies the use of the full training set, while the use of the term {\textquotedblleft}batch{\textquotedblright} to describe
+a group of examples does not. For example, it is very common to use the term
+{\textquotedblleft}batch size{\textquotedblright} to describe the size of a minibatch.
+Optimization algorithms that use only a single example at a time are sometimes
+called stochastic or sometimes online methods. The term online is usually
+reserved for the case where the examples are drawn from a stream of continually
+created examples rather than from a fixed-size training set over which several
+passes are made.
+Most algorithms used for deep learning fall somewhere in between, using more
+than one but less than all of the training examples. These were traditionally called
+minibatch or minibatch stochastic methods and it is now common to simply
+call them stochastic methods. The canonical example of a stochastic method is stochastic gradient descent,
+presented in detail in section 8.3.1. Minibatch sizes are generally driven by the following factors:
+ Larger batches provide a more accurate estimate of the gradient, but with
+less than linear returns.
+ Multicore architectures are usually underutilized by extremely small batches. This motivates using some absolute minimum batch size, below which there
+is no reduction in the time to process a minibatch.
+ If all examples in the batch are to be processed in parallel (as is typically
+the case), then the amount of memory scales with the batch size. For many
+hardware setups this is the limiting factor in batch size.
+ Some kinds of hardware achieve better runtime with specific sizes of arrays. Especially when using GPUs, it is common for power of 2 batch sizes to offer
+better runtime. Typical power of 2 batch sizes range from 32 to 256, with 16
+sometimes being attempted for large models.
+ Small batches can offer a regularizing effect (Wilson and Martinez, 2003), perhaps due to the noise they add to the learning process. Generalization
+error is often best for a batch size of 1. Training with such a small batch
+size might require a small learning rate to maintain stability due to the high
+variance in the estimate of the gradient. The total runtime can be very high
+due to the need to make more steps, both because of the reduced learning
+rate and because it takes more steps to observe the entire training set. Different kinds of algorithms use different kinds of information from the minibatch in different ways. Some algorithms are more sensitive to sampling error than
+others, either because they use information that is difficult to estimate accurately
+with few samples, or because they use information in ways that amplify sampling
+errors more. Methods that compute updates based only on the gradient g are
+usually relatively robust and can handle smaller batch sizes like 100. Second-order
+methods, which use also the Hessian matrix H and compute updates such as
+H{-}1g, typically require much larger batch sizes like 10,000. These large batch
+sizes are required to minimize fluctuations in the estimates of H{-}1g. Suppose
+that H is estimated perfectly but has a poor condition number. Multiplication by
+H or its inverse amplifies pre-existing errors, in this case, estimation errors in g. Very small changes in the estimate of g can thus cause large changes in the update
+H{-}1g, even if H were estimated perfectly. Of course, H will be estimated only
+approximately, so the update H{-}1g will contain even more error than we would
+predict from applying a poorly conditioned operation to the estimate of g.
+It is also crucial that the minibatches be selected randomly. Computing an
+unbiased estimate of the expected gradient from a set of samples requires that those
+samples be independent. We also wish for two subsequent gradient estimates to be
+independent from each other, so two subsequent minibatches of examples should
+also be independent from each other. Many datasets are most naturally arranged
+in a way where successive examples are highly correlated. For example, we might
+have a dataset of medical data with a long list of blood sample test results. This
+list might be arranged so that first we have five blood samples taken at different
+times from the first patient, then we have three blood samples taken from the
+second patient, then the blood samples from the third patient, and so on. If we
+were to draw examples in order from this list, then each of our minibatches would
+be extremely biased, because it would represent primarily one patient out of the
+many patients in the dataset. In cases such as these where the order of the dataset
+holds some significance, it is necessary to shuffle the examples before selecting
+minibatches. For very large datasets, for example datasets containing billions of
+examples in a data center, it can be impractical to sample examples truly uniformly
+at random every time we want to construct a minibatch. Fortunately, in practice
+it is usually sufficient to shuffle the order of the dataset once and then store it in
+shuffled fashion. This will impose a fixed set of possible minibatches of consecutive
+examples that all models trained thereafter will use, and each individual model
+will be forced to reuse this ordering every time it passes through the training
+data. However, this deviation from true random selection does not seem to have a
+significant detrimental effect. Failing to ever shuffle the examples in any way can
+seriously reduce the effectiveness of the algorithm.
+Many optimization problems in machine learning decompose over examples
+well enough that we can compute entire separate updates over different examples
+in parallel. In other words, we can compute the update that minimizes J(X) for
+one minibatch of examples X at the same time that we compute the update for
+several other minibatches. Such asynchronous parallel distributed approaches are
+discussed further in section 12.1.3. An interesting motivation for minibatch stochastic gradient descent is that it
+follows the gradient of the true generalization error (equation 8.2) so long as no
+examples are repeated. Most implementations of minibatch stochastic gradient
+descent shuffle the dataset once and then pass through it multiple times. On the
+first pass, each minibatch is used to compute an unbiased estimate of the true
+generalization error. On the second pass, the estimate becomes biased because it is
+formed by re-sampling values that have already been used, rather than obtaining
+new fair samples from the data generating distribution.
+The fact that stochastic gradient descent minimizes generalization error is
+easiest to see in the online learning case, where examples or minibatches are drawn
+from a stream of data. In other words, instead of receiving a fixed-size training
+set, the learner is similar to a living being who sees a new example at each instant,
+with every example (x, y) coming from the data generating distribution pdata(x, y). In this scenario, examples are never repeated; every experience is a fair sample
+from pdata. The equivalence is easiest to derive when both x and y are discrete. In this
+case, the generalization error (equation 8.2) can be written as a sum
+J
+{*}({\theta}) = 
+x 
+y
+pdata(x, y)L(f(x; {\theta}), y), (8.7)
+with the exact gradient
+g = {\nabla}{\theta}J
+{*}({\theta}) = 
+x 
+y
+pdata(x, y){\nabla}{\theta}L(f(x; {\theta}), y). (8.8)
+We have already seen the same fact demonstrated for the log-likelihood in equation 8.5 and equation 8.6; we observe now that this holds for other functions L
+besides the likelihood. A similar result can be derived when x and y are continuous, under mild assumptions regarding pdata and L. Hence, we can obtain an unbiased estimator of the exact gradient of the
+generalization error by sampling a minibatch of examples {\{}x
+(1)
+, . . . x
+(m){\}} with corresponding targets y
+(i) from the data generating distribution pdata , and computing
+the gradient of the loss with respect to the parameters for that minibatch:
+{\textasciicircum}g =
+1
+m
+{\nabla}{\theta} 
+i
+L(f(x
+(i)
+; {\theta}), y
+(i)). (8.9)
+Updating {\theta} in the direction of g{\textasciicircum} performs SGD on the generalization error.
+Of course, this interpretation only applies when examples are not reused.
+Nonetheless, it is usually best to make several passes through the training set, unless the training set is extremely large. When multiple such epochs are used,
+only the first epoch follows the unbiased gradient of the generalization error, but
+of course, the additional epochs usually provide enough benefit due to decreased
+training error to offset the harm they cause by increasing the gap between training
+error and test error.
+With some datasets growing rapidly in size, faster than computing power, it
+is becoming more common for machine learning applications to use each training
+example only once or even to make an incomplete pass through the training
+set. When using an extremely large training set, overfitting is not an issue, so
+underfitting and computational efficiency become the predominant concerns. See
+also Bottou and Bousquet (2008) for a discussion of the effect of computational
+bottlenecks on generalization error, as the number of training examples grows.
+
+
+
+
+
+
+8.2 Challenges in Neural Network Optimization
+Optimization in general is an extremely difficult task. Traditionally, machine
+learning has avoided the difficulty of general optimization by carefully designing
+the objective function and constraints to ensure that the optimization problem is
+convex. When training neural networks, we must confront the general non-convex
+case. Even convex optimization is not without its complications. In this section,
+we summarize several of the most prominent challenges involved in optimization
+for training deep models.
+
+
+
+
+
+
+8.2.1 Ill-Conditioning
+Some challenges arise even when optimizing convex functions. Of these, the most
+prominent is ill-conditioning of the Hessian matrix H. This is a very general
+problem in most numerical optimization, convex or otherwise, and is described in
+more detail in section 4.3.1. The ill-conditioning problem is generally believed to be present in neural
+network training problems. Ill-conditioning can manifest by causing SGD to get
+{\textquotedblleft}stuck{\textquotedblright} in the sense that even very small steps increase the cost function.
+Recall from equation 4.9 that a second-order Taylor series expansion of the
+cost function predicts that a gradient descent step of {-}g will add
+1
+2
+2gHg {-} g
+g (8.10)
+to the cost. Ill-conditioning of the gradient becomes a problem when 1
+2
+2g Hg
+exceeds g g. To determine whether ill-conditioning is detrimental to a neural
+network training task, one can monitor the squared gradient norm g g and
+{-}50 0 50 100 150 200 250
+Training time (epochs)
+{-}2
+0
+2
+4
+6
+8
+10
+12
+14
+16
+Gradient norm
+0 50 100 150 200 250
+Training time (epochs)
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Classific
+ation error rate
+Figure 8.1: Gradient descent often does not arrive at a critical point of any kind. In this
+example, the gradient norm increases throughout training of a convolutional network used
+for object detection. (Left)A scatterplot showing how the norms of individual gradient
+evaluations are distributed over time. To improve legibility, only one gradient norm
+is plotted per epoch. The running average of all gradient norms is plotted as a solid
+curve. The gradient norm clearly increases over time, rather than decreasing as we would
+expect if the training process converged to a critical point. (Right)Despite the increasing
+gradient, the training process is reasonably successful. The validation set classification
+error decreases to a low level.
+the gHg term. In many cases, the gradient norm does not shrink significantly
+throughout learning, but the gHg term grows by more than an order of magnitude.
+The result is that learning becomes very slow despite the presence of a strong
+gradient because the learning rate must be shrunk to compensate for even stronger
+curvature. Figure 8.1 shows an example of the gradient increasing significantly
+during the successful training of a neural network.
+Though ill-conditioning is present in other settings besides neural network
+training, some of the techniques used to combat it in other contexts are less
+applicable to neural networks. For example, Newton`s method is an excellent tool
+for minimizing convex functions with poorly conditioned Hessian matrices, but in
+the subsequent sections we will argue that Newton`s method requires significant
+modification before it can be applied to neural networks.
+
+
+
+
+
+
+8.2.2 Local Minima
+One of the most prominent features of a convex optimization problem is that it
+can be reduced to the problem of finding a local minimum. Any local minimum is
+guaranteed to be a global minimum. Some convex functions have a flat region at
+the bottom rather than a single global minimum point, but any point within such
+a flat region is an acceptable solution. When optimizing a convex function, we
+know that we have reached a good solution if we find a critical point of any kind.
+With non-convex functions, such as neural nets, it is possible to have many
+local minima. Indeed, nearly any deep model is essentially guaranteed to have
+an extremely large number of local minima. However, as we will see, this is not
+necessarily a major problem.
+Neural networks and any models with multiple equivalently parametrized latent
+variables all have multiple local minima because of the model identifiability
+problem. A model is said to be identifiable if a sufficiently large training set can
+rule out all but one setting of the model`s parameters. Models with latent variables
+are often not identifiable because we can obtain equivalent models by exchanging
+latent variables with each other. For example, we could take a neural network and
+modify layer 1 by swapping the incoming weight vector for unit i with the incoming
+weight vector for unit j, then doing the same for the outgoing weight vectors. If we
+have m layers with n units each, then there are n!m ways of arranging the hidden
+units. This kind of non-identifiability is known as weight space symmetry.
+In addition to weight space symmetry, many kinds of neural networks have
+additional causes of non-identifiability. For example, in any rectified linear or
+maxout network, we can scale all of the incoming weights and biases of a unit by
+{\alpha} if we also scale all of its outgoing weights by 1{\alpha}
+. This means that{\textemdash}if the cost
+function does not include terms such as weight decay that depend directly on the
+weights rather than the models` outputs{\textemdash}every local minimum of a rectified linear
+or maxout network lies on an (m {\texttimes} n)-dimensional hyperbola of equivalent local
+minima.
+These model identifiability issues mean that there can be an extremely large
+or even uncountably infinite amount of local minima in a neural network cost
+function. However, all of these local minima arising from non-identifiability are
+equivalent to each other in cost function value. As a result, these local minima are
+not a problematic form of non-convexity. Local minima can be problematic if they have high cost in comparison to the
+global minimum. One can construct small neural networks, even without hidden
+units, that have local minima with higher cost than the global minimum (Sontag
+and Sussman, 1989; Brady et al., 1989; Gori and Tesi, 1992). If local minima
+with high cost are common, this could pose a serious problem for gradient-based
+optimization algorithms.
+It remains an open question whether there are many local minima of high cost
+for networks of practical interest and whether optimization algorithms encounter
+them. For many years, most practitioners believed that local minima were a
+common problem plaguing neural network optimization. Today, that does not
+appear to be the case. The problem remains an active area of research, but experts
+now suspect that, for sufficiently large neural networks, most local minima have a
+low cost function value, and that it is not important to find a true global minimum
+rather than to find a point in parameter space that has low but not minimal cost
+(Saxe et al., 2013; Dauphin et al., 2014; Goodfellow et al., 2015; Choromanska
+et al., 2014). Many practitioners attribute nearly all difficulty with neural network optimization to local minima. We encourage practitioners to carefully test for specific
+problems. A test that can rule out local minima as the problem is to plot the
+norm of the gradient over time. If the norm of the gradient does not shrink to
+insignificant size, the problem is neither local minima nor any other kind of critical
+point. This kind of negative test can rule out local minima. In high dimensional
+spaces, it can be very difficult to positively establish that local minima are the
+problem. Many structures other than local minima also have small gradients.
+
+
+
+8.2.3 Plateaus, Saddle Points and Other Flat Regions
+For many high-dimensional non-convex functions, local minima (and maxima)
+are in fact rare compared to another kind of point with zero gradient: a saddle
+point. Some points around a saddle point have greater cost than the saddle point,
+while others have a lower cost. At a saddle point, the Hessian matrix has both
+positive and negative eigenvalues. Points lying along eigenvectors associated with
+positive eigenvalues have greater cost than the saddle point, while points lying
+along negative eigenvalues have lower value. We can think of a saddle point as
+being a local minimum along one cross-section of the cost function and a local
+maximum along another cross-section. See figure 4.5 for an illustration.
+Many classes of random functions exhibit the following behavior: in lowdimensional spaces, local minima are common. In higher dimensional spaces, local
+minima are rare and saddle points are more common. For a function f : R
+n {\textrightarrow} R of
+this type, the expected ratio of the number of saddle points to local minima grows
+exponentially with n. To understand the intuition behind this behavior, observe
+that the Hessian matrix at a local minimum has only positive eigenvalues. The
+Hessian matrix at a saddle point has a mixture of positive and negative eigenvalues. Imagine that the sign of each eigenvalue is generated by flipping a coin. In a single
+dimension, it is easy to obtain a local minimum by tossing a coin and getting heads
+once. In n-dimensional space, it is exponentially unlikely that all n coin tosses will
+be heads. See Dauphin et al. (2014) for a review of the relevant theoretical work.
+An amazing property of many random functions is that the eigenvalues of the
+Hessian become more likely to be positive as we reach regions of lower cost. In
+our coin tossing analogy, this means we are more likely to have our coin come up
+heads n times if we are at a critical point with low cost. This means that local
+minima are much more likely to have low cost than high cost. Critical points with
+high cost are far more likely to be saddle points. Critical points with extremely
+high cost are more likely to be local maxima.
+This happens for many classes of random functions. Does it happen for neural
+networks? Baldi and Hornik (1989) showed theoretically that shallow autoencoders
+(feedforward networks trained to copy their input to their output, described in
+chapter 14) with no nonlinearities have global minima and saddle points but no
+local minima with higher cost than the global minimum. They observed without
+proof that these results extend to deeper networks without nonlinearities. The
+output of such networks is a linear function of their input, but they are useful
+to study as a model of nonlinear neural networks because their loss function is
+a non-convex function of their parameters. Such networks are essentially just
+multiple matrices composed together. Saxe et al. (2013) provided exact solutions
+to the complete learning dynamics in such networks and showed that learning in
+these models captures many of the qualitative features observed in the training of
+deep models with nonlinear activation functions. Dauphin et al. (2014) showed
+experimentally that real neural networks also have loss functions that contain very
+many high-cost saddle points. Choromanska et al. (2014) provided additional
+theoretical arguments, showing that another class of high-dimensional random
+functions related to neural networks does so as well.
+What are the implications of the proliferation of saddle points for training algorithms? For first-order optimization algorithms that use only gradient information,
+the situation is unclear. The gradient can often become very small near a saddle
+point. On the other hand, gradient descent empirically seems to be able to escape
+saddle points in many cases. Goodfellow et al. (2015) provided visualizations of
+several learning trajectories of state-of-the-art neural networks, with an example
+given in figure 8.2. These visualizations show a flattening of the cost function near
+a prominent saddle point where the weights are all zero, but they also show the
+gradient descent trajectory rapidly escaping this region. Goodfellow et al. (2015)
+also argue that continuous-time gradient descent may be shown analytically to be
+repelled from, rather than attracted to, a nearby saddle point, but the situation
+may be different for more realistic uses of gradient descent. For Newton`s method, it is clear that saddle points constitute a problem.
+Projection 2 of {\theta}
+Projection 1 of {\theta}
+J( ) {\theta}
+
+
+
+Figure 8.2: A visualization of the cost function of a neural network. Image adapted
+with permission from Goodfellow et al. (2015). These visualizations appear similar for
+feedforward neural networks, convolutional networks, and recurrent networks applied
+to real object recognition and natural language processing tasks. Surprisingly, these
+visualizations usually do not show many conspicuous obstacles. Prior to the success of
+stochastic gradient descent for training very large models beginning in roughly 2012,
+neural net cost function surfaces were generally believed to have much more non-convex
+structure than is revealed by these projections. The primary obstacle revealed by this
+projection is a saddle point of high cost near where the parameters are initialized, but, as
+indicated by the blue path, the SGD training trajectory escapes this saddle point readily. Most of training time is spent traversing the relatively flat valley of the cost function, which may be due to high noise in the gradient, poor conditioning of the Hessian matrix
+in this region, or simply the need to circumnavigate the tall {\textquotedblleft}mountain{\textquotedblright} visible in the
+figure via an indirect arcing path.
+Gradient descent is designed to move {\textquotedblleft}downhill{\textquotedblright} and is not explicitly designed
+to seek a critical point. Newton`s method, however, is designed to solve for a
+point where the gradient is zero. Without appropriate modification, it can jump
+to a saddle point. The proliferation of saddle points in high dimensional spaces
+presumably explains why second-order methods have not succeeded in replacing
+gradient descent for neural network training. Dauphin et al. (2014) introduced a
+saddle-free Newton method for second-order optimization and showed that it
+improves significantly over the traditional version. Second-order methods remain
+difficult to scale to large neural networks, but this saddle-free approach holds
+promise if it could be scaled.
+There are other kinds of points with zero gradient besides minima and saddle
+points. There are also maxima, which are much like saddle points from the
+perspective of optimization{\textemdash}many algorithms are not attracted to them, but
+unmodified Newton`s method is. Maxima of many classes of random functions
+become exponentially rare in high dimensional space, just like minima do.
+There may also be wide, flat regions of constant value. In these locations, the
+gradient and also the Hessian are all zero. Such degenerate locations pose major
+problems for all numerical optimization algorithms. In a convex problem, a wide,
+flat region must consist entirely of global minima, but in a general optimization
+problem, such a region could correspond to a high value of the objective function.
+
+
+8.2.4 Cliffs and Exploding Gradients
+Neural networks with many layers often have extremely steep regions resembling
+cliffs, as illustrated in figure 8.3. These result from the multiplication of several
+large weights together. On the face of an extremely steep cliff structure, the
+gradient update step can move the parameters extremely far, usually jumping off
+of the cliff structure altogether.
+
+
+  
+Figure 8.3: The objective function for highly nonlinear deep neural networks or for
+recurrent neural networks often contains sharp nonlinearities in parameter space resulting
+from the multiplication of several parameters. These nonlinearities give rise to very
+high derivatives in some places. When the parameters get close to such a cliff region, a
+gradient descent update can catapult the parameters very far, possibly losing most of the
+optimization work that had been done. Figure adapted with permission from Pascanu
+et al. (2013).
+The cliff can be dangerous whether we approach it from above or from below,
+but fortunately its most serious consequences can be avoided using the gradient
+clipping heuristic described in section 10.11.1. The basic idea is to recall that
+the gradient does not specify the optimal step size, but only the optimal direction
+within an infinitesimal region. When the traditional gradient descent algorithm
+proposes to make a very large step, the gradient clipping heuristic intervenes to
+reduce the step size to be small enough that it is less likely to go outside the region
+where the gradient indicates the direction of approximately steepest descent. Cliff
+structures are most common in the cost functions for recurrent neural networks, because such models involve a multiplication of many factors, with one factor
+for each time step. Long temporal sequences thus incur an extreme amount of
+multiplication.
+
+
+
+
+
+8.2.5 Long-Term Dependencies
+Another difficulty that neural network optimization algorithms must overcome
+arises when the computational graph becomes extremely deep. Feedforward
+networks with many layers have such deep computational graphs. So do recurrent
+networks, described in chapter 10, which construct very deep computational graphs
+by repeatedly applying the same operation at each time step of a long temporal
+sequence. Repeated application of the same parameters gives rise to especially
+pronounced difficulties. For example, suppose that a computational graph contains a path that consists
+of repeatedly multiplying by a matrix W. After t steps, this is equivalent to multiplying by Wt
+. Suppose that W has an eigendecomposition W = V diag({\lambda})V
+{-}1
+. In this simple case, it is straightforward to see that
+W t =
+V diag({\lambda})V
+{-}1t = V diag({\lambda})
+tV
+{-}1
+. (8.11)
+Any eigenvalues {\lambda}i that are not near an absolute value of 1 will either explode if they
+are greater than 1 in magnitude or vanish if they are less than 1 in magnitude. The
+vanishing and exploding gradient problem refers to the fact that gradients
+through such a graph are also scaled according to diag({\lambda})
+t
+. Vanishing gradients
+make it difficult to know which direction the parameters should move to improve
+the cost function, while exploding gradients can make learning unstable. The cliff
+structures described earlier that motivate gradient clipping are an example of the
+exploding gradient phenomenon.
+The repeated multiplication by W at each time step described here is very
+similar to the power method algorithm used to find the largest eigenvalue of
+a matrix W and the corresponding eigenvector. From this point of view it is
+not surprising that x
+Wt will eventually discard all components of x that are
+orthogonal to the principal eigenvector of W. Recurrent networks use the same matrix W at each time step, but feedforward
+networks do not, so even very deep feedforward networks can largely avoid the
+vanishing and exploding gradient problem (Sussillo, 2014). We defer a further discussion of the challenges of training recurrent networks
+until section 10.7, after recurrent networks have been described in more detail.
+
+
+
+
+
+
+8.2.6 Inexact Gradients
+Most optimization algorithms are designed with the assumption that we have
+access to the exact gradient or Hessian matrix. In practice, we usually only have
+a noisy or even biased estimate of these quantities. Nearly every deep learning
+algorithm relies on sampling-based estimates at least insofar as using a minibatch
+of training examples to compute the gradient.
+In other cases, the objective function we want to minimize is actually intractable.
+When the objective function is intractable, typically its gradient is intractable as
+well. In such cases we can only approximate the gradient. These issues mostly arise
+290
+CHAPTER 8. OPTIMIZATION FOR TRAINING DEEP MODELS
+with the more advanced models in part III. For example, contrastive divergence
+gives a technique for approximating the gradient of the intractable log-likelihood
+of a Boltzmann machine.
+Various neural network optimization algorithms are designed to account for
+imperfections in the gradient estimate. One can also avoid the problem by choosing
+a surrogate loss function that is easier to approximate than the true loss.
+
+
+
+
+
+
+8.2.7 Poor Correspondence between Local and Global Structure
+Many of the problems we have discussed so far correspond to properties of the
+loss function at a single point{\textemdash}it can be difficult to make a single step if J({\theta} ) is
+poorly conditioned at the current point {\theta}, or if {\theta} lies on a cliff, or if {\theta} is a saddle
+point hiding the opportunity to make progress downhill from the gradient.
+It is possible to overcome all of these problems at a single point and still
+perform poorly if the direction that results in the most improvement locally does
+not point toward distant regions of much lower cost. Goodfellow et al. (2015) argue that much of the runtime of training is due to
+the length of the trajectory needed to arrive at the solution. Figure 8.2 shows that
+the learning trajectory spends most of its time tracing out a wide arc around a
+mountain-shaped structure.
+Much of research into the difficulties of optimization has focused on whether
+training arrives at a global minimum, a local minimum, or a saddle point, but in
+practice neural networks do not arrive at a critical point of any kind. Figure 8.1
+shows that neural networks often do not arrive at a region of small gradient. Indeed,
+such critical points do not even necessarily exist. For example, the loss function {-}log p(y | x; {\theta}) can lack a global minimum point and instead asymptotically
+approach some value as the model becomes more confident. For a classifier with
+discrete y and p(y | x) provided by a softmax, the negative log-likelihood can
+become arbitrarily close to zero if the model is able to correctly classify every
+example in the training set, but it is impossible to actually reach the value of
+zero. Likewise, a model of real values p(y | x) = N (y; f({\theta}), {\beta} {-}1) can have negative
+log-likelihood that asymptotes to negative infinity{\textemdash}if f({\theta}) is able to correctly
+predict the value of all training set y targets, the learning algorithm will increase
+{\beta} without bound. See figure 8.4 for an example of a failure of local optimization to
+find a good cost function value even in the absence of any local minima or saddle
+points. Future research will need to develop further understanding of the factors that
+influence the length of the learning trajectory and better characterize the outcome
+{\theta}
+J( ) {\theta}
+
+
+Figure 8.4: Optimization based on local downhill moves can fail if the local surface does
+not point toward the global solution. Here we provide an example of how this can occur, even if there are no saddle points and no local minima. This example cost function
+contains only asymptotes toward low values, not minima. The main cause of difficulty in
+this case is being initialized on the wrong side of the {\textquotedblleft}mountain{\textquotedblright} and not being able to
+traverse it. In higher dimensional space, learning algorithms can often circumnavigate
+such mountains but the trajectory associated with doing so may be long and result in
+excessive training time, as illustrated in figure 8.2.
+of the process. Many existing research directions are aimed at finding good initial points for
+problems that have difficult global structure, rather than developing algorithms
+that use non-local moves. Gradient descent and essentially all learning algorithms that are effective for
+training neural networks are based on making small, local moves. The previous
+sections have primarily focused on how the correct direction of these local moves
+can be difficult to compute. We may be able to compute some properties of the
+objective function, such as its gradient, only approximately, with bias or variance
+in our estimate of the correct direction. In these cases, local descent may or may
+not define a reasonably short path to a valid solution, but we are not actually
+able to follow the local descent path. The objective function may have issues
+such as poor conditioning or discontinuous gradients, causing the region where
+the gradient provides a good model of the objective function to be very small. In
+these cases, local descent with steps of size  may define a reasonably short path
+to the solution, but we are only able to compute the local descent direction with
+steps of size {\delta}  . In these cases, local descent may or may not define a path
+to the solution, but the path contains many steps, so following the path incurs a
+high computational cost. Sometimes local information provides us no guide, when
+the function has a wide flat region, or if we manage to land exactly on a critical
+point (usually this latter scenario only happens to methods that solve explicitly
+for critical points, such as Newton`s method). In these cases, local descent does
+not define a path to a solution at all. In other cases, local moves can be too greedy
+and lead us along a path that moves downhill but away from any solution, as in
+figure 8.4, or along an unnecessarily long trajectory to the solution, as in figure 8.2. Currently, we do not understand which of these problems are most relevant to
+making neural network optimization difficult, and this is an active area of research.
+Regardless of which of these problems are most significant, all of them might be
+avoided if there exists a region of space connected reasonably directly to a solution
+by a path that local descent can follow, and if we are able to initialize learning
+within that well-behaved region. This last view suggests research into choosing
+good initial points for traditional optimization algorithms to use.
+
+
+
+
+
+8.2.8 Theoretical Limits of Optimization
+Several theoretical results show that there are limits on the performance of any
+optimization algorithm we might design for neural networks (Blum and Rivest, 1992; Judd, 1989; Wolpert and MacReady, 1997). Typically these results have
+little bearing on the use of neural networks in practice.
+Some theoretical results apply only to the case where the units of a neural
+network output discrete values. However, most neural network units output
+smoothly increasing values that make optimization via local search feasible. Some
+theoretical results show that there exist problem classes that are intractable, but
+it can be difficult to tell whether a particular problem falls into that class. Other
+results show that finding a solution for a network of a given size is intractable, but
+in practice we can find a solution easily by using a larger network for which many
+more parameter settings correspond to an acceptable solution. Moreover, in the
+context of neural network training, we usually do not care about finding the exact
+minimum of a function, but seek only to reduce its value sufficiently to obtain good
+generalization error. Theoretical analysis of whether an optimization algorithm
+can accomplish this goal is extremely difficult. Developing more realistic bounds
+on the performance of optimization algorithms therefore remains an important
+goal for machine learning research.
+
+
+
+
+8.3 Basic Algorithms
+We have previously introduced the gradient descent (section 4.3) algorithm that
+follows the gradient of an entire training set downhill. This may be accelerated
+considerably by using stochastic gradient descent to follow the gradient of randomly
+selected minibatches downhill, as discussed in section 5.9 and section 8.1.3.
+
+
+
+
+
+
+8.3.1 Stochastic Gradient Descent
+Stochastic gradient descent (SGD) and its variants are probably the most used
+optimization algorithms for machine learning in general and for deep learning
+in particular. As discussed in section 8.1.3, it is possible to obtain an unbiased
+estimate of the gradient by taking the average gradient on a minibatch of m
+examples drawn i.i.d from the data generating distribution.
+Algorithm 8.1 shows how to follow this estimate of the gradient downhill.
+Algorithm 8.1 Stochastic gradient descent (SGD) update at training iteration k
+Require: Learning rate k. Require: Initial parameter {\theta}
+while stopping criterion not met do
+Sample a minibatch of m examples from the training set {\{}x
+(1)
+, . . . ,x
+(m){\}} with
+corresponding targets y
+(i)
+. Compute gradient estimate: g{\textasciicircum} {\textleftarrow} +
+1m {\nabla}{\theta} 
+i L(f(x
+(i)
+; {\theta}), y
+(i))
+Apply update: {\theta} {\textleftarrow} {\theta} {-} {\textasciicircum}g
+end while
+A crucial parameter for the SGD algorithm is the learning rate. Previously, we
+have described SGD as using a fixed learning rate . In practice, it is necessary to
+gradually decrease the learning rate over time, so we now denote the learning rate
+at iteration k as k. This is because the SGD gradient estimator introduces a source of noise (the
+random sampling of m training examples) that does not vanish even when we arrive
+at a minimum. By comparison, the true gradient of the total cost function becomes
+small and then 0 when we approach and reach a minimum using batch gradient
+descent, so batch gradient descent can use a fixed learning rate. A sufficient
+condition to guarantee convergence of SGD is that
+{\infty}
+k=1
+k = {\infty}, and (8.12)
+{\infty}
+k=1
+
+2
+k {<} {\infty}. (8.13)
+In practice, it is common to decay the learning rate linearly until iteration {\tau}:
+k = (1 {-} {\alpha})0 + {\alpha}{\tau} (8.14)
+with {\alpha} = k
+{\tau}
+. After iteration {\tau} , it is common to leave  constant.
+The learning rate may be chosen by trial and error, but it is usually best
+to choose it by monitoring learning curves that plot the objective function as a
+function of time. This is more of an art than a science, and most guidance on this
+subject should be regarded with some skepticism. When using the linear schedule,
+the parameters to choose are 0, {\tau} , and {\tau} . Usually {\tau} may be set to the number of
+iterations required to make a few hundred passes through the training set. Usually
+{\tau} should be set to roughly 1{\%} the value of 0. The main question is how to set 0. If it is too large, the learning curve will show violent oscillations, with the cost
+function often increasing significantly. Gentle oscillations are fine, especially if
+training with a stochastic cost function such as the cost function arising from the
+use of dropout. If the learning rate is too low, learning proceeds slowly, and if the
+initial learning rate is too low, learning may become stuck with a high cost value.
+Typically, the optimal initial learning rate, in terms of total training time and the
+final cost value, is higher than the learning rate that yields the best performance
+after the first 100 iterations or so. Therefore, it is usually best to monitor the first
+several iterations and use a learning rate that is higher than the best-performing
+learning rate at this time, but not so high that it causes severe instability. The most important property of SGD and related minibatch or online gradient- based optimization is that computation time per update does not grow with the
+number of training examples. This allows convergence even when the number
+of training examples becomes very large. For a large enough dataset, SGD may
+converge to within some fixed tolerance of its final test set error before it has
+processed the entire training set. To study the convergence rate of an optimization algorithm it is common to
+measure the excess error J({\theta}){-} min{\theta} J({\theta}), which is the amount that the current
+cost function exceeds the minimum possible cost. When SGD is applied to a convex
+problem, the excess error is O ({\sqrt{}}
+1
+k
+) after k iterations, while in the strongly convex
+case it is O(
+1
+k
+). These bounds cannot be improved unless extra conditions are
+assumed. Batch gradient descent enjoys better convergence rates than stochastic
+gradient descent in theory. However, the Cram{\'e}r-Rao bound (Cram{\'e}r, 1946; Rao, 1945) states that generalization error cannot decrease faster than O(
+1
+k
+). Bottou
+and Bousquet (2008) argue that it therefore may not be worthwhile to pursue
+an optimization algorithm that converges faster than O(
+1
+k
+) for machine learning
+tasks{\textemdash}faster convergence presumably corresponds to overfitting. Moreover, the
+asymptotic analysis obscures many advantages that stochastic gradient descent
+has after a small number of steps. With large datasets, the ability of SGD to make
+rapid initial progress while evaluating the gradient for only very few examples
+outweighs its slow asymptotic convergence. Most of the algorithms described in
+the remainder of this chapter achieve benefits that matter in practice but are lost
+in the constant factors obscured by the O(
+1
+k
+) asymptotic analysis. One can also
+trade off the benefits of both batch and stochastic gradient descent by gradually
+increasing the minibatch size during the course of learning.
+For more information on SGD, see Bottou (1998).
+
+
+
+
+
+
+8.3.2 Momentum
+While stochastic gradient descent remains a very popular optimization strategy,
+learning with it can sometimes be slow. The method of momentum (Polyak, 1964)
+is designed to accelerate learning, especially in the face of high curvature, small but
+consistent gradients, or noisy gradients. The momentum algorithm accumulates
+an exponentially decaying moving average of past gradients and continues to move
+in their direction. The effect of momentum is illustrated in figure 8.5. Formally, the momentum algorithm introduces a variable v that plays the role
+of velocity{\textemdash}it is the direction and speed at which the parameters move through
+parameter space. The velocity is set to an exponentially decaying average of the
+negative gradient. The name momentum derives from a physical analogy, in
+which the negative gradient is a force moving a particle through parameter space,
+according to Newton`s laws of motion. Momentum in physics is mass times velocity. In the momentum learning algorithm, we assume unit mass, so the velocity vector v
+may also be regarded as the momentum of the particle. A hyperparameter {\alpha} {\in} [0, 1)
+determines how quickly the contributions of previous gradients exponentially decay. The update rule is given by:
+v {\textleftarrow} {\alpha}v {-} {\nabla}{\theta} 
+1
+m m
+i=1
+L(f(x
+(i)
+; {\theta}), y
+(i))
+, (8.15)
+{\theta} {\textleftarrow} {\theta} + v. (8.16)
+The velocity v accumulates the gradient elements {\nabla}{\theta} 
+1m m
+i=1 L(f(x
+(i)
+; {\theta}), y
+(i) )
+. The larger {\alpha} is relative to , the more previous gradients affect the current direction.
+The SGD algorithm with momentum is given in algorithm 8.2.
+{-}30 {-}20 {-}10 0 10 20 {-}30
+{-}20
+{-}10
+0
+10
+20
+Figure 8.5: Momentum aims primarily to solve two problems: poor conditioning of the
+Hessian matrix and variance in the stochastic gradient. Here, we illustrate how momentum
+overcomes the first of these two problems. The contour lines depict a quadratic loss
+function with a poorly conditioned Hessian matrix. The red path cutting across the
+contours indicates the path followed by the momentum learning rule as it minimizes this
+function. At each step along the way, we draw an arrow indicating the step that gradient
+descent would take at that point. We can see that a poorly conditioned quadratic objective
+looks like a long, narrow valley or canyon with steep sides. Momentum correctly traverses
+the canyon lengthwise, while gradient steps waste time moving back and forth across the
+narrow axis of the canyon. Compare also figure 4.6, which shows the behavior of gradient
+descent without momentum.
+Previously, the size of the step was simply the norm of the gradient multiplied
+by the learning rate. Now, the size of the step depends on how large and how
+aligned a sequence of gradients are. The step size is largest when many successive
+gradients point in exactly the same direction. If the momentum algorithm always
+observes gradient g, then it will accelerate in the direction of {-}g, until reaching a
+terminal velocity where the size of each step is
+||g||
+1 {-} {\alpha}
+. (8.17)
+It is thus helpful to think of the momentum hyperparameter in terms of 1
+1{-}{\alpha}
+. For
+example, {\alpha} = .9 corresponds to multiplying the maximum speed by 10 relative to
+the gradient descent algorithm.
+Common values of {\alpha} used in practice include .5, .9, and .99. Like the learning
+rate, {\alpha} may also be adapted over time. Typically it begins with a small value and
+is later raised. It is less important to adapt {\alpha} over time than to shrink  over time.
+Algorithm 8.2 Stochastic gradient descent (SGD) with momentum
+Require: Learning rate , momentum parameter {\alpha}. Require: Initial parameter {\theta}, initial velocity v. while stopping criterion not met do
+Sample a minibatch of m examples from the training set {\{}x
+(1)
+, . . . ,x
+(m){\}} with
+corresponding targets y
+(i)
+. Compute gradient estimate: g {\textleftarrow} 1m{\nabla}{\theta} 
+i L(f(x
+(i)
+; {\theta}), y
+(i) )
+Compute velocity update: v {\textleftarrow} {\alpha}v {-} g
+Apply update: {\theta} {\textleftarrow} {\theta} + v
+end while
+We can view the momentum algorithm as simulating a particle subject to
+continuous-time Newtonian dynamics. The physical analogy can help to build
+intuition for how the momentum and gradient descent algorithms behave. The position of the particle at any point in time is given by {\theta}(t). The particle
+experiences net force f(t). This force causes the particle to accelerate:
+f(t) =
+{\partial}
+2
+{\partial}t2 {\theta}(t). (8.18)
+Rather than viewing this as a second-order differential equation of the position,
+we can introduce the variable v(t) representing the velocity of the particle at time
+t and rewrite the Newtonian dynamics as a first-order differential equation:
+v(t) =
+{\partial}
+{\partial}t
+{\theta}(t), (8.19)
+f(t) =
+{\partial}
+{\partial}t
+v(t). (8.20)
+The momentum algorithm then consists of solving the differential equations via
+numerical simulation. A simple numerical method for solving differential equations
+is Euler`s method, which simply consists of simulating the dynamics defined by
+the equation by taking small, finite steps in the direction of each gradient.
+This explains the basic form of the momentum update, but what specifically are
+the forces? One force is proportional to the negative gradient of the cost function: {-}{\nabla}{\theta} J ({\theta}). This force pushes the particle downhill along the cost function surface.
+The gradient descent algorithm would simply take a single step based on each
+gradient, but the Newtonian scenario used by the momentum algorithm instead
+uses this force to alter the velocity of the particle. We can think of the particle
+as being like a hockey puck sliding down an icy surface. Whenever it descends a
+steep part of the surface, it gathers speed and continues sliding in that direction
+until it begins to go uphill again.
+One other force is necessary. If the only force is the gradient of the cost function,
+then the particle might never come to rest. Imagine a hockey puck sliding down
+one side of a valley and straight up the other side, oscillating back and forth forever,
+assuming the ice is perfectly frictionless. To resolve this problem, we add one
+other force, proportional to {-}v(t). In physics terminology, this force corresponds
+to viscous drag, as if the particle must push through a resistant medium such as
+syrup. This causes the particle to gradually lose energy over time and eventually
+converge to a local minimum.
+Why do we use {-}v(t) and viscous drag in particular? Part of the reason to
+use {-}v(t) is mathematical convenience{\textemdash}an integer power of the velocity is easy
+to work with. However, other physical systems have other kinds of drag based
+on other integer powers of the velocity. For example, a particle traveling through
+the air experiences turbulent drag, with force proportional to the square of the
+velocity, while a particle moving along the ground experiences dry friction, with a
+force of constant magnitude. We can reject each of these options. Turbulent drag,
+proportional to the square of the velocity, becomes very weak when the velocity is
+small. It is not powerful enough to force the particle to come to rest. A particle
+with a non-zero initial velocity that experiences only the force of turbulent drag
+will move away from its initial position forever, with the distance from the starting
+point growing like O(log t). We must therefore use a lower power of the velocity. If we use a power of zero, representing dry friction, then the force is too strong.
+When the force due to the gradient of the cost function is small but non-zero, the
+constant force due to friction can cause the particle to come to rest before reaching
+a local minimum. Viscous drag avoids both of these problems{\textemdash}it is weak enough
+that the gradient can continue to cause motion until a minimum is reached, but
+strong enough to prevent motion if the gradient does not justify moving.
+
+
+8.3.3 Nesterov Momentum
+Sutskever et al. (2013) introduced a variant of the momentum algorithm that was
+inspired by Nesterov`s accelerated gradient method (Nesterov, 1983, 2004). The
+update rules in this case are given by:
+v {\textleftarrow} {\alpha}v {-} {\nabla}{\theta}
+
+1
+m m
+i=1
+L
+
+f(x
+(i)
+; {\theta} + {\alpha}v), y
+(i)
+
+, (8.21)
+{\theta} {\textleftarrow} {\theta} + v, (8.22)
+where the parameters {\alpha} and  play a similar role as in the standard momentum
+method. The difference between Nesterov momentum and standard momentum is
+where the gradient is evaluated. With Nesterov momentum the gradient is evaluated
+after the current velocity is applied. Thus one can interpret Nesterov momentum
+as attempting to add a correction factor to the standard method of momentum.
+The complete Nesterov momentum algorithm is presented in algorithm 8.3.
+In the convex batch gradient case, Nesterov momentum brings the rate of
+convergence of the excess error from O(1/k) (after k steps) to O(1/k2) as shown
+by Nesterov (1983). Unfortunately, in the stochastic gradient case, Nesterov
+momentum does not improve the rate of convergence.
+
+
+
+Algorithm 8.3 Stochastic gradient descent (SGD) with Nesterov momentum
+Require: Learning rate , momentum parameter {\alpha}. Require: Initial parameter {\theta}, initial velocity v. while stopping criterion not met do
+Sample a minibatch of m examples from the training set {\{}x
+(1)
+, . . . ,x
+(m){\}} with
+corresponding labels y
+(i)
+. Apply interim update: {\theta}{\textasciitilde} {\textleftarrow} {\theta} + {\alpha}v
+Compute gradient (at interim point): g {\textleftarrow} 1m {\nabla}{\theta}{\textasciitilde} 
+i L(f(x
+(i)
+; {\theta}{\textasciitilde}), y
+(i))
+Compute velocity update: v {\textleftarrow} {\alpha}v {-} g
+Apply update: {\theta} {\textleftarrow} {\theta} + v
+end while

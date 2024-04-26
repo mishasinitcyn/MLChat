@@ -1,0 +1,1709 @@
+4
+Matrix Decompositions
+In Chapters 2 and 3, we studied ways to manipulate and measure vectors,
+projections of vectors, and linear mappings. Mappings and transforma-
+tions of vectors can be conveniently described as operations performed by
+matrices. Moreover, data is often represented in matrix form as well, e.g.,
+where the rows of the matrix represent different people and the columns
+describe different features of the people, such as weight, height, and socio-
+economic status. In this chapter, we present three aspects of matrices: how
+to summarize matrices, how matrices can be decomposed, and how these
+decompositions can be used for matrix approximations.
+We first consider methods that allow us to describe matrices with just
+a few numbers that characterize the overall properties of matrices. We
+will do this in the sections on determinants (Section 4.1) and eigenval-
+ues (Section 4.2) for the important special case of square matrices. These
+characteristic numbers have important mathematical consequences and
+allow us to quickly grasp what useful properties a matrix has. From here
+we will proceed to matrix decomposition methods: An analogy for ma-
+trix decomposition is the factoring of numbers, such as the factoring of
+21into prime numbers 7{\textperiodcentered}3. For this reason matrix decomposition is also
+often referred to as matrix factorization . Matrix decompositions are used matrix factorization
+to describe a matrix by means of a different representation using factors
+of interpretable matrices.
+We will first cover a square-root-like operation for symmetric, positive
+definite matrices, the Cholesky decomposition (Section 4.3). From here
+we will look at two related methods for factorizing matrices into canoni-
+cal forms. The first one is known as matrix diagonalization (Section 4.4),
+which allows us to represent the linear mapping using a diagonal trans-
+formation matrix if we choose an appropriate basis. The second method,
+singular value decomposition (Section 4.5), extends this factorization to
+non-square matrices, and it is considered one of the fundamental concepts
+in linear algebra. These decompositions are helpful, as matrices represent-
+ing numerical data are often very large and hard to analyze. We conclude
+the chapter with a systematic overview of the types of matrices and the
+characteristic properties that distinguish them in the form of a matrix tax-
+onomy (Section 4.7).
+The methods that we cover in this chapter will become important in
+98
+This material is published by Cambridge University Press as Mathematics for Machine Learning by
+Marc Peter Deisenroth, A. Aldo Faisal, and Cheng Soon Ong (2020). This version is free to view
+and download for personal use only. Not for re-distribution, re-sale, or use in derivative works.
+{\textcopyright}by M. P. Deisenroth, A. A. Faisal, and C. S. Ong, 2024. https://mml-book.com .
+4.1 Determinant and Trace 99
+Figure 4.1 A mind
+map of the concepts
+introduced in this
+chapter, along with
+where they are used
+in other parts of the
+book.Determinant Invertibility Cholesky
+Eigenvalues
+Eigenvectors Orthogonal matrix Diagonalization
+SVDChapter 6
+Probability
+{\&} distributions
+Chapter 10
+Dimensionality
+reductiontests used inused in
+used in determines
+used in
+used in
+used inconstructs used in
+used inused in
+both subsequent mathematical chapters, such as Chapter 6, but also in
+applied chapters, such as dimensionality reduction in Chapters 10 or den-
+sity estimation in Chapter 11. This chapter`s overall structure is depicted
+in the mind map of Figure 4.1.
+4.1 Determinant and TraceThe determinant
+notation |A|must
+not be confused
+with the absolute
+value.Determinants are important concepts in linear algebra. A determinant is
+a mathematical object in the analysis and solution of systems of linear
+equations. Determinants are only defined for square matrices A{\in}Rn{\texttimes}n,
+i.e., matrices with the same number of rows and columns. In this book,
+we write the determinant as det(A)or sometimes as |A|so that
+det(A) =a11a12. . . a 1n
+a21a22. . . a 2n
+.........
+an1an2. . . a nn. (4.1)
+Thedeterminant of a square matrix A{\in}Rn{\texttimes}nis a function that maps A determinant
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+100 Matrix Decompositions
+onto a real number. Before providing a definition of the determinant for
+general n{\texttimes}nmatrices, let us have a look at some motivating examples,
+and define determinants for some special matrices.
+Example 4.1 (Testing for Matrix Invertibility)
+Let us begin with exploring if a square matrix Ais invertible (see Sec-
+tion 2.2.2). For the smallest cases, we already know when a matrix
+is invertible. If Ais a1{\texttimes}1matrix, i.e., it is a scalar number, then
+A=a={\Rightarrow}A{-}1=1
+a. Thus a1
+a= 1holds, if and only if a= 0.
+For2{\texttimes}2matrices, by the definition of the inverse (Definition 2.3), we
+know that AA{-}1=I. Then, with (2.24), the inverse of Ais
+A{-}1=1
+a11a22{-}a12a21a22{-}a12
+{-}a21a11
+. (4.2)
+Hence, Ais invertible if and only if
+a11a22{-}a12a21= 0. (4.3)
+This quantity is the determinant of A{\in}R2{\texttimes}2, i.e.,
+det(A) =a11a12
+a21a22=a11a22{-}a12a21. (4.4)
+Example 4.1 points already at the relationship between determinants
+and the existence of inverse matrices. The next theorem states the same
+result for n{\texttimes}nmatrices.
+Theorem 4.1. For any square matrix A{\in}Rn{\texttimes}nit holds that Ais invertible
+if and only if det(A)= 0.
+We have explicit (closed-form) expressions for determinants of small
+matrices in terms of the elements of the matrix. For n= 1,
+det(A) = det( a11) =a11. (4.5)
+Forn= 2,
+det(A) =a11a12
+a21a22=a11a22{-}a12a21, (4.6)
+which we have observed in the preceding example.
+Forn= 3(known as Sarrus` rule),
+a11a12a13
+a21a22a23
+a31a32a33=a11a22a33+a21a32a13+a31a12a23 (4.7)
+{-}a31a22a13{-}a11a32a23{-}a21a12a33.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.1 Determinant and Trace 101
+For a memory aid of the product terms in Sarrus` rule, try tracing the
+elements of the triple products in the matrix.
+We call a square matrix Tanupper-triangular matrix ifTij= 0 for upper-triangular
+matrix i {>} j , i.e., the matrix is zero below its diagonal. Analogously, we define a
+lower-triangular matrix as a matrix with zeros above its diagonal. For a tri- lower-triangular
+matrix angular matrix T{\in}Rn{\texttimes}n, the determinant is the product of the diagonal
+elements, i.e.,
+det(T) =nY
+i=1Tii. (4.8)
+The determinant is
+the signed volume
+of the parallelepiped
+formed by the
+columns of the
+matrix.
+Figure 4.2 The area
+of the parallelogram
+(shaded region)
+spanned by the
+vectors bandgis
+|det([b,g])|.
+b
+g
+Figure 4.3 The
+volume of the
+parallelepiped
+(shaded volume)
+spanned by vectors
+r,b,gis
+|det([r,b,g])|.
+b
+grExample 4.2 (Determinants as Measures of Volume)
+The notion of a determinant is natural when we consider it as a mapping
+from a set of nvectors spanning an object in Rn. It turns out that the de-
+terminant det(A)is the signed volume of an n-dimensional parallelepiped
+formed by columns of the matrix A.
+Forn= 2, the columns of the matrix form a parallelogram; see Fig-
+ure 4.2. As the angle between vectors gets smaller, the area of a parallel-
+ogram shrinks, too. Consider two vectors b,gthat form the columns of a
+matrix A= [b,g]. Then, the absolute value of the determinant of Ais the
+area of the parallelogram with vertices 0,b,g,b+g. In particular, if b,g
+are linearly dependent so that b={\lambda}gfor some {\lambda}{\in}R, they no longer
+form a two-dimensional parallelogram. Therefore, the corresponding area
+is0. On the contrary, if b,gare linearly independent and are multiples of
+the canonical basis vectors e1,e2then they can be written as b=b
+0
+and
+g=0
+g
+, and the determinant isb0
+0g=bg{-}0 =bg.
+The sign of the determinant indicates the orientation of the spanning
+vectors b,gwith respect to the standard basis (e1,e2). In our figure, flip-
+ping the order to g,bswaps the columns of Aand reverses the orientation
+of the shaded area. This becomes the familiar formula: area =height {\texttimes}
+length. This intuition extends to higher dimensions. In R3, we consider
+three vectors r,b,g{\in}R3spanning the edges of a parallelepiped, i.e., a
+solid with faces that are parallel parallelograms (see Figure 4.3). The ab- The sign of the
+determinant
+indicates the
+orientation of the
+spanning vectors.solute value of the determinant of the 3{\texttimes}3matrix [r,b,g]is the volume
+of the solid. Thus, the determinant acts as a function that measures the
+signed volume formed by column vectors composed in a matrix.
+Consider the three linearly independent vectors r,g,b{\in}R3given as
+r=
+2
+0
+{-}8
+,g=
+6
+1
+0
+,b=
+1
+4
+{-}1
+. (4.9)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+102 Matrix Decompositions
+Writing these vectors as the columns of a matrix
+A= [r,g,b] =
+2 6 1
+0 1 4
+{-}8 0 {-}1
+ (4.10)
+allows us to compute the desired volume as
+V=|det(A)|= 186 . (4.11)
+Computing the determinant of an n{\texttimes}nmatrix requires a general algo-
+rithm to solve the cases for n {>}3, which we are going to explore in the fol-
+lowing. Theorem 4.2 below reduces the problem of computing the deter-
+minant of an n{\texttimes}nmatrix to computing the determinant of (n{-}1){\texttimes}(n{-}1)
+matrices. By recursively applying the Laplace expansion (Theorem 4.2),
+we can therefore compute determinants of n{\texttimes}nmatrices by ultimately
+computing determinants of 2{\texttimes}2matrices.
+Laplace expansion
+Theorem 4.2 (Laplace Expansion) .Consider a matrix A{\in}Rn{\texttimes}n. Then,
+for all j= 1, . . . , n :
+1. Expansion along column j det(Ak,j)is called
+aminor and
+({-}1)k+jdet(Ak,j)
+acofactor .det(A) =nX
+k=1({-}1)k+jakjdet(Ak,j). (4.12)
+2. Expansion along row j
+det(A) =nX
+k=1({-}1)k+jajkdet(Aj,k). (4.13)
+HereAk,j{\in}R(n{-}1){\texttimes}(n{-}1)is the submatrix of Athat we obtain when delet-
+ing row kand column j.
+Example 4.3 (Laplace Expansion)
+Let us compute the determinant of
+A=
+1 2 3
+3 1 2
+0 0 1
+ (4.14)
+using the Laplace expansion along the first row. Applying (4.13) yields
+1 2 3
+3 1 2
+0 0 1= ({-}1)1+1{\textperiodcentered}11 2
+0 1
++ ({-}1)1+2{\textperiodcentered}23 2
+0 1+ ({-}1)1+3{\textperiodcentered}33 1
+0 0.(4.15)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.1 Determinant and Trace 103
+We use (4.6) to compute the determinants of all 2{\texttimes}2matrices and obtain
+det(A) = 1(1 {-}0){-}2(3{-}0) + 3(0 {-}0) ={-}5. (4.16)
+For completeness we can compare this result to computing the determi-
+nant using Sarrus` rule (4.7):
+det(A) = 1{\textperiodcentered}1{\textperiodcentered}1+3{\textperiodcentered}0{\textperiodcentered}3+0{\textperiodcentered}2{\textperiodcentered}2{-}0{\textperiodcentered}1{\textperiodcentered}3{-}1{\textperiodcentered}0{\textperiodcentered}2{-}3{\textperiodcentered}2{\textperiodcentered}1 = 1{-}6 ={-}5.(4.17)
+ForA{\in}Rn{\texttimes}nthe determinant exhibits the following properties:
+The determinant of a matrix product is the product of the corresponding
+determinants, det(AB) = det( A)det(B).
+Determinants are invariant to transposition, i.e., det(A) = det( A{\top}).
+IfAis regular (invertible), then det(A{-}1) =1
+det(A).
+Similar matrices (Definition 2.22) possess the same determinant. There-
+fore, for a linear mapping {\Phi} :V{\textrightarrow}Vall transformation matrices A{\Phi}
+of{\Phi}have the same determinant. Thus, the determinant is invariant to
+the choice of basis of a linear mapping.
+Adding a multiple of a column/row to another one does not change
+det(A).
+Multiplication of a column/row with {\lambda}{\in}Rscales det(A)by{\lambda}. In
+particular, det({\lambda}A) ={\lambda}ndet(A).
+Swapping two rows/columns changes the sign of det(A).
+Because of the last three properties, we can use Gaussian elimination (see
+Section 2.1) to compute det(A)by bringing Ainto row-echelon form.
+We can stop Gaussian elimination when we have Ain a triangular form
+where the elements below the diagonal are all 0. Recall from (4.8) that the
+determinant of a triangular matrix is the product of the diagonal elements.
+Theorem 4.3. A square matrix A{\in}Rn{\texttimes}nhasdet(A)= 0if and only if
+rk(A) =n. In other words, Ais invertible if and only if it is full rank.
+When mathematics was mainly performed by hand, the determinant
+calculation was considered an essential way to analyze matrix invertibil-
+ity. However, contemporary approaches in machine learning use direct
+numerical methods that superseded the explicit calculation of the deter-
+minant. For example, in Chapter 2, we learned that inverse matrices can
+be computed by Gaussian elimination. Gaussian elimination can thus be
+used to compute the determinant of a matrix.
+Determinants will play an important theoretical role for the following
+sections, especially when we learn about eigenvalues and eigenvectors
+(Section 4.2) through the characteristic polynomial.
+Definition 4.4. Thetrace of a square matrix A{\in}Rn{\texttimes}nis defined as trace
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+104 Matrix Decompositions
+tr(A) :=nX
+i=1aii, (4.18)
+i.e. , the trace is the sum of the diagonal elements of A.
+The trace satisfies the following properties:
+tr(A+B) =tr(A) +tr(B)forA,B{\in}Rn{\texttimes}n
+tr({\alpha}A) ={\alpha}tr(A), {\alpha}{\in}RforA{\in}Rn{\texttimes}n
+tr(In) =n
+tr(AB) =tr(BA)forA{\in}Rn{\texttimes}k,B{\in}Rk{\texttimes}n
+It can be shown that only one function satisfies these four properties to-
+gether {\textendash} the trace (Gohberg et al., 2012).
+The properties of the trace of matrix products are more general. Specif-
+ically, the trace is invariant under cyclic permutations, i.e., The trace is
+invariant under
+cyclic permutations. tr(AKL ) =tr(KLA ) (4.19)
+for matrices A{\in}Ra{\texttimes}k,K{\in}Rk{\texttimes}l,L{\in}Rl{\texttimes}a. This property generalizes to
+products of an arbitrary number of matrices. As a special case of (4.19), it
+follows that for two vectors x,y{\in}Rn
+tr(xy{\top}) =tr(y{\top}x) =y{\top}x{\in}R. (4.20)
+Given a linear mapping {\Phi} :V{\textrightarrow}V, where Vis a vector space, we
+define the trace of this map by using the trace of matrix representation
+of{\Phi}. For a given basis of V, we can describe {\Phi}by means of the transfor-
+mation matrix A. Then the trace of {\Phi}is the trace of A. For a different
+basis of V, it holds that the corresponding transformation matrix Bof{\Phi}
+can be obtained by a basis change of the form S{-}1ASfor suitable S(see
+Section 2.7.2). For the corresponding trace of {\Phi}, this means
+tr(B) =tr(S{-}1AS)(4.19)=tr(ASS{-}1) =tr(A). (4.21)
+Hence, while matrix representations of linear mappings are basis depen-
+dent the trace of a linear mapping {\Phi}is independent of the basis.
+In this section, we covered determinants and traces as functions char-
+acterizing a square matrix. Taking together our understanding of determi-
+nants and traces we can now define an important equation describing a
+matrix Ain terms of a polynomial, which we will use extensively in the
+following sections.
+Definition 4.5 (Characteristic Polynomial) .For{\lambda}{\in}Rand a square ma-
+trixA{\in}Rn{\texttimes}n
+pA({\lambda}) := det( A{-}{\lambda}I) (4.22a)
+=c0+c1{\lambda}+c2{\lambda}2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+cn{-}1{\lambda}n{-}1+ ({-}1)n{\lambda}n, (4.22b)
+c0, . . . , c n{-}1{\in}R, is the characteristic polynomial ofA. In particular, characteristic
+polynomial
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.2 Eigenvalues and Eigenvectors 105
+c0= det( A), (4.23)
+cn{-}1= ({-}1)n{-}1tr(A). (4.24)
+The characteristic polynomial (4.22a) will allow us to compute eigen-
+values and eigenvectors, covered in the next section.
+4.2 Eigenvalues and Eigenvectors
+We will now get to know a new way to characterize a matrix and its associ-
+ated linear mapping. Recall from Section 2.7.1 that every linear mapping
+has a unique transformation matrix given an ordered basis. We can in-
+terpret linear mappings and their associated transformation matrices by
+performing an {\textquotedblleft}eigen{\textquotedblright} analysis. As we will see, the eigenvalues of a lin- Eigen is a German
+word meaning
+{\textquotedblleft}characteristic{\textquotedblright},
+{\textquotedblleft}self{\textquotedblright}, or {\textquotedblleft}own{\textquotedblright}.ear mapping will tell us how a special set of vectors, the eigenvectors, is
+transformed by the linear mapping.
+Definition 4.6. LetA{\in}Rn{\texttimes}nbe a square matrix. Then {\lambda}{\in}Ris an
+eigenvalue ofAandx{\in}Rn{\textbackslash}{\{}0{\}}is the corresponding eigenvector ofAif eigenvalue
+eigenvectorAx={\lambda}x. (4.25)
+We call (4.25) the eigenvalue equation . eigenvalue equation
+Remark. In the linear algebra literature and software, it is often a conven-
+tion that eigenvalues are sorted in descending order, so that the largest
+eigenvalue and associated eigenvector are called the first eigenvalue and
+its associated eigenvector, and the second largest called the second eigen-
+value and its associated eigenvector, and so on. However, textbooks and
+publications may have different or no notion of orderings. We do not want
+to presume an ordering in this book if not stated explicitly. {\diamond}
+The following statements are equivalent:
+{\lambda}is an eigenvalue of A{\in}Rn{\texttimes}n.
+There exists an x{\in}Rn{\textbackslash}{\{}0{\}}withAx={\lambda}x, or equivalently, (A{-}
+{\lambda}In)x=0can be solved non-trivially, i.e., x=0.
+rk(A{-}{\lambda}In){<} n.
+det(A{-}{\lambda}In) = 0 .
+Definition 4.7 (Collinearity and Codirection) .Two vectors that point in
+the same direction are called codirected . Two vectors are collinear if they codirected
+collinear point in the same or the opposite direction.
+Remark (Non-uniqueness of eigenvectors) .Ifxis an eigenvector of A
+associated with eigenvalue {\lambda}, then for any c{\in}R{\textbackslash}{\{}0{\}}it holds that cxis
+an eigenvector of Awith the same eigenvalue since
+A(cx) =cAx=c{\lambda}x={\lambda}(cx). (4.26)
+Thus, all vectors that are collinear to xare also eigenvectors of A.
+{\diamond}
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+106 Matrix Decompositions
+Theorem 4.8. {\lambda}{\in}Ris an eigenvalue of A{\in}Rn{\texttimes}nif and only if {\lambda}is a
+root of the characteristic polynomial pA({\lambda})ofA.
+Definition 4.9. Let a square matrix Ahave an eigenvalue {\lambda}i. The algebraic algebraic
+multiplicity multiplicity of{\lambda}iis the number of times the root appears in the character-
+istic polynomial.
+Definition 4.10 (Eigenspace and Eigenspectrum) .ForA{\in}Rn{\texttimes}n, the set
+of all eigenvectors of Aassociated with an eigenvalue {\lambda}spans a subspace
+ofRn, which is called the eigenspace ofAwith respect to {\lambda}and is denoted eigenspace
+byE{\lambda}. The set of all eigenvalues of Ais called the eigenspectrum , or just eigenspectrum
+spectrum , ofA. spectrum
+If{\lambda}is an eigenvalue of A{\in}Rn{\texttimes}n, then the corresponding eigenspace
+E{\lambda}is the solution space of the homogeneous system of linear equations
+(A{-}{\lambda}I)x=0. Geometrically, the eigenvector corresponding to a nonzero
+eigenvalue points in a direction that is stretched by the linear mapping.
+The eigenvalue is the factor by which it is stretched. If the eigenvalue is
+negative, the direction of the stretching is flipped.
+Example 4.4 (The Case of the Identity Matrix)
+The identity matrix I{\in}Rn{\texttimes}nhas characteristic polynomial pI({\lambda}) =
+det(I{-}{\lambda}I) = (1 {-}{\lambda})n= 0, which has only one eigenvalue {\lambda}= 1that oc-
+cursntimes. Moreover, Ix={\lambda}x= 1xholds for all vectors x{\in}Rn{\textbackslash}{\{}0{\}}.
+Because of this, the sole eigenspace E1of the identity matrix spans ndi-
+mensions, and all nstandard basis vectors of Rnare eigenvectors of I.
+Useful properties regarding eigenvalues and eigenvectors include the
+following:
+A matrix Aand its transpose A{\top}possess the same eigenvalues, but not
+necessarily the same eigenvectors.
+The eigenspace E{\lambda}is the null space of A{-}{\lambda}Isince
+Ax={\lambda}x{\Leftarrow}{\Rightarrow}Ax{-}{\lambda}x=0 (4.27a)
+{\Leftarrow}{\Rightarrow} (A{-}{\lambda}I)x=0{\Leftarrow}{\Rightarrow}x{\in}ker(A{-}{\lambda}I).(4.27b)
+Similar matrices (see Definition 2.22) possess the same eigenvalues.
+Therefore, a linear mapping {\Phi}has eigenvalues that are independent of
+the choice of basis of its transformation matrix. This makes eigenvalues,
+together with the determinant and the trace, key characteristic param-
+eters of a linear mapping as they are all invariant under basis change.
+Symmetric, positive definite matrices always have positive, real eigen-
+values.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.2 Eigenvalues and Eigenvectors 107
+Example 4.5 (Computing Eigenvalues, Eigenvectors, and
+Eigenspaces)
+Let us find the eigenvalues and eigenvectors of the 2{\texttimes}2matrix
+A=4 2
+1 3
+. (4.28)
+Step 1: Characteristic Polynomial. From our definition of the eigen-
+vector x=0and eigenvalue {\lambda}ofA, there will be a vector such that
+Ax={\lambda}x, i.e., (A{-}{\lambda}I)x=0. Since x=0, this requires that the kernel
+(null space) of A{-}{\lambda}Icontains more elements than just 0. This means
+thatA{-}{\lambda}Iis not invertible and therefore det(A{-}{\lambda}I) = 0 . Hence, we
+need to compute the roots of the characteristic polynomial (4.22a) to find
+the eigenvalues.
+Step 2: Eigenvalues. The characteristic polynomial is
+pA({\lambda}) = det( A{-}{\lambda}I) (4.29a)
+= det4 2
+1 3
+{-}{\lambda}0
+0{\lambda}
+=4{-}{\lambda} 2
+1 3 {-}{\lambda}(4.29b)
+= (4{-}{\lambda})(3{-}{\lambda}){-}2{\textperiodcentered}1. (4.29c)
+We factorize the characteristic polynomial and obtain
+p({\lambda}) = (4 {-}{\lambda})(3{-}{\lambda}){-}2{\textperiodcentered}1 = 10 {-}7{\lambda}+{\lambda}2= (2{-}{\lambda})(5{-}{\lambda})(4.30)
+giving the roots {\lambda}1= 2and{\lambda}2= 5.
+Step 3: Eigenvectors and Eigenspaces. We find the eigenvectors that
+correspond to these eigenvalues by looking at vectors xsuch that
+4{-}{\lambda} 2
+1 3 {-}{\lambda}
+x=0. (4.31)
+For{\lambda}= 5we obtain
+4{-}5 2
+1 3 {-}5x1
+x2
+={-}1 2
+1{-}2x1
+x2
+=0. (4.32)
+We solve this homogeneous system and obtain a solution space
+E5= span[2
+1
+]. (4.33)
+This eigenspace is one-dimensional as it possesses a single basis vector.
+Analogously, we find the eigenvector for {\lambda}= 2by solving the homoge-
+neous system of equations
+4{-}2 2
+1 3 {-}2
+x=2 2
+1 1
+x=0. (4.34)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+108 Matrix Decompositions
+This means any vector x=x1
+x2
+, where x2={-}x1, such as1
+{-}1
+, is an
+eigenvector with eigenvalue 2. The corresponding eigenspace is given as
+E2= span[1
+{-}1
+]. (4.35)
+The two eigenspaces E5andE2in Example 4.5 are one-dimensional
+as they are each spanned by a single vector. However, in other cases
+we may have multiple identical eigenvalues (see Definition 4.9) and the
+eigenspace may have more than one dimension.
+Definition 4.11. Let{\lambda}ibe an eigenvalue of a square matrix A. Then the
+geometric multiplicity of{\lambda}iis the number of linearly independent eigen- geometric
+multiplicity vectors associated with {\lambda}i. In other words, it is the dimensionality of the
+eigenspace spanned by the eigenvectors associated with {\lambda}i.
+Remark. A specific eigenvalue`s geometric multiplicity must be at least
+one because every eigenvalue has at least one associated eigenvector. An
+eigenvalue`s geometric multiplicity cannot exceed its algebraic multiplic-
+ity, but it may be lower. {\diamond}
+Example 4.6
+The matrix A=2 1
+0 2
+has two repeated eigenvalues {\lambda}1={\lambda}2= 2and an
+algebraic multiplicity of 2. The eigenvalue has, however, only one distinct
+unit eigenvector x1=1
+0
+and, thus, geometric multiplicity 1.
+Graphical Intuition in Two Dimensions
+Let us gain some intuition for determinants, eigenvectors, and eigenval-
+ues using different linear mappings. Figure 4.4 depicts five transformation
+matrices A1, . . . ,A5and their impact on a square grid of points, centered
+at the origin: In geometry, the
+area-preserving
+properties of this
+type of shearing
+parallel to an axis is
+also known as
+Cavalieri`s principle
+of equal areas for
+parallelograms
+(Katz, 2004).A1=1
+20
+0 2
+. The direction of the two eigenvectors correspond to the
+canonical basis vectors in R2, i.e., to two cardinal axes. The vertical axis
+is extended by a factor of 2(eigenvalue {\lambda}1= 2), and the horizontal axis
+is compressed by factor1
+2(eigenvalue {\lambda}2=1
+2). The mapping is area
+preserving ( det(A1) = 1 = 2 {\textperiodcentered}1
+2).
+A2=11
+2
+0 1
+corresponds to a shearing mapping , i.e., it shears the
+points along the horizontal axis to the right if they are on the positive
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.2 Eigenvalues and Eigenvectors 109
+Figure 4.4
+Determinants and
+eigenspaces.
+Overview of five
+linear mappings and
+their associated
+transformation
+matrices
+Ai{\in}R2{\texttimes}2
+projecting 400
+color-coded points
+x{\in}R2(left
+column) onto target
+points Aix(right
+column). The
+central column
+depicts the first
+eigenvector,
+stretched by its
+associated
+eigenvalue {\lambda}1, and
+the second
+eigenvector
+stretched by its
+eigenvalue {\lambda}2. Each
+row depicts the
+effect of one of five
+transformation
+matrices Aiwith
+respect to the
+standard basis.
+det(A) = 1.0{\lambda}1= 2.0
+{\lambda}2= 0.5
+det(A) = 1.0{\lambda}1= 1.0
+{\lambda}2= 1.0
+det(A) = 1.0{\lambda}1= (0.87-0.5j)
+{\lambda}2= (0.87+0.5j)
+det(A) = 0.0{\lambda}1= 0.0
+{\lambda}2= 2.0
+det(A) = 0.75{\lambda}1= 0.5
+{\lambda}2= 1.5
+half of the vertical axis, and to the left vice versa. This mapping is area
+preserving ( det(A2) = 1 ). The eigenvalue {\lambda}1= 1 = {\lambda}2is repeated
+and the eigenvectors are collinear (drawn here for emphasis in two
+opposite directions). This indicates that the mapping acts only along
+one direction (the horizontal axis).
+A3=cos({\pi}
+6){-}sin({\pi}
+6)
+sin({\pi}
+6) cos({\pi}
+6)
+=1
+2{\sqrt{}}
+3{-}1
+1{\sqrt{}}
+3
+The matrix A3rotates the
+points by{\pi}
+6rad = 30{\textopenbullet}counter-clockwise and has only complex eigen-
+values, reflecting that the mapping is a rotation (hence, no eigenvectors
+are drawn). A rotation has to be volume preserving, and so the deter-
+minant is 1. For more details on rotations, we refer to Section 3.9.
+A4=1{-}1
+{-}1 1
+represents a mapping in the standard basis that col-
+lapses a two-dimensional domain onto one dimension. Since one eigen-
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+110 Matrix Decompositions
+value is 0, the space in direction of the (blue) eigenvector corresponding
+to{\lambda}1= 0 collapses, while the orthogonal (red) eigenvector stretches
+space by a factor {\lambda}2= 2. Therefore, the area of the image is 0.
+A5=11
+21
+21
+is a shear-and-stretch mapping that scales space by 75{\%}
+since|det(A5)|=3
+4. It stretches space along the (red) eigenvector
+of{\lambda}2by a factor 1.5and compresses it along the orthogonal (blue)
+eigenvector by a factor 0.5.
+Example 4.7 (Eigenspectrum of a Biological Neural Network)
+Figure 4.5
+Caenorhabditis
+elegans neural
+network (Kaiser and
+Hilgetag,
+2006).(a) Sym-
+metrized
+connectivity matrix;
+(b) Eigenspectrum.
+0 50 100 150 200 250
+neuron index0
+50
+100
+150
+200
+250neuron index
+(a) Connectivity matrix.
+0 100 200
+index of sorted eigenvalue{-}10{-}50510152025eigenvalue
+ (b) Eigenspectrum.
+Methods to analyze and learn from network data are an essential com-
+ponent of machine learning methods. The key to understanding networks
+is the connectivity between network nodes, especially if two nodes are
+connected to each other or not. In data science applications, it is often
+useful to study the matrix that captures this connectivity data.
+We build a connectivity/adjacency matrix A{\in}R277{\texttimes}277of the complete
+neural network of the worm C.Elegans . Each row/column represents one
+of the 277neurons of this worm`s brain. The connectivity matrix Ahas
+a value of aij= 1 if neuron italks to neuron jthrough a synapse, and
+aij= 0 otherwise. The connectivity matrix is not symmetric, which im-
+plies that eigenvalues may not be real valued. Therefore, we compute a
+symmetrized version of the connectivity matrix as Asym:=A+A{\top}. This
+new matrix Asymis shown in Figure 4.5(a) and has a nonzero value aijif
+and only if two neurons are connected (white pixels), irrespective of the
+direction of the connection. In Figure 4.5(b), we show the correspond-
+ing eigenspectrum of Asym. The horizontal axis shows the index of the
+eigenvalues, sorted in descending order. The vertical axis shows the corre-
+sponding eigenvalue. The S-like shape of this eigenspectrum is typical for
+many biological neural networks. The underlying mechanism responsible
+for this is an area of active neuroscience research.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.2 Eigenvalues and Eigenvectors 111
+Theorem 4.12. The eigenvectors x1, . . . ,xnof a matrix A{\in}Rn{\texttimes}nwithn
+distinct eigenvalues {\lambda}1, . . . , {\lambda} nare linearly independent.
+This theorem states that eigenvectors of a matrix with ndistinct eigen-
+values form a basis of Rn.
+Definition 4.13. A square matrix A{\in}Rn{\texttimes}nisdefective if it possesses defective
+fewer than nlinearly independent eigenvectors.
+A non-defective matrix A{\in}Rn{\texttimes}ndoes not necessarily require ndis-
+tinct eigenvalues, but it does require that the eigenvectors form a basis of
+Rn. Looking at the eigenspaces of a defective matrix, it follows that the
+sum of the dimensions of the eigenspaces is less than n. Specifically, a de-
+fective matrix has at least one eigenvalue {\lambda}iwith an algebraic multiplicity
+m {>} 1and a geometric multiplicity of less than m.
+Remark. A defective matrix cannot have ndistinct eigenvalues, as distinct
+eigenvalues have linearly independent eigenvectors (Theorem 4.12). {\diamond}
+Theorem 4.14. Given a matrix A{\in}Rm{\texttimes}n, we can always obtain a sym-
+metric, positive semidefinite matrix S{\in}Rn{\texttimes}nby defining
+S:=A{\top}A. (4.36)
+Remark. Ifrk(A) =n, then S:=A{\top}Ais symmetric, positive definite.
+{\diamond}
+Understanding why Theorem 4.14 holds is insightful for how we can
+use symmetrized matrices: Symmetry requires S=S{\top}, and by insert-
+ing (4.36) we obtain S=A{\top}A=A{\top}(A{\top}){\top}= (A{\top}A){\top}=S{\top}. More-
+over, positive semidefiniteness (Section 3.2.3) requires that x{\top}Sx{\geqslant}0
+and inserting (4.36) we obtain x{\top}Sx=x{\top}A{\top}Ax= (x{\top}A{\top})(Ax) =
+(Ax){\top}(Ax){\geqslant}0, because the dot product computes a sum of squares
+(which are themselves non-negative).
+spectral theorem
+Theorem 4.15 (Spectral Theorem) .IfA{\in}Rn{\texttimes}nis symmetric, there ex-
+ists an orthonormal basis of the corresponding vector space Vconsisting of
+eigenvectors of A, and each eigenvalue is real.
+A direct implication of the spectral theorem is that the eigendecompo-
+sition of a symmetric matrix Aexists (with real eigenvalues), and that
+we can find an ONB of eigenvectors so that A=PDP{\top}, where Dis
+diagonal and the columns of Pcontain the eigenvectors.
+Example 4.8
+Consider the matrix
+A=
+3 2 2
+2 3 2
+2 2 3
+. (4.37)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+112 Matrix Decompositions
+The characteristic polynomial of Ais
+pA({\lambda}) ={-}({\lambda}{-}1)2({\lambda}{-}7), (4.38)
+so that we obtain the eigenvalues {\lambda}1= 1 and{\lambda}2= 7, where {\lambda}1is a
+repeated eigenvalue. Following our standard procedure for computing
+eigenvectors, we obtain the eigenspaces
+E1= span[
+{-}1
+1
+0
+
+|{\{}z{\}}
+=:x1,
+{-}1
+0
+1
+
+|{\{}z{\}}
+=:x2], E 7= span[
+1
+1
+1
+
+|{\{}z{\}}
+=:x3]. (4.39)
+We see that x3is orthogonal to both x1andx2. However, since x{\top}
+1x2=
+1= 0, they are not orthogonal. The spectral theorem (Theorem 4.15)
+states that there exists an orthogonal basis, but the one we have is not
+orthogonal. However, we can construct one.
+To construct such a basis, we exploit the fact that x1,x2are eigenvec-
+tors associated with the same eigenvalue {\lambda}. Therefore, for any {\alpha}, {\beta}{\in}Rit
+holds that
+A({\alpha}x1+{\beta}x2) =Ax1{\alpha}+Ax2{\beta}={\lambda}({\alpha}x1+{\beta}x2), (4.40)
+i.e., any linear combination of x1andx2is also an eigenvector of Aas-
+sociated with {\lambda}. The Gram-Schmidt algorithm (Section 3.8.3) is a method
+for iteratively constructing an orthogonal/orthonormal basis from a set of
+basis vectors using such linear combinations. Therefore, even if x1andx2
+are not orthogonal, we can apply the Gram-Schmidt algorithm and find
+eigenvectors associated with {\lambda}1= 1 that are orthogonal to each other
+(and to x3). In our example, we will obtain
+x{'}
+1=
+{-}1
+1
+0
+,x{'}
+2=1
+2
+{-}1
+{-}1
+2
+, (4.41)
+which are orthogonal to each other, orthogonal to x3, and eigenvectors of
+Aassociated with {\lambda}1= 1.
+Before we conclude our considerations of eigenvalues and eigenvectors
+it is useful to tie these matrix characteristics together with the concepts of
+the determinant and the trace.
+Theorem 4.16. The determinant of a matrix A{\in}Rn{\texttimes}nis the product of
+its eigenvalues, i.e.,
+det(A) =nY
+i=1{\lambda}i, (4.42)
+where {\lambda}i{\in}Care (possibly repeated) eigenvalues of A.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.2 Eigenvalues and Eigenvectors 113
+Figure 4.6
+Geometric
+interpretation of
+eigenvalues. The
+eigenvectors of A
+get stretched by the
+corresponding
+eigenvalues. The
+area of the unit
+square changes by
+|{\lambda}1{\lambda}2|, the
+perimeter changes
+by a factor of
+1
+2(|{\lambda}1|+|{\lambda}2|).x1x2
+v1v2A
+Theorem 4.17. The trace of a matrix A{\in}Rn{\texttimes}nis the sum of its eigenval-
+ues, i.e.,
+tr(A) =nX
+i=1{\lambda}i, (4.43)
+where {\lambda}i{\in}Care (possibly repeated) eigenvalues of A.
+Let us provide a geometric intuition of these two theorems. Consider
+a matrix A{\in}R2{\texttimes}2that possesses two linearly independent eigenvectors
+x1,x2. For this example, we assume (x1,x2)are an ONB of R2so that they
+are orthogonal and the area of the square they span is 1; see Figure 4.6.
+From Section 4.1, we know that the determinant computes the change of
+area of unit square under the transformation A. In this example, we can
+compute the change of area explicitly: Mapping the eigenvectors using
+Agives us vectors v1=Ax1={\lambda}1x1andv2=Ax2={\lambda}2x2, i.e., the
+new vectors viare scaled versions of the eigenvectors xi, and the scaling
+factors are the corresponding eigenvalues {\lambda}i.v1,v2are still orthogonal,
+and the area of the rectangle they span is |{\lambda}1{\lambda}2|.
+Given that x1,x2(in our example) are orthonormal, we can directly
+compute the perimeter of the unit square as 2(1 + 1) . Mapping the eigen-
+vectors using Acreates a rectangle whose perimeter is 2(|{\lambda}1|+|{\lambda}2|).
+Therefore, the sum of the absolute values of the eigenvalues tells us how
+the perimeter of the unit square changes under the transformation matrix
+A.
+Example 4.9 (Google`s PageRank {\textendash} Webpages as Eigenvectors)
+Google uses the eigenvector corresponding to the maximal eigenvalue of
+a matrix Ato determine the rank of a page for search. The idea for the
+PageRank algorithm, developed at Stanford University by Larry Page and
+Sergey Brin in 1996, was that the importance of any web page can be ap-
+proximated by the importance of pages that link to it. For this, they write
+down all web sites as a huge directed graph that shows which page links
+to which. PageRank computes the weight (importance) xi{\geqslant}0of a web
+siteaiby counting the number of pages pointing to ai. Moreover, PageR-
+ank takes into account the importance of the web sites that link to ai. The
+navigation behavior of a user is then modeled by a transition matrix Aof
+this graph that tells us with what (click) probability somebody will end up
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+114 Matrix Decompositions
+on a different web site. The matrix Ahas the property that for any ini-
+tial rank/importance vector xof a web site the sequence x,Ax,A2x, . . .
+converges to a vector x{*}. This vector is called the PageRank and satisfies PageRank
+Ax{*}=x{*}, i.e., it is an eigenvector (with corresponding eigenvalue 1) of
+A. After normalizing x{*}, such that {\parallel}x{*}{\parallel}= 1, we can interpret the entries
+as probabilities. More details and different perspectives on PageRank can
+be found in the original technical report (Page et al., 1999).
+4.3 Cholesky Decomposition
+There are many ways to factorize special types of matrices that we en-
+counter often in machine learning. In the positive real numbers, we have
+the square-root operation that gives us a decomposition of the number
+into identical components, e.g., 9 = 3 {\textperiodcentered}3. For matrices, we need to be
+careful that we compute a square-root-like operation on positive quanti-
+ties. For symmetric, positive definite matrices (see Section 3.2.3), we can
+choose from a number of square-root equivalent operations. The Cholesky Cholesky
+decomposition decomposition /Cholesky factorization provides a square-root equivalent op-
+Cholesky
+factorizationeration on symmetric, positive definite matrices that is useful in practice.
+Theorem 4.18 (Cholesky Decomposition) .A symmetric, positive definite
+matrix Acan be factorized into a product A=LL{\top}, where Lis a lower-
+triangular matrix with positive diagonal elements:
+
+a11{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}a1n
+.........
+an1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}ann
+=
+l11{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0
+.........
+ln1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}lnn
+
+l11{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}ln1
+.........
+0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}lnn
+. (4.44)
+Lis called the Cholesky factor of A, andLis unique. Cholesky factor
+Example 4.10 (Cholesky Factorization)
+Consider a symmetric, positive definite matrix A{\in}R3{\texttimes}3. We are inter-
+ested in finding its Cholesky factorization A=LL{\top}, i.e.,
+A=
+a11a21a31
+a21a22a32
+a31a32a33
+=LL{\top}=
+l110 0
+l21l220
+l31l32l33
+
+l11l21l31
+0l22l32
+0 0 l33
+.(4.45)
+Multiplying out the right-hand side yields
+A=
+l2
+11 l21l11 l31l11
+l21l11 l2
+21+l2
+22 l31l21+l32l22
+l31l11l31l21+l32l22l2
+31+l2
+32+l2
+33
+. (4.46)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.4 Eigendecomposition and Diagonalization 115
+Comparing the left-hand side of (4.45) and the right-hand side of (4.46)
+shows that there is a simple pattern in the diagonal elements lii:
+l11={\sqrt{}}a11, l 22=q
+a22{-}l2
+21, l 33=q
+a33{-}(l2
+31+l2
+32).(4.47)
+Similarly for the elements below the diagonal ( lij, where i {>} j ), there is
+also a repeating pattern:
+l21=1
+l11a21, l 31=1
+l11a31, l 32=1
+l22(a32{-}l31l21). (4.48)
+Thus, we constructed the Cholesky decomposition for any symmetric, pos-
+itive definite 3{\texttimes}3matrix. The key realization is that we can backward
+calculate what the components lijfor the Lshould be, given the values
+aijforAand previously computed values of lij.
+The Cholesky decomposition is an important tool for the numerical
+computations underlying machine learning. Here, symmetric positive def-
+inite matrices require frequent manipulation, e.g., the covariance matrix
+of a multivariate Gaussian variable (see Section 6.5) is symmetric, positive
+definite. The Cholesky factorization of this covariance matrix allows us to
+generate samples from a Gaussian distribution. It also allows us to perform
+a linear transformation of random variables, which is heavily exploited
+when computing gradients in deep stochastic models, such as the varia-
+tional auto-encoder (Jimenez Rezende et al., 2014; Kingma and Welling,
+2014). The Cholesky decomposition also allows us to compute determi-
+nants very efficiently. Given the Cholesky decomposition A=LL{\top}, we
+know that det(A) = det( L) det(L{\top}) = det( L)2. Since Lis a triangular
+matrix, the determinant is simply the product of its diagonal entries so
+thatdet(A) =Q
+il2
+ii. Thus, many numerical software packages use the
+Cholesky decomposition to make computations more efficient.
+4.4 Eigendecomposition and Diagonalization
+Adiagonal matrix is a matrix that has value zero on all off-diagonal ele- diagonal matrix
+ments, i.e., they are of the form
+D=
+c1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0
+.........
+0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}cn
+. (4.49)
+They allow fast computation of determinants, powers, and inverses. The
+determinant is the product of its diagonal entries, a matrix power Dkis
+given by each diagonal element raised to the power k, and the inverse
+D{-}1is the reciprocal of its diagonal elements if all of them are nonzero.
+In this section, we will discuss how to transform matrices into diagonal
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+116 Matrix Decompositions
+form. This is an important application of the basis change we discussed in
+Section 2.7.2 and eigenvalues from Section 4.2.
+Recall that two matrices A,Dare similar (Definition 2.22) if there ex-
+ists an invertible matrix P, such that D=P{-}1AP. More specifically, we
+will look at matrices Athat are similar to diagonal matrices Dthat con-
+tain the eigenvalues of Aon the diagonal.
+Definition 4.19 (Diagonalizable) .A matrix A{\in}Rn{\texttimes}nisdiagonalizable diagonalizable
+if it is similar to a diagonal matrix, i.e., if there exists an invertible matrix
+P{\in}Rn{\texttimes}nsuch that D=P{-}1AP.
+In the following, we will see that diagonalizing a matrix A{\in}Rn{\texttimes}nis
+a way of expressing the same linear mapping but in another basis (see
+Section 2.6.1), which will turn out to be a basis that consists of the eigen-
+vectors of A.
+LetA{\in}Rn{\texttimes}n, let{\lambda}1, . . . , {\lambda} nbe a set of scalars, and let p1, . . . ,pnbe a
+set of vectors in Rn. We define P:= [p1, . . . ,pn]and let D{\in}Rn{\texttimes}nbe a
+diagonal matrix with diagonal entries {\lambda}1, . . . , {\lambda} n. Then we can show that
+AP=PD (4.50)
+if and only if {\lambda}1, . . . , {\lambda} nare the eigenvalues of Aandp1, . . . ,pnare cor-
+responding eigenvectors of A.
+We can see that this statement holds because
+AP=A[p1, . . . ,pn] = [Ap1, . . . ,Apn], (4.51)
+PD= [p1, . . . ,pn]
+{\lambda}1 0
+...
+0 {\lambda}n
+= [{\lambda}1p1, . . . , {\lambda} npn]. (4.52)
+Thus, (4.50) implies that
+Ap1={\lambda}1p1 (4.53)
+...
+Apn={\lambda}npn. (4.54)
+Therefore, the columns of Pmust be eigenvectors of A.
+Our definition of diagonalization requires that P{\in}Rn{\texttimes}nis invertible,
+i.e.,Phas full rank (Theorem 4.3). This requires us to have nlinearly
+independent eigenvectors p1, . . . ,pn, i.e., the piform a basis of Rn.
+Theorem 4.20 (Eigendecomposition) .A square matrix A{\in}Rn{\texttimes}ncan be
+factored into
+A=PDP{-}1, (4.55)
+where P{\in}Rn{\texttimes}nandDis a diagonal matrix whose diagonal entries are
+the eigenvalues of A, if and only if the eigenvectors of Aform a basis of Rn.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.4 Eigendecomposition and Diagonalization 117
+Figure 4.7 Intuition
+behind the
+eigendecomposition
+as sequential
+transformations.
+Top-left to
+bottom-left: P{-}1
+performs a basis
+change (here drawn
+inR2and depicted
+as a rotation-like
+operation) from the
+standard basis into
+the eigenbasis.
+Bottom-left to
+bottom-right: D
+performs a scaling
+along the remapped
+orthogonal
+eigenvectors,
+depicted here by a
+circle being
+stretched to an
+ellipse. Bottom-right
+to top-right: P
+undoes the basis
+change (depicted as
+a reverse rotation)
+and restores the
+original coordinate
+frame.
+e1e2
+p1p2
+p1p2e1e2
+p1p2
+{\lambda}1p1{\lambda}2p2
+e1e2
+Ae 1Ae 2P{-}1
+DPA
+Theorem 4.20 implies that only non-defective matrices can be diagonal-
+ized and that the columns of Pare the neigenvectors of A. For symmetric
+matrices we can obtain even stronger outcomes for the eigenvalue decom-
+position.
+Theorem 4.21. A symmetric matrix S{\in}Rn{\texttimes}ncan always be diagonalized.
+Theorem 4.21 follows directly from the spectral theorem 4.15. More-
+over, the spectral theorem states that we can find an ONB of eigenvectors
+ofRn. This makes Pan orthogonal matrix so that D=P{\top}AP.
+Remark. The Jordan normal form of a matrix offers a decomposition that
+works for defective matrices (Lang, 1987) but is beyond the scope of this
+book. {\diamond}
+Geometric Intuition for the Eigendecomposition
+We can interpret the eigendecomposition of a matrix as follows (see also
+Figure 4.7): Let Abe the transformation matrix of a linear mapping with
+respect to the standard basis ei(blue arrows). P{-}1performs a basis
+change from the standard basis into the eigenbasis. Then, the diagonal
+Dscales the vectors along these axes by the eigenvalues {\lambda}i. Finally, P
+transforms these scaled vectors back into the standard/canonical coordi-
+nates yielding {\lambda}ipi.
+Example 4.11 (Eigendecomposition)
+Let us compute the eigendecomposition of A=1
+25{-}2
+{-}2 5
+.
+Step 1: Compute eigenvalues and eigenvectors. The characteristic
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+118 Matrix Decompositions
+polynomial of Ais
+det(A{-}{\lambda}I) = det5
+2{-}{\lambda}{-}1
+{-}15
+2{-}{\lambda}
+(4.56a)
+= (5
+2{-}{\lambda})2{-}1 ={\lambda}2{-}5{\lambda}+21
+4= ({\lambda}{-}7
+2)({\lambda}{-}3
+2). (4.56b)
+Therefore, the eigenvalues of Aare{\lambda}1=7
+2and{\lambda}2=3
+2(the roots of the
+characteristic polynomial), and the associated (normalized) eigenvectors
+are obtained via
+Ap1=7
+2p1,Ap2=3
+2p2. (4.57)
+This yields
+p1=1{\sqrt{}}
+21
+{-}1
+,p2=1{\sqrt{}}
+21
+1
+. (4.58)
+Step 2: Check for existence. The eigenvectors p1,p2form a basis of R2.
+Therefore, Acan be diagonalized.
+Step 3: Construct the matrix Pto diagonalize A.We collect the eigen-
+vectors of AinPso that
+P= [p1,p2] =1{\sqrt{}}
+21 1
+{-}1 1
+. (4.59)
+We then obtain
+P{-}1AP=7
+20
+03
+2
+=D. (4.60)
+Equivalently, we get (exploiting that P{-}1=P{\top}since the eigenvectors Figure 4.7 visualizes
+the
+eigendecomposition
+ofA=5{-}2
+{-}2 5
+as a sequence of
+linear
+transformations.p1andp2in this example form an ONB)
+1
+25{-}2
+{-}2 5
+|{\{}z{\}}
+A=1{\sqrt{}}
+21 1
+{-}1 1
+|{\{}z{\}}
+P7
+20
+03
+2
+|{\{}z{\}}
+D1{\sqrt{}}
+21{-}1
+1 1
+|{\{}z{\}}
+P{-}1. (4.61)
+Diagonal matrices Dcan efficiently be raised to a power. Therefore,
+we can find a matrix power for a matrix A{\in}Rn{\texttimes}nvia the eigenvalue
+decomposition (if it exists) so that
+Ak= (PDP{-}1)k=PDkP{-}1. (4.62)
+Computing Dkis efficient because we apply this operation individually
+to any diagonal element.
+Assume that the eigendecomposition A=PDP{-}1exists. Then,
+det(A) = det( PDP{-}1) = det( P) det(D) det(P{-}1) (4.63a)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.5 Singular Value Decomposition 119
+= det( D) =Y
+idii (4.63b)
+allows for an efficient computation of the determinant of A.
+The eigenvalue decomposition requires square matrices. It would be
+useful to perform a decomposition on general matrices. In the next sec-
+tion, we introduce a more general matrix decomposition technique, the
+singular value decomposition.
+4.5 Singular Value Decomposition
+The singular value decomposition (SVD) of a matrix is a central matrix
+decomposition method in linear algebra. It has been referred to as the
+{\textquotedblleft}fundamental theorem of linear algebra{\textquotedblright} (Strang, 1993) because it can be
+applied to all matrices, not only to square matrices, and it always exists.
+Moreover, as we will explore in the following, the SVD of a matrix A,
+which represents a linear mapping {\Phi} :V{\textrightarrow}W, quantifies the change
+between the underlying geometry of these two vector spaces. We recom-
+mend the work by Kalman (1996) and Roy and Banerjee (2014) for a
+deeper overview of the mathematics of the SVD.
+SVD theorem
+Theorem 4.22 (SVD Theorem) .LetA{\in}Rm{\texttimes}nbe a rectangular matrix of
+rankr{\in}[0,min(m, n)]. The SVD of Ais a decomposition of the form SVD
+singular value
+decomposition
+= U A V{\top}{\Sigma}mn
+mm
+mn
+nn
+(4.64)
+with an orthogonal matrix U{\in}Rm{\texttimes}mwith column vectors ui,i= 1, . . . , m ,
+and an orthogonal matrix V{\in}Rn{\texttimes}nwith column vectors vj,j= 1, . . . , n .
+Moreover, {\Sigma}is an m{\texttimes}nmatrix with {\Sigma}ii={\sigma}i{\geqslant}0and{\Sigma}ij= 0, i=j.
+The diagonal entries {\sigma}i,i= 1, . . . , r , of{\Sigma}are called the singular values ,singular values
+uiare called the left-singular vectors , andvjare called the right-singular left-singular vectors
+right-singular
+vectorsvectors . By convention, the singular values are ordered, i.e., {\sigma}1{\geqslant}{\sigma}2{\geqslant}
+{\sigma}r{\geqslant}0.
+Thesingular value matrix {\Sigma}is unique, but it requires some attention. singular value
+matrix Observe that the {\Sigma}{\in}Rm{\texttimes}nis rectangular. In particular, {\Sigma}is of the same
+size as A. This means that {\Sigma}has a diagonal submatrix that contains the
+singular values and needs additional zero padding. Specifically, if m {>} n ,
+then the matrix {\Sigma}has diagonal structure up to row nand then consists of
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+120 Matrix Decompositions
+Figure 4.8 Intuition
+behind the SVD of a
+matrix A{\in}R3{\texttimes}2
+as sequential
+transformations.
+Top-left to
+bottom-left: V{\top}
+performs a basis
+change in R2.
+Bottom-left to
+bottom-right: {\Sigma}
+scales and maps
+fromR2toR3. The
+ellipse in the
+bottom-right lives in
+R3. The third
+dimension is
+orthogonal to the
+surface of the
+elliptical disk.
+Bottom-right to
+top-right: U
+performs a basis
+change within R3.v2
+v1
+ {\sigma}2u2
+{\sigma}1u1
+e2
+e1{\sigma}2e2
+{\sigma}1e1A
+V{\top}
+{\Sigma}U
+0{\top}row vectors from n+ 1tombelow so that
+{\Sigma}=
+{\sigma}10 0
+0...0
+0 0 {\sigma}n
+0. . . 0
+......
+0. . . 0
+. (4.65)
+Ifm {<} n , the matrix {\Sigma}has a diagonal structure up to column mand
+columns that consist of 0from m+ 1ton:
+{\Sigma}=
+{\sigma}10 0 0 . . .0
+0...0......
+0 0 {\sigma}m0. . .0
+. (4.66)
+Remark. The SVD exists for any matrix A{\in}Rm{\texttimes}n. {\diamond}
+4.5.1 Geometric Intuitions for the SVD
+The SVD offers geometric intuitions to describe a transformation matrix
+A. In the following, we will discuss the SVD as sequential linear trans-
+formations performed on the bases. In Example 4.12, we will then apply
+transformation matrices of the SVD to a set of vectors in R2, which allows
+us to visualize the effect of each transformation more clearly.
+The SVD of a matrix can be interpreted as a decomposition of a corre-
+sponding linear mapping (recall Section 2.7.1) {\Phi} :Rn{\textrightarrow}Rminto three
+operations; see Figure 4.8. The SVD intuition follows superficially a simi-
+lar structure to our eigendecomposition intuition, see Figure 4.7: Broadly
+speaking, the SVD performs a basis change via V{\top}followed by a scal-
+ing and augmentation (or reduction) in dimensionality via the singular
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.5 Singular Value Decomposition 121
+value matrix {\Sigma}. Finally, it performs a second basis change via U. The SVD
+entails a number of important details and caveats, which is why we will
+review our intuition in more detail. It is useful to review
+basis changes
+(Section 2.7.2),
+orthogonal matrices
+(Definition 3.8) and
+orthonormal bases
+(Section 3.5).Assume we are given a transformation matrix of a linear mapping {\Phi} :
+Rn{\textrightarrow}Rmwith respect to the standard bases BandCofRnandRm,
+respectively. Moreover, assume a second basis {\textasciitilde}BofRnand{\textasciitilde}CofRm. Then
+1. The matrix Vperforms a basis change in the domain Rnfrom {\textasciitilde}B(rep-
+resented by the red and orange vectors v1andv2in the top-left of Fig-
+ure 4.8) to the standard basis B.V{\top}=V{-}1performs a basis change
+from Bto{\textasciitilde}B. The red and orange vectors are now aligned with the
+canonical basis in the bottom-left of Figure 4.8.
+2. Having changed the coordinate system to {\textasciitilde}B,{\Sigma}scales the new coordi-
+nates by the singular values {\sigma}i(and adds or deletes dimensions), i.e.,
+{\Sigma}is the transformation matrix of {\Phi}with respect to {\textasciitilde}Band {\textasciitilde}C, rep-
+resented by the red and orange vectors being stretched and lying in
+thee1-e2plane, which is now embedded in a third dimension in the
+bottom-right of Figure 4.8.
+3.Uperforms a basis change in the codomain Rmfrom {\textasciitilde}Cinto the canoni-
+cal basis of Rm, represented by a rotation of the red and orange vectors
+out of the e1-e2plane. This is shown in the top-right of Figure 4.8.
+The SVD expresses a change of basis in both the domain and codomain.
+This is in contrast with the eigendecomposition that operates within the
+same vector space, where the same basis change is applied and then un-
+done. What makes the SVD special is that these two different bases are
+simultaneously linked by the singular value matrix {\Sigma}.
+Example 4.12 (Vectors and the SVD)
+Consider a mapping of a square grid of vectors X {\in}R2that fit in a box of
+size2{\texttimes}2centered at the origin. Using the standard basis, we map these
+vectors using
+A=
+1{-}0.8
+0 1
+1 0
+=U{\Sigma}V{\top}(4.67a)
+=
+{-}0.79 0 {-}0.62
+0.38{-}0.78{-}0.49
+{-}0.48{-}0.62 0 .62
+
+1.62 0
+0 1 .0
+0 0
+{-}0.78 0 .62
+{-}0.62{-}0.78
+.(4.67b)
+We start with a set of vectors X(colored dots; see top-left panel of Fig-
+ure 4.9) arranged in a grid. We then apply V{\top}{\in}R2{\texttimes}2, which rotates X.
+The rotated vectors are shown in the bottom-left panel of Figure 4.9. We
+now map these vectors using the singular value matrix {\Sigma}to the codomain
+R3(see the bottom-right panel in Figure 4.9). Note that all vectors lie in
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+122 Matrix Decompositions
+thex1-x2plane. The third coordinate is always 0. The vectors in the x1-x2
+plane have been stretched by the singular values.
+The direct mapping of the vectors XbyAto the codomain R3equals
+the transformation of XbyU{\Sigma}V{\top}, where Uperforms a rotation within
+the codomain R3so that the mapped vectors are no longer restricted to
+thex1-x2plane; they still are on a plane as shown in the top-right panel
+of Figure 4.9.
+Figure 4.9 SVD and
+mapping of vectors
+(represented by
+discs). The panels
+follow the same
+anti-clockwise
+structure of
+Figure 4.8.
+{-}1.5{-}1.0{-}0.5 0.0 0.5 1.0 1.5
+x1{-}1.5{-}1.0{-}0.50.00.51.01.5x2
+x1-1.5-0.5
+0.5
+1.5x2
+-1.5-0.50.51.5x3
+-1.0-0.50.00.51.0
+{-}1.5{-}1.0{-}0.5 0.0 0.5 1.0 1.5
+x1{-}1.5{-}1.0{-}0.50.00.51.01.5x2
+x1-1.5-0.50.51.5x2
+-1.5-0.50.51.5x3
+0
+4.5.2 Construction of the SVD
+We will next discuss why the SVD exists and show how to compute it
+in detail. The SVD of a general matrix shares some similarities with the
+eigendecomposition of a square matrix.
+Remark. Compare the eigendecomposition of an SPD matrix
+S=S{\top}=PDP{\top}(4.68)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.5 Singular Value Decomposition 123
+with the corresponding SVD
+S=U{\Sigma}V{\top}. (4.69)
+If we set
+U=P=V,D={\Sigma}, (4.70)
+we see that the SVD of SPD matrices is their eigendecomposition. {\diamond}
+In the following, we will explore why Theorem 4.22 holds and how
+the SVD is constructed. Computing the SVD of A{\in}Rm{\texttimes}nis equivalent
+to finding two sets of orthonormal bases U= (u1, . . . ,um)andV=
+(v1, . . . ,vn)of the codomain Rmand the domain Rn, respectively. From
+these ordered bases, we will construct the matrices UandV.
+Our plan is to start with constructing the orthonormal set of right-
+singular vectors v1, . . . ,vn{\in}Rn. We then construct the orthonormal set
+of left-singular vectors u1, . . . ,um{\in}Rm. Thereafter, we will link the two
+and require that the orthogonality of the viis preserved under the trans-
+formation of A. This is important because we know that the images Avi
+form a set of orthogonal vectors. We will then normalize these images by
+scalar factors, which will turn out to be the singular values.
+Let us begin with constructing the right-singular vectors. The spectral
+theorem (Theorem 4.15) tells us that the eigenvectors of a symmetric
+matrix form an ONB, which also means it can be diagonalized. More-
+over, from Theorem 4.14 we can always construct a symmetric, positive
+semidefinite matrix A{\top}A{\in}Rn{\texttimes}nfrom any rectangular matrix A{\in}
+Rm{\texttimes}n. Thus, we can always diagonalize A{\top}Aand obtain
+A{\top}A=PDP{\top}=P
+{\lambda}1{\textperiodcentered}{\textperiodcentered}{\textperiodcentered} 0
+.........
+0{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}{\lambda}n
+P{\top}, (4.71)
+where Pis an orthogonal matrix, which is composed of the orthonormal
+eigenbasis. The {\lambda}i{\geqslant}0are the eigenvalues of A{\top}A. Let us assume the
+SVD of Aexists and inject (4.64) into (4.71). This yields
+A{\top}A= (U{\Sigma}V{\top}){\top}(U{\Sigma}V{\top}) =V{\Sigma}{\top}U{\top}U{\Sigma}V{\top}, (4.72)
+where U,Vare orthogonal matrices. Therefore, with U{\top}U=Iwe ob-
+tain
+A{\top}A=V{\Sigma}{\top}{\Sigma}V{\top}=V
+{\sigma}2
+10 0
+0...0
+0 0 {\sigma}2
+n
+V{\top}. (4.73)
+Comparing now (4.71) and (4.73), we identify
+V{\top}=P{\top}, (4.74)
+{\sigma}2
+i={\lambda}i. (4.75)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+124 Matrix Decompositions
+Therefore, the eigenvectors of A{\top}Athat compose Pare the right-singular
+vectors VofA(see (4.74)). The eigenvalues of A{\top}Aare the squared
+singular values of {\Sigma}(see (4.75)).
+To obtain the left-singular vectors U, we follow a similar procedure.
+We start by computing the SVD of the symmetric matrix AA{\top}{\in}Rm{\texttimes}m
+(instead of the previous A{\top}A{\in}Rn{\texttimes}n). The SVD of Ayields
+AA{\top}= (U{\Sigma}V{\top})(U{\Sigma}V{\top}){\top}=U{\Sigma}V{\top}V{\Sigma}{\top}U{\top}(4.76a)
+=U
+{\sigma}2
+10 0
+0...0
+0 0 {\sigma}2
+m
+U{\top}. (4.76b)
+The spectral theorem tells us that AA{\top}=SDS{\top}can be diagonalized
+and we can find an ONB of eigenvectors of AA{\top}, which are collected in
+S. The orthonormal eigenvectors of AA{\top}are the left-singular vectors U
+and form an orthonormal basis in the codomain of the SVD.
+This leaves the question of the structure of the matrix {\Sigma}. Since AA{\top}
+andA{\top}Ahave the same nonzero eigenvalues (see page 106), the nonzero
+entries of the {\Sigma}matrices in the SVD for both cases have to be the same.
+The last step is to link up all the parts we touched upon so far. We have
+an orthonormal set of right-singular vectors in V. To finish the construc-
+tion of the SVD, we connect them with the orthonormal vectors U. To
+reach this goal, we use the fact the images of the viunder Ahave to be
+orthogonal, too. We can show this by using the results from Section 3.4.
+We require that the inner product between AviandAvjmust be 0for
+i=j. For any two orthogonal eigenvectors vi,vj,i=j, it holds that
+(Avi){\top}(Avj) =v{\top}
+i(A{\top}A)vj=v{\top}
+i({\lambda}jvj) ={\lambda}jv{\top}
+ivj= 0. (4.77)
+For the case m{\geqslant}r, it holds that {\{}Av1, . . . ,Avr{\}}is a basis of an r-
+dimensional subspace of Rm.
+To complete the SVD construction, we need left-singular vectors that
+are ortho normal : We normalize the images of the right-singular vectors
+Aviand obtain
+ui:=Avi
+{\parallel}Avi{\parallel}=1{\sqrt{}}{\lambda}iAvi=1
+{\sigma}iAvi, (4.78)
+where the last equality was obtained from (4.75) and (4.76b), showing
+us that the eigenvalues of AA{\top}are such that {\sigma}2
+i={\lambda}i.
+Therefore, the eigenvectors of A{\top}A, which we know are the right-
+singular vectors vi, and their normalized images under A, the left-singular
+vectors ui, form two self-consistent ONBs that are connected through the
+singular value matrix {\Sigma}.
+Let us rearrange (4.78) to obtain the singular value equation singular value
+equation
+Avi={\sigma}iui, i= 1, . . . , r . (4.79)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.5 Singular Value Decomposition 125
+This equation closely resembles the eigenvalue equation (4.25), but the
+vectors on the left- and the right-hand sides are not the same.
+Forn {<} m , (4.79) holds only for i{\leqslant}n, but (4.79) says nothing about
+theuifori {>} n . However, we know by construction that they are or-
+thonormal. Conversely, for m {<} n , (4.79) holds only for i{\leqslant}m. Fori {>} m ,
+we have Avi=0and we still know that the viform an orthonormal set.
+This means that the SVD also supplies an orthonormal basis of the kernel
+(null space) of A, the set of vectors xwithAx=0(see Section 2.7.3).
+Concatenating the vias the columns of Vand the uias the columns of
+Uyields
+AV=U{\Sigma}, (4.80)
+where {\Sigma}has the same dimensions as Aand a diagonal structure for rows
+1, . . . , r . Hence, right-multiplying with V{\top}yields A=U{\Sigma}V{\top}, which is
+the SVD of A.
+Example 4.13 (Computing the SVD)
+Let us find the singular value decomposition of
+A=1 0 1
+{-}2 1 0
+. (4.81)
+The SVD requires us to compute the right-singular vectors vj, the singular
+values {\sigma}k, and the left-singular vectors ui.
+Step 1: Right-singular vectors as the eigenbasis of A{\top}A.
+We start by computing
+A{\top}A=
+1{-}2
+0 1
+1 0
+1 0 1
+{-}2 1 0
+=
+5{-}2 1
+{-}2 1 0
+1 0 1
+. (4.82)
+We compute the singular values and right-singular vectors vjthrough
+the eigenvalue decomposition of A{\top}A, which is given as
+A{\top}A=
+5{\sqrt{}}
+300{-}1{\sqrt{}}
+6
+{-}2{\sqrt{}}
+301{\sqrt{}}
+5{-}2{\sqrt{}}
+6
+1{\sqrt{}}
+302{\sqrt{}}
+51{\sqrt{}}
+6
+
+6 0 0
+0 1 0
+0 0 0
+
+5{\sqrt{}}
+30{-}2{\sqrt{}}
+301{\sqrt{}}
+30
+01{\sqrt{}}
+52{\sqrt{}}
+5
+{-}1{\sqrt{}}
+6{-}2{\sqrt{}}
+61{\sqrt{}}
+6
+=PDP{\top},
+(4.83)
+and we obtain the right-singular vectors as the columns of Pso that
+V=P=
+5{\sqrt{}}
+300{-}1{\sqrt{}}
+6
+{-}2{\sqrt{}}
+301{\sqrt{}}
+5{-}2{\sqrt{}}
+6
+1{\sqrt{}}
+302{\sqrt{}}
+51{\sqrt{}}
+6
+. (4.84)
+Step 2: Singular-value matrix.
+As the singular values {\sigma}iare the square roots of the eigenvalues of
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+126 Matrix Decompositions
+A{\top}Awe obtain them straight from D. Since rk(A) = 2 , there are only
+two nonzero singular values: {\sigma}1={\sqrt{}}
+6and{\sigma}2= 1. The singular value
+matrix must be the same size as A, and we obtain
+{\Sigma}={\sqrt{}}
+6 0 0
+0 1 0
+. (4.85)
+Step 3: Left-singular vectors as the normalized image of the right-
+singular vectors.
+We find the left-singular vectors by computing the image of the right-
+singular vectors under Aand normalizing them by dividing them by their
+corresponding singular value. We obtain
+u1=1
+{\sigma}1Av1=1{\sqrt{}}
+61 0 1
+{-}2 1 0
+5{\sqrt{}}
+30
+{-}2{\sqrt{}}
+30
+1{\sqrt{}}
+30
+={''}
+1{\sqrt{}}
+5
+{-}2{\sqrt{}}
+5{\#}
+, (4.86)
+u2=1
+{\sigma}2Av2=1
+11 0 1
+{-}2 1 0
+0
+1{\sqrt{}}
+5
+2{\sqrt{}}
+5
+={''}
+2{\sqrt{}}
+5
+1{\sqrt{}}
+5{\#}
+, (4.87)
+U= [u1,u2] =1{\sqrt{}}
+51 2
+{-}2 1
+. (4.88)
+Note that on a computer the approach illustrated here has poor numerical
+behavior, and the SVD of Ais normally computed without resorting to the
+eigenvalue decomposition of A{\top}A.
+4.5.3 Eigenvalue Decomposition vs. Singular Value Decomposition
+Let us consider the eigendecomposition A=PDP{-}1and the SVD A=
+U{\Sigma}V{\top}and review the core elements of the past sections.
+The SVD always exists for any matrix Rm{\texttimes}n. The eigendecomposition is
+only defined for square matrices Rn{\texttimes}nand only exists if we can find a
+basis of eigenvectors of Rn.
+The vectors in the eigendecomposition matrix Pare not necessarily
+orthogonal, i.e., the change of basis is not a simple rotation and scaling.
+On the other hand, the vectors in the matrices UandVin the SVD are
+orthonormal, so they do represent rotations.
+Both the eigendecomposition and the SVD are compositions of three
+linear mappings:
+1. Change of basis in the domain
+2. Independent scaling of each new basis vector and mapping from do-
+main to codomain
+3. Change of basis in the codomain
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.5 Singular Value Decomposition 127
+Figure 4.10 Movie
+ratings of three
+people for four
+movies and its SVD
+decomposition. 5 4 1
+5 5 0
+0 0 5
+1 0 4
+
+Ali
+Beatrix
+Chandra
+Star Wars
+Blade Runner
+Amelie
+Delicatessen={-}0.6710 0.0236 0.4647 {-}0.5774
+{-}0.7197 0.2054 {-}0.4759 0.4619
+{-}0.0939 {-}0.7705 {-}0.5268 {-}0.3464
+{-}0.1515 {-}0.6030 0.5293 {-}0.5774
+
+
+9.6438 0 0
+06.3639 0
+0 00.7056
+0 0 0
+
+
+{-}0.7367 {-}0.6515 {-}0.1811
+0.0852 0.1762 {-}0.9807
+0.6708 {-}0.7379 {-}0.0743
+
+
+A key difference between the eigendecomposition and the SVD is that
+in the SVD, domain and codomain can be vector spaces of different
+dimensions.
+In the SVD, the left- and right-singular vector matrices UandVare
+generally not inverse of each other (they perform basis changes in dif-
+ferent vector spaces). In the eigendecomposition, the basis change ma-
+tricesPandP{-}1are inverses of each other.
+In the SVD, the entries in the diagonal matrix {\Sigma}are all real and non-
+negative, which is not generally true for the diagonal matrix in the
+eigendecomposition.
+The SVD and the eigendecomposition are closely related through their
+projections
+{\textendash}The left-singular vectors of Aare eigenvectors of AA{\top}
+{\textendash}The right-singular vectors of Aare eigenvectors of A{\top}A.
+{\textendash}The nonzero singular values of Aare the square roots of the nonzero
+eigenvalues of both AA{\top}andA{\top}A.
+For symmetric matrices A{\in}Rn{\texttimes}n, the eigenvalue decomposition and
+the SVD are one and the same, which follows from the spectral theo-
+rem 4.15.
+Example 4.14 (Finding Structure in Movie Ratings and Consumers)
+Let us add a practical interpretation of the SVD by analyzing data on
+people and their preferred movies. Consider three viewers (Ali, Beatrix,
+Chandra) rating four different movies ( Star Wars ,Blade Runner ,Amelie ,
+Delicatessen ). Their ratings are values between 0(worst) and 5(best) and
+encoded in a data matrix A{\in}R4{\texttimes}3as shown in Figure 4.10. Each row
+represents a movie and each column a user. Thus, the column vectors of
+movie ratings, one for each viewer, are xAli,xBeatrix ,xChandra .
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+128 Matrix Decompositions
+Factoring Ausing the SVD offers us a way to capture the relationships
+of how people rate movies, and especially if there is a structure linking
+which people like which movies. Applying the SVD to our data matrix A
+makes a number of assumptions:
+1. All viewers rate movies consistently using the same linear mapping.
+2. There are no errors or noise in the ratings.
+3. We interpret the left-singular vectors uias stereotypical movies and
+the right-singular vectors vjas stereotypical viewers.
+We then make the assumption that any viewer`s specific movie preferences
+can be expressed as a linear combination of the vj. Similarly, any movie`s
+like-ability can be expressed as a linear combination of the ui. Therefore,
+a vector in the domain of the SVD can be interpreted as a viewer in the
+{\textquotedblleft}space{\textquotedblright} of stereotypical viewers, and a vector in the codomain of the SVD
+correspondingly as a movie in the {\textquotedblleft}space{\textquotedblright} of stereotypical movies. Let us These two {\textquotedblleft}spaces{\textquotedblright}
+are only
+meaningfully
+spanned by the
+respective viewer
+and movie data if
+the data itself covers
+a sufficient diversity
+of viewers and
+movies.inspect the SVD of our movie-user matrix. The first left-singular vector u1
+has large absolute values for the two science fiction movies and a large
+first singular value (red shading in Figure 4.10). Thus, this groups a type
+of users with a specific set of movies (science fiction theme). Similarly, the
+first right-singular v1shows large absolute values for Ali and Beatrix, who
+give high ratings to science fiction movies (green shading in Figure 4.10).
+This suggests that v1reflects the notion of a science fiction lover.
+Similarly, u2, seems to capture a French art house film theme, and v2in-
+dicates that Chandra is close to an idealized lover of such movies. An ide-
+alized science fiction lover is a purist and only loves science fiction movies,
+so a science fiction lover v1gives a rating of zero to everything but science
+fiction themed{\textemdash}this logic is implied by the diagonal substructure for the
+singular value matrix {\Sigma}. A specific movie is therefore represented by how
+it decomposes (linearly) into its stereotypical movies. Likewise, a person
+would be represented by how they decompose (via linear combination)
+into movie themes.
+It is worth to briefly discuss SVD terminology and conventions, as there
+are different versions used in the literature. While these differences can
+be confusing, the mathematics remains invariant to them.
+For convenience in notation and abstraction, we use an SVD notation
+where the SVD is described as having two square left- and right-singular
+vector matrices, but a non-square singular value matrix. Our defini-
+tion (4.64) for the SVD is sometimes called the full SVD . full SVD
+Some authors define the SVD a bit differently and focus on square sin-
+gular matrices. Then, for A{\in}Rm{\texttimes}nandm{\geqslant}n,
+A
+m{\texttimes}n=U
+m{\texttimes}n{\Sigma}
+n{\texttimes}nV{\top}
+n{\texttimes}n. (4.89)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+4.6 Matrix Approximation 129
+Sometimes this formulation is called the reduced SVD (e.g., Datta (2010)) reduced SVD
+ortheSVD (e.g., Press et al. (2007)). This alternative format changes
+merely how the matrices are constructed but leaves the mathematical
+structure of the SVD unchanged. The convenience of this alternative
+formulation is that {\Sigma}is diagonal, as in the eigenvalue decomposition.
+In Section 4.6, we will learn about matrix approximation techniques
+using the SVD, which is also called the truncated SVD . truncated SVD
+It is possible to define the SVD of a rank- rmatrix Aso that Uis an
+m{\texttimes}rmatrix, {\Sigma}a diagonal matrix r{\texttimes}r, and Vanr{\texttimes}nmatrix.
+This construction is very similar to our definition, and ensures that the
+diagonal matrix {\Sigma}has only nonzero entries along the diagonal. The
+main convenience of this alternative notation is that {\Sigma}is diagonal, as
+in the eigenvalue decomposition.
+A restriction that the SVD for Aonly applies to m{\texttimes}nmatrices with
+m {>} n is practically unnecessary. When m {<} n , the SVD decomposition
+will yield {\Sigma}with more zero columns than rows and, consequently, the
+singular values {\sigma}m+1, . . . , {\sigma} nare0.
+The SVD is used in a variety of applications in machine learning from
+least-squares problems in curve fitting to solving systems of linear equa-
+tions. These applications harness various important properties of the SVD,
+its relation to the rank of a matrix, and its ability to approximate matrices
+of a given rank with lower-rank matrices. Substituting a matrix with its
+SVD has often the advantage of making calculation more robust to nu-
+merical rounding errors. As we will explore in the next section, the SVD`s
+ability to approximate matrices with {\textquotedblleft}simpler{\textquotedblright} matrices in a principled
+manner opens up machine learning applications ranging from dimension-
+ality reduction and topic modeling to data compression and clustering.
+4.6 Matrix Approximation
+We considered the SVD as a way to factorize A=U{\Sigma}V{\top}{\in}Rm{\texttimes}ninto
+the product of three matrices, where U{\in}Rm{\texttimes}mandV{\in}Rn{\texttimes}nare or-
+thogonal and {\Sigma}contains the singular values on its main diagonal. Instead
+of doing the full SVD factorization, we will now investigate how the SVD
+allows us to represent a matrix Aas a sum of simpler (low-rank) matrices
+Ai, which lends itself to a matrix approximation scheme that is cheaper
+to compute than the full SVD.
+We construct a rank- 1matrix Ai{\in}Rm{\texttimes}nas
+Ai:=uiv{\top}
+i, (4.90)
+which is formed by the outer product of the ith orthogonal column vector
+ofUandV. Figure 4.11 shows an image of Stonehenge, which can be
+represented by a matrix A{\in}R1432{\texttimes}1910, and some outer products Ai, as
+defined in (4.90).
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).

@@ -1,0 +1,368 @@
+3.1 Norms 71
+Figure 3.3 For
+different norms, the
+red lines indicate
+the set of vectors
+with norm 1. Left:
+Manhattan norm;
+Right: Euclidean
+distance.
+1
+1
+1
+1
+{\parallel}x{\parallel}1= 1
+{\parallel}x{\parallel}2= 1
+3.1 Norms
+When we think of geometric vectors, i.e., directed line segments that start
+at the origin, then intuitively the length of a vector is the distance of the
+{\textquotedblleft}end{\textquotedblright} of this directed line segment from the origin. In the following, we
+will discuss the notion of the length of vectors using the concept of a norm.
+Definition 3.1 (Norm) .Anorm on a vector space Vis a function norm
+{\parallel} {\textperiodcentered} {\parallel}:V{\textrightarrow}R, (3.1)
+x7{\textrightarrow} {\parallel}x{\parallel}, (3.2)
+which assigns each vector xitslength {\parallel}x{\parallel} {\in}R, such that for all {\lambda}{\in}R length
+andx,y{\in}Vthe following hold:
+absolutely
+homogeneous Absolutely homogeneous: {\parallel}{\lambda}x{\parallel}=|{\lambda}|{\parallel}x{\parallel}
+triangle inequality Triangle inequality: {\parallel}x+y{\parallel}{\leqslant}{\parallel}x{\parallel}+{\parallel}y{\parallel}
+positive definite Positive definite: {\parallel}x{\parallel}{\geqslant}0and{\parallel}x{\parallel}= 0{\Leftarrow}{\Rightarrow}x=0
+Figure 3.2 Triangle
+inequality.
+a
+b
+c{\leq}a+b In geometric terms, the triangle inequality states that for any triangle,
+the sum of the lengths of any two sides must be greater than or equal
+to the length of the remaining side; see Figure 3.2 for an illustration.
+Definition 3.1 is in terms of a general vector space V(Section 2.4), but
+in this book we will only consider a finite-dimensional vector space Rn.
+Recall that for a vector x{\in}Rnwe denote the elements of the vector using
+a subscript, that is, xiis the ithelement of the vector x.
+Example 3.1 (Manhattan Norm)
+The Manhattan norm onRnis defined for x{\in}Rnas Manhattan norm
+{\parallel}x{\parallel}1:=nX
+i=1|xi|, (3.3)
+where | {\textperiodcentered} |is the absolute value. The left panel of Figure 3.3 shows all
+vectors x{\in}R2with{\parallel}x{\parallel}1= 1. The Manhattan norm is also called {\ell}1{\ell}1norm
+norm .
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+72 Analytic Geometry
+Example 3.2 (Euclidean Norm)
+The Euclidean norm ofx{\in}Rnis defined as Euclidean norm
+{\parallel}x{\parallel}2:=vuutnX
+i=1x2
+i={\sqrt{}}
+x{\top}x (3.4)
+and computes the Euclidean distance ofxfrom the origin. The right panel Euclidean distance
+of Figure 3.3 shows all vectors x{\in}R2with{\parallel}x{\parallel}2= 1. The Euclidean
+norm is also called {\ell}2norm . {\ell}2norm
+Remark. Throughout this book, we will use the Euclidean norm (3.4) by
+default if not stated otherwise. {\diamond}
+3.2 Inner Products
+Inner products allow for the introduction of intuitive geometrical con-
+cepts, such as the length of a vector and the angle or distance between
+two vectors. A major purpose of inner products is to determine whether
+vectors are orthogonal to each other.
+3.2.1 Dot Product
+We may already be familiar with a particular type of inner product, the
+scalar product /dot product inRn, which is given by scalar product
+dot product
+x{\top}y=nX
+i=1xiyi. (3.5)
+We will refer to this particular inner product as the dot product in this
+book. However, inner products are more general concepts with specific
+properties, which we will now introduce.
+3.2.2 General Inner Products
+Recall the linear mapping from Section 2.7, where we can rearrange the
+mapping with respect to addition and multiplication with a scalar. A bi- bilinear mapping
+linear mapping {\Omega}is a mapping with two arguments, and it is linear in
+each argument, i.e., when we look at a vector space Vthen it holds that
+for all x,y,z{\in}V, {\lambda}, {\psi} {\in}Rthat
+{\Omega}({\lambda}x+{\psi}y,z) ={\lambda}{\Omega}(x,z) +{\psi}{\Omega}(y,z) (3.6)
+{\Omega}(x, {\lambda}y+{\psi}z) ={\lambda}{\Omega}(x,y) +{\psi}{\Omega}(x,z). (3.7)
+Here, (3.6) asserts that {\Omega}is linear in the first argument, and (3.7) asserts
+that{\Omega}is linear in the second argument (see also (2.87)).
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+3.2 Inner Products 73
+Definition 3.2. LetVbe a vector space and {\Omega} :V{\texttimes}V{\textrightarrow}Rbe a bilinear
+mapping that takes two vectors and maps them onto a real number. Then
+{\Omega}is called symmetric if{\Omega}(x,y) = {\Omega}( y,x)for all x,y{\in}V, i.e., the symmetric
+order of the arguments does not matter.
+{\Omega}is called positive definite if positive definite
+{\forall}x{\in}V{\textbackslash}{\{}0{\}}: {\Omega}(x,x){>}0,{\Omega}(0,0) = 0 . (3.8)
+Definition 3.3. LetVbe a vector space and {\Omega} :V{\texttimes}V{\textrightarrow}Rbe a bilinear
+mapping that takes two vectors and maps them onto a real number. Then
+A positive definite, symmetric bilinear mapping {\Omega} :V{\texttimes}V{\textrightarrow}Ris called
+aninner product onV. We typically write {\langle}x,y{\rangle}instead of {\Omega}(x,y). inner product
+The pair (V,{\langle}{\textperiodcentered},{\textperiodcentered}{\rangle})is called an inner product space or (real) vector space inner product space
+vector space with
+inner productwith inner product . If we use the dot product defined in (3.5), we call
+(V,{\langle}{\textperiodcentered},{\textperiodcentered}{\rangle})aEuclidean vector space .
+Euclidean vector
+space We will refer to these spaces as inner product spaces in this book.
+Example 3.3 (Inner Product That Is Not the Dot Product)
+Consider V=R2. If we define
+{\langle}x,y{\rangle}:=x1y1{-}(x1y2+x2y1) + 2x2y2 (3.9)
+then{\langle}{\textperiodcentered},{\textperiodcentered}{\rangle}is an inner product but different from the dot product. The proof
+will be an exercise.
+3.2.3 Symmetric, Positive Definite Matrices
+Symmetric, positive definite matrices play an important role in machine
+learning, and they are defined via the inner product. In Section 4.3, we
+will return to symmetric, positive definite matrices in the context of matrix
+decompositions. The idea of symmetric positive semidefinite matrices is
+key in the definition of kernels (Section 12.4).
+Consider an n-dimensional vector space Vwith an inner product {\langle}{\textperiodcentered},{\textperiodcentered}{\rangle}:
+V{\texttimes}V{\textrightarrow}R(see Definition 3.3) and an ordered basis B= (b1, . . . ,bn)of
+V. Recall from Section 2.6.1 that any vectors x,y{\in}Vcan be written as
+linear combinations of the basis vectors so that x=Pn
+i=1{\psi}ibi{\in}Vand
+y=Pn
+j=1{\lambda}jbj{\in}Vfor suitable {\psi}i, {\lambda}j{\in}R. Due to the bilinearity of the
+inner product, it holds for all x,y{\in}Vthat
+{\langle}x,y{\rangle}=*nX
+i=1{\psi}ibi,nX
+j=1{\lambda}jbj+
+=nX
+i=1nX
+j=1{\psi}i{\langle}bi,bj{\rangle}{\lambda}j={\textasciicircum}x{\top}A{\textasciicircum}y,(3.10)
+where Aij:={\langle}bi,bj{\rangle}and{\textasciicircum}x,{\textasciicircum}yare the coordinates of xandywith respect
+to the basis B. This implies that the inner product {\langle}{\textperiodcentered},{\textperiodcentered}{\rangle}is uniquely deter-
+mined through A. The symmetry of the inner product also means that A
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+74 Analytic Geometry
+is symmetric. Furthermore, the positive definiteness of the inner product
+implies that
+{\forall}x{\in}V{\textbackslash}{\{}0{\}}:x{\top}Ax{>}0. (3.11)
+Definition 3.4 (Symmetric, Positive Definite Matrix) .A symmetric matrix
+A{\in}Rn{\texttimes}nthat satisfies (3.11) is called symmetric, positive definite , or symmetric, positive
+definite justpositive definite . If only {\geqslant}holds in (3.11), then Ais called symmetric,
+positive definite
+symmetric, positive
+semidefinitepositive semidefinite .
+Example 3.4 (Symmetric, Positive Definite Matrices)
+Consider the matrices
+A1=9 6
+6 5
+,A2=9 6
+6 3
+. (3.12)
+A1is positive definite because it is symmetric and
+x{\top}A1x=x1x29 6
+6 5x1
+x2
+(3.13a)
+= 9x2
+1+ 12x1x2+ 5x2
+2= (3x1+ 2x2)2+x2
+2{>}0 (3.13b)
+for all x{\in}V{\textbackslash}{\{}0{\}}. In contrast, A2is symmetric but not positive definite
+because x{\top}A2x= 9x2
+1+ 12x1x2+ 3x2
+2= (3x1+ 2x2)2{-}x2
+2can be less
+than 0, e.g., for x= [2,{-}3]{\top}.
+IfA{\in}Rn{\texttimes}nis symmetric, positive definite, then
+{\langle}x,y{\rangle}={\textasciicircum}x{\top}A{\textasciicircum}y (3.14)
+defines an inner product with respect to an ordered basis B, where {\textasciicircum}xand
+{\textasciicircum}yare the coordinate representations of x,y{\in}Vwith respect to B.
+Theorem 3.5. For a real-valued, finite-dimensional vector space Vand an
+ordered basis BofV, it holds that {\langle}{\textperiodcentered},{\textperiodcentered}{\rangle}:V{\texttimes}V{\textrightarrow}Ris an inner product if
+and only if there exists a symmetric, positive definite matrix A{\in}Rn{\texttimes}nwith
+{\langle}x,y{\rangle}={\textasciicircum}x{\top}A{\textasciicircum}y. (3.15)
+The following properties hold if A{\in}Rn{\texttimes}nis symmetric and positive
+definite:
+The null space (kernel) of Aconsists only of 0because x{\top}Ax{>}0for
+allx=0. This implies that Ax=0ifx=0.
+The diagonal elements aiiofAare positive because aii=e{\top}
+iAei{>}0,
+where eiis the ith vector of the standard basis in Rn.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+3.3 Lengths and Distances 75
+3.3 Lengths and Distances
+In Section 3.1, we already discussed norms that we can use to compute
+the length of a vector. Inner products and norms are closely related in the
+sense that any inner product induces a norm Inner products
+induce norms.
+{\parallel}x{\parallel}:=q
+{\langle}x,x{\rangle} (3.16)
+in a natural way, such that we can compute lengths of vectors using the in-
+ner product. However, not every norm is induced by an inner product. The
+Manhattan norm (3.3) is an example of a norm without a corresponding
+inner product. In the following, we will focus on norms that are induced
+by inner products and introduce geometric concepts, such as lengths, dis-
+tances, and angles.
+Remark (Cauchy-Schwarz Inequality) .For an inner product vector space
+(V,{\langle}{\textperiodcentered},{\textperiodcentered}{\rangle})the induced norm {\parallel} {\textperiodcentered} {\parallel}satisfies the Cauchy-Schwarz inequality Cauchy-Schwarz
+inequality
+|{\langle}x,y{\rangle}|{\leqslant}{\parallel}x{\parallel}{\parallel}y{\parallel}. (3.17)
+{\diamond}
+Example 3.5 (Lengths of Vectors Using Inner Products)
+In geometry, we are often interested in lengths of vectors. We can now use
+an inner product to compute them using (3.16). Let us take x= [1,1]{\top}{\in}
+R2. If we use the dot product as the inner product, with (3.16) we obtain
+{\parallel}x{\parallel}={\sqrt{}}
+x{\top}x={\sqrt{}}
+12+ 12={\sqrt{}}
+2 (3.18)
+as the length of x. Let us now choose a different inner product:
+{\langle}x,y{\rangle}:=x{\top}1{-}1
+2
+{-}1
+21
+y=x1y1{-}1
+2(x1y2+x2y1) +x2y2.(3.19)
+If we compute the norm of a vector, then this inner product returns smaller
+values than the dot product if x1andx2have the same sign (and x1x2{>}
+0); otherwise, it returns greater values than the dot product. With this
+inner product, we obtain
+{\langle}x,x{\rangle}=x2
+1{-}x1x2+x2
+2= 1{-}1 + 1 = 1 = {\Rightarrow} {\parallel}x{\parallel}={\sqrt{}}
+1 = 1 ,(3.20)
+such that xis {\textquotedblleft}shorter{\textquotedblright} with this inner product than with the dot product.
+Definition 3.6 (Distance and Metric) .Consider an inner product space
+(V,{\langle}{\textperiodcentered},{\textperiodcentered}{\rangle}). Then
+d(x,y) :={\parallel}x{-}y{\parallel}=q
+{\langle}x{-}y,x{-}y{\rangle} (3.21)
+is called the distance between xandyforx,y{\in}V. If we use the dot distance
+product as the inner product, then the distance is called Euclidean distance .Euclidean distance
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+76 Analytic Geometry
+The mapping
+d:V{\texttimes}V{\textrightarrow}R (3.22)
+(x,y)7{\textrightarrow}d(x,y) (3.23)
+is called a metric . metric
+Remark. Similar to the length of a vector, the distance between vectors
+does not require an inner product: a norm is sufficient. If we have a norm
+induced by an inner product, the distance may vary depending on the
+choice of the inner product. {\diamond}
+A metric dsatisfies the following:
+1.dispositive definite , i.e., d(x,y){\geqslant}0for all x,y{\in}Vandd(x,y) = positive definite
+0{\Leftarrow}{\Rightarrow}x=y.
+2.dissymmetric , i.e., d(x,y) =d(y,x)for all x,y{\in}V. symmetric
+triangle inequality 3.Triangle inequality: d(x,z){\leqslant}d(x,y) +d(y,z)for all x,y,z{\in}V.
+Remark. At first glance, the lists of properties of inner products and met-
+rics look very similar. However, by comparing Definition 3.3 with Defini-
+tion 3.6 we observe that {\langle}x,y{\rangle}andd(x,y)behave in opposite directions.
+Very similar xandywill result in a large value for the inner product and
+a small value for the metric. {\diamond}
+3.4 Angles and Orthogonality
+Figure 3.4 When
+restricted to [0, {\pi}]
+thenf({\omega}) = cos( {\omega})
+returns a unique
+number in the
+interval [{-}1,1].
+0{\pi}/2{\pi}
+{\omega}{-}101cos({\omega})In addition to enabling the definition of lengths of vectors, as well as the
+distance between two vectors, inner products also capture the geometry
+of a vector space by defining the angle {\omega}between two vectors. We use
+the Cauchy-Schwarz inequality (3.17) to define angles {\omega}in inner prod-
+uct spaces between two vectors x,y, and this notion coincides with our
+intuition in R2andR3. Assume that x=0,y=0. Then
+{-}1{\leqslant}{\langle}x,y{\rangle}
+{\parallel}x{\parallel}{\parallel}y{\parallel}{\leqslant}1. (3.24)
+Therefore, there exists a unique {\omega}{\in}[0, {\pi}], illustrated in Figure 3.4, with
+cos{\omega}={\langle}x,y{\rangle}
+{\parallel}x{\parallel}{\parallel}y{\parallel}. (3.25)
+The number {\omega}is the angle between the vectors xandy. Intuitively, the angle
+angle between two vectors tells us how similar their orientations are. For
+example, using the dot product, the angle between xandy= 4x, i.e.,y
+is a scaled version of x, is0: Their orientation is the same.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+3.4 Angles and Orthogonality 77
+Example 3.6 (Angle between Vectors)
+Let us compute the angle between x= [1,1]{\top}{\in}R2andy= [1,2]{\top}{\in}R2;Figure 3.5 The
+angle {\omega}between
+two vectors x,yis
+computed using the
+inner product.
+y
+x
+1 01
+{\omega}see Figure 3.5, where we use the dot product as the inner product. Then
+we get
+cos{\omega}={\langle}x,y{\rangle}p
+{\langle}x,x{\rangle}{\langle}y,y{\rangle}=x{\top}yp
+x{\top}xy{\top}y=3{\sqrt{}}
+10, (3.26)
+and the angle between the two vectors is arccos(3{\sqrt{}}
+10){\approx}0.32 rad , which
+corresponds to about 18{\textopenbullet}.
+A key feature of the inner product is that it also allows us to characterize
+vectors that are orthogonal.
+Definition 3.7 (Orthogonality) .Two vectors xandyareorthogonal if and orthogonal
+only if {\langle}x,y{\rangle}= 0, and we write x{\perp}y. If additionally {\parallel}x{\parallel}= 1 = {\parallel}y{\parallel},
+i.e., the vectors are unit vectors, then xandyareorthonormal . orthonormal
+An implication of this definition is that the 0-vector is orthogonal to
+every vector in the vector space.
+Remark. Orthogonality is the generalization of the concept of perpendic-
+ularity to bilinear forms that do not have to be the dot product. In our
+context, geometrically, we can think of orthogonal vectors as having a
+right angle with respect to a specific inner product. {\diamond}
+Example 3.7 (Orthogonal Vectors)
+Figure 3.6 The
+angle {\omega}between
+two vectors x,ycan
+change depending
+on the inner
+product.y x
+{-}1 1 01
+{\omega}
+Consider two vectors x= [1,1]{\top},y= [{-}1,1]{\top}{\in}R2; see Figure 3.6.
+We are interested in determining the angle {\omega}between them using two
+different inner products. Using the dot product as the inner product yields
+an angle {\omega}between xandyof90{\textopenbullet}, such that x{\perp}y. However, if we
+choose the inner product
+{\langle}x,y{\rangle}=x{\top}2 0
+0 1
+y, (3.27)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+78 Analytic Geometry
+we get that the angle {\omega}between xandyis given by
+cos{\omega}={\langle}x,y{\rangle}
+{\parallel}x{\parallel}{\parallel}y{\parallel}={-}1
+3={\Rightarrow}{\omega}{\approx}1.91 rad {\approx}109.5{\textopenbullet}, (3.28)
+andxandyare not orthogonal. Therefore, vectors that are orthogonal
+with respect to one inner product do not have to be orthogonal with re-
+spect to a different inner product.
+Definition 3.8 (Orthogonal Matrix) .A square matrix A{\in}Rn{\texttimes}nis an
+orthogonal matrix if and only if its columns are orthonormal so that orthogonal matrix
+AA{\top}=I=A{\top}A, (3.29)
+which implies that
+A{-}1=A{\top}, (3.30)
+i.e., the inverse is obtained by simply transposing the matrix. It is convention to
+call these matrices
+{\textquotedblleft}orthogonal{\textquotedblright} but a
+more precise
+description would
+be {\textquotedblleft}orthonormal{\textquotedblright}.Transformations by orthogonal matrices are special because the length
+of a vector xis not changed when transforming it using an orthogonal
+matrix A. For the dot product, we obtain
+Transformations
+with orthogonal
+matrices preserve
+distances and
+angles.{\parallel}Ax{\parallel}2= (Ax){\top}(Ax) =x{\top}A{\top}Ax=x{\top}Ix=x{\top}x={\parallel}x{\parallel}2.(3.31)
+Moreover, the angle between any two vectors x,y, as measured by their
+inner product, is also unchanged when transforming both of them using
+an orthogonal matrix A. Assuming the dot product as the inner product,
+the angle of the images AxandAyis given as
+cos{\omega}=(Ax){\top}(Ay)
+{\parallel}Ax{\parallel}{\parallel}Ay{\parallel}=x{\top}A{\top}Ayq
+x{\top}A{\top}Axy{\top}A{\top}Ay=x{\top}y
+{\parallel}x{\parallel}{\parallel}y{\parallel},(3.32)
+which gives exactly the angle between xandy. This means that orthog-
+onal matrices AwithA{\top}=A{-}1preserve both angles and distances. It
+turns out that orthogonal matrices define transformations that are rota-
+tions (with the possibility of flips). In Section 3.9, we will discuss more
+details about rotations.
+3.5 Orthonormal Basis
+In Section 2.6.1, we characterized properties of basis vectors and found
+that in an n-dimensional vector space, we need nbasis vectors, i.e., n
+vectors that are linearly independent. In Sections 3.3 and 3.4, we used
+inner products to compute the length of vectors and the angle between
+vectors. In the following, we will discuss the special case where the basis
+vectors are orthogonal to each other and where the length of each basis
+vector is 1. We will call this basis then an orthonormal basis.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .

@@ -1,0 +1,448 @@
+6.5 Gaussian Distribution 197
+Figure 6.7
+Gaussian
+distribution of two
+random variables x1
+andx2.
+x1{-}101x2
+{-}5.0{-}2.50.02.55.07.5p(x1,x2)
+0.000.050.100.150.20
+from the preceding definition of inner products) to compare probability
+distributions, it is unfortunately not the best way to obtain distances be-
+tween distributions. Recall that the probability mass (or density) is posi-
+tive and needs to add up to 1. These constraints mean that distributions
+live on something called a statistical manifold. The study of this space of
+probability distributions is called information geometry. Computing dis-
+tances between distributions are often done using Kullback-Leibler diver-
+gence, which is a generalization of distances that account for properties of
+the statistical manifold. Just like the Euclidean distance is a special case of
+a metric (Section 3.3), the Kullback-Leibler divergence is a special case of
+two more general classes of divergences called Bregman divergences and
+f-divergences. The study of divergences is beyond the scope of this book,
+and we refer for more details to the recent book by Amari (2016), one of
+the founders of the field of information geometry. {\diamond}
+6.5 Gaussian Distribution
+The Gaussian distribution is the most well-studied probability distribution
+for continuous-valued random variables. It is also referred to as the normal normal distribution
+distribution . Its importance originates from the fact that it has many com- The Gaussian
+distribution arises
+naturally when we
+consider sums of
+independent and
+identically
+distributed random
+variables. This is
+known as the
+central limit
+theorem (Grinstead
+and Snell, 1997).putationally convenient properties, which we will be discussing in the fol-
+lowing. In particular, we will use it to define the likelihood and prior for
+linear regression (Chapter 9), and consider a mixture of Gaussians for
+density estimation (Chapter 11).
+There are many other areas of machine learning that also benefit from
+using a Gaussian distribution, for example Gaussian processes, variational
+inference, and reinforcement learning. It is also widely used in other ap-
+plication areas such as signal processing (e.g., Kalman filter), control (e.g.,
+linear quadratic regulator), and statistics (e.g., hypothesis testing).
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+198 Probability and Distributions
+Figure 6.8
+Gaussian
+distributions
+overlaid with 100
+samples. (a) One-
+dimensional case;
+(b) two-dimensional
+case.
+{-}5.0{-}2.5 0.0 2.5 5.0 7.5
+x0.000.050.100.150.20
+p(x)
+Mean
+Sample
+2{\sigma}
+(a) Univariate (one-dimensional) Gaussian;
+The red cross shows the mean and the red
+line shows the extent of the variance.
+{-}1 0 1
+x1{-}4{-}202468x2Mean
+Sample(b) Multivariate (two-dimensional) Gaus-
+sian, viewed from top. The red cross shows
+the mean and the colored lines show the con-
+tour lines of the density.
+For a univariate random variable, the Gaussian distribution has a den-
+sity that is given by
+p(x|{\textmu}, {\sigma}2) =1{\sqrt{}}
+2{\pi}{\sigma}2exp
+{-}(x{-}{\textmu})2
+2{\sigma}2
+. (6.62)
+The multivariate Gaussian distribution is fully characterized by a mean multivariate
+Gaussian
+distribution
+mean vectorvector {\textmu}and a covariance matrix {\Sigma}and defined as
+covariance matrixp(x|{\textmu},{\Sigma}) = (2 {\pi}){-}D
+2|{\Sigma}|{-}1
+2exp{-}1
+2(x{-}{\textmu}){\top}{\Sigma}{-}1(x{-}{\textmu}),(6.63)
+where x{\in}RD. We write p(x) =Nx|{\textmu},{\Sigma}
+orX{\sim} N{\textmu},{\Sigma}
+. Fig- Also known as a
+multivariate normal
+distribution.ure 6.7 shows a bivariate Gaussian (mesh), with the corresponding con-
+tour plot. Figure 6.8 shows a univariate Gaussian and a bivariate Gaussian
+with corresponding samples. The special case of the Gaussian with zero
+mean and identity covariance, that is, {\textmu}=0and{\Sigma}=I, is referred to as
+thestandard normal distribution . standard normal
+distribution Gaussians are widely used in statistical estimation and machine learn-
+ing as they have closed-form expressions for marginal and conditional dis-
+tributions. In Chapter 9, we use these closed-form expressions extensively
+for linear regression. A major advantage of modeling with Gaussian ran-
+dom variables is that variable transformations (Section 6.7) are often not
+needed. Since the Gaussian distribution is fully specified by its mean and
+covariance, we often can obtain the transformed distribution by applying
+the transformation to the mean and covariance of the random variable.
+6.5.1 Marginals and Conditionals of Gaussians are Gaussians
+In the following, we present marginalization and conditioning in the gen-
+eral case of multivariate random variables. If this is confusing at first read-
+ing, the reader is advised to consider two univariate random variables in-
+stead. Let XandYbe two multivariate random variables, that may have
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+6.5 Gaussian Distribution 199
+different dimensions. To consider the effect of applying the sum rule of
+probability and the effect of conditioning, we explicitly write the Gaus-
+sian distribution in terms of the concatenated states [x{\top},y{\top}],
+p(x,y) =N{\textmu}x
+{\textmu}y
+,{\Sigma}xx{\Sigma}xy
+{\Sigma}yx{\Sigma}yy
+. (6.64)
+where {\Sigma}xx= Cov[ x,x]and{\Sigma}yy= Cov[ y,y]are the marginal covari-
+ance matrices of xandy, respectively, and {\Sigma}xy= Cov[ x,y]is the cross-
+covariance matrix between xandy.
+The conditional distribution p(x|y)is also Gaussian (illustrated in Fig-
+ure 6.9(c)) and given by (derived in Section 2.3 of Bishop, 2006)
+p(x|y) =N{\textmu}x|y,{\Sigma}x|y
+(6.65)
+{\textmu}x|y={\textmu}x+{\Sigma}xy{\Sigma}{-}1
+yy(y{-}{\textmu}y) (6.66)
+{\Sigma}x|y={\Sigma}xx{-}{\Sigma}xy{\Sigma}{-}1
+yy{\Sigma}yx. (6.67)
+Note that in the computation of the mean in (6.66), the y-value is an
+observation and no longer random.
+Remark. The conditional Gaussian distribution shows up in many places,
+where we are interested in posterior distributions:
+The Kalman filter (Kalman, 1960), one of the most central algorithms
+for state estimation in signal processing, does nothing but computing
+Gaussian conditionals of joint distributions (Deisenroth and Ohlsson,
+2011; S {\textasciidieresis}arkk{\textasciidieresis}a, 2013).
+Gaussian processes (Rasmussen and Williams, 2006), which are a prac-
+tical implementation of a distribution over functions. In a Gaussian pro-
+cess, we make assumptions of joint Gaussianity of random variables. By
+(Gaussian) conditioning on observed data, we can determine a poste-
+rior distribution over functions.
+Latent linear Gaussian models (Roweis and Ghahramani, 1999; Mur-
+phy, 2012), which include probabilistic principal component analysis
+(PPCA) (Tipping and Bishop, 1999). We will look at PPCA in more de-
+tail in Section 10.7.
+{\diamond}
+The marginal distribution p(x)of a joint Gaussian distribution p(x,y)
+(see (6.64)) is itself Gaussian and computed by applying the sum rule
+(6.20) and given by
+p(x) =Z
+p(x,y)dy=Nx|{\textmu}x,{\Sigma}xx. (6.68)
+The corresponding result holds for p(y), which is obtained by marginaliz-
+ing with respect to x. Intuitively, looking at the joint distribution in (6.64),
+we ignore (i.e., integrate out) everything we are not interested in. This is
+illustrated in Figure 6.9(b).
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+200 Probability and Distributions
+Example 6.6
+Figure 6.9
+(a) Bivariate
+Gaussian;
+(b) marginal of a
+joint Gaussian
+distribution is
+Gaussian; (c) the
+conditional
+distribution of a
+Gaussian is also
+Gaussian.
+{-}1 0 1
+x1{-}4{-}202468x2
+x2={-}1
+(a) Bivariate Gaussian.
+{-}1.5{-}1.0{-}0.5 0.0 0.5 1.0 1.5
+x10.00.20.40.6p(x1)
+Mean
+2{\sigma}
+(b) Marginal distribution.
+{-}1.5{-}1.0{-}0.5 0.0 0.5 1.0 1.5
+x10.00.20.40.60.81.01.2p(x1|x2={-}1)
+Mean
+2{\sigma} (c) Conditional distribution.
+Consider the bivariate Gaussian distribution (illustrated in Figure 6.9):
+p(x1, x2) =N0
+2
+,0.3{-}1
+{-}1 5
+. (6.69)
+We can compute the parameters of the univariate Gaussian, conditioned
+onx2={-}1, by applying (6.66) and (6.67) to obtain the mean and vari-
+ance respectively. Numerically, this is
+{\textmu}x1|x2={-}1= 0 + ( {-}1){\textperiodcentered}0.2{\textperiodcentered}({-}1{-}2) = 0 .6 (6.70)
+and
+{\sigma}2
+x1|x2={-}1= 0.3{-}({-}1){\textperiodcentered}0.2{\textperiodcentered}({-}1) = 0 .1. (6.71)
+Therefore, the conditional Gaussian is given by
+p(x1|x2={-}1) =N0.6,0.1. (6.72)
+The marginal distribution p(x1), in contrast, can be obtained by apply-
+ing (6.68), which is essentially using the mean and variance of the random
+variable x1, giving us
+p(x1) =N0,0.3. (6.73)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+6.5 Gaussian Distribution 201
+6.5.2 Product of Gaussian Densities
+For linear regression (Chapter 9), we need to compute a Gaussian likeli-
+hood. Furthermore, we may wish to assume a Gaussian prior (Section 9.3).
+We apply Bayes` Theorem to compute the posterior, which results in a mul-
+tiplication of the likelihood and the prior, that is, the multiplication of two
+Gaussian densities. The product of two Gaussians Nx|a,ANx|b,B
+The derivation is an
+exercise at the end
+of this chapter.is a Gaussian distribution scaled by a c{\in}R, given by cNx|c,C
+with
+C= (A{-}1+B{-}1){-}1(6.74)
+c=C(A{-}1a+B{-}1b) (6.75)
+c= (2{\pi}){-}D
+2|A+B|{-}1
+2exp{-}1
+2(a{-}b){\top}(A+B){-}1(a{-}b).(6.76)
+The scaling constant citself can be written in the form of a Gaussian
+density either in aor inbwith an {\textquotedblleft}inflated{\textquotedblright} covariance matrix A+B,
+i.e.,c=Na|b,A+B=Nb|a,A+B
+.
+Remark. For notation convenience, we will sometimes use Nx|m,S
+to describe the functional form of a Gaussian density even if xis not a
+random variable. We have just done this in the preceding demonstration
+when we wrote
+c=Na|b,A+B=Nb|a,A+B. (6.77)
+Here, neither anorbare random variables. However, writing cin this way
+is more compact than (6.76). {\diamond}
+6.5.3 Sums and Linear Transformations
+IfX, Y are independent Gaussian random variables (i.e., the joint distri-
+bution is given as p(x,y) =p(x)p(y)) with p(x) =Nx|{\textmu}x,{\Sigma}x
+and
+p(y) =Ny|{\textmu}y,{\Sigma}y
+, then x+yis also Gaussian distributed and given
+by
+p(x+y) =N{\textmu}x+{\textmu}y,{\Sigma}x+{\Sigma}y. (6.78)
+Knowing that p(x+y)is Gaussian, the mean and covariance matrix can
+be determined immediately using the results from (6.46) through (6.49).
+This property will be important when we consider i.i.d. Gaussian noise
+acting on random variables, as is the case for linear regression (Chap-
+ter 9).
+Example 6.7
+Since expectations are linear operations, we can obtain the weighted sum
+of independent Gaussian random variables
+p(ax+by) =Na{\textmu}x+b{\textmu}y, a2{\Sigma}x+b2{\Sigma}y. (6.79)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+202 Probability and Distributions
+Remark. A case that will be useful in Chapter 11 is the weighted sum of
+Gaussian densities. This is different from the weighted sum of Gaussian
+random variables. {\diamond}
+In Theorem 6.12, the random variable xis from a density that is a
+mixture of two densities p1(x)andp2(x), weighted by {\alpha}. The theorem can
+be generalized to the multivariate random variable case, since linearity of
+expectations holds also for multivariate random variables. However, the
+idea of a squared random variable needs to be replaced by xx{\top}.
+Theorem 6.12. Consider a mixture of two univariate Gaussian densities
+p(x) ={\alpha}p1(x) + (1 {-}{\alpha})p2(x), (6.80)
+where the scalar 0{<} {\alpha} {<} 1is the mixture weight, and p1(x)andp2(x)are
+univariate Gaussian densities (Equation (6.62) ) with different parameters,
+i.e.,({\textmu}1, {\sigma}2
+1)= ({\textmu}2, {\sigma}2
+2).
+Then the mean of the mixture density p(x)is given by the weighted sum
+of the means of each random variable:
+E[x] ={\alpha}{\textmu}1+ (1{-}{\alpha}){\textmu}2. (6.81)
+The variance of the mixture density p(x)is given by
+V[x] ={\alpha}{\sigma}2
+1+ (1{-}{\alpha}){\sigma}2
+2+{\alpha}{\textmu}2
+1+ (1{-}{\alpha}){\textmu}2
+2{-}[{\alpha}{\textmu}1+ (1{-}{\alpha}){\textmu}2]2
+.
+(6.82)
+Proof The mean of the mixture density p(x)is given by the weighted
+sum of the means of each random variable. We apply the definition of the
+mean (Definition 6.4), and plug in our mixture (6.80), which yields
+E[x] =Z{\infty}
+{-}{\infty}xp(x)dx (6.83a)
+=Z{\infty}
+{-}{\infty}({\alpha}xp 1(x) + (1 {-}{\alpha})xp2(x)) dx (6.83b)
+={\alpha}Z{\infty}
+{-}{\infty}xp1(x)dx+ (1{-}{\alpha})Z{\infty}
+{-}{\infty}xp2(x)dx (6.83c)
+={\alpha}{\textmu}1+ (1{-}{\alpha}){\textmu}2. (6.83d)
+To compute the variance, we can use the raw-score version of the vari-
+ance from (6.44), which requires an expression of the expectation of the
+squared random variable. Here we use the definition of an expectation of
+a function (the square) of a random variable (Definition 6.3),
+E[x2] =Z{\infty}
+{-}{\infty}x2p(x)dx (6.84a)
+=Z{\infty}
+{-}{\infty}{\alpha}x2p1(x) + (1 {-}{\alpha})x2p2(x)dx (6.84b)
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+6.5 Gaussian Distribution 203
+={\alpha}Z{\infty}
+{-}{\infty}x2p1(x)dx+ (1{-}{\alpha})Z{\infty}
+{-}{\infty}x2p2(x)dx (6.84c)
+={\alpha}({\textmu}2
+1+{\sigma}2
+1) + (1 {-}{\alpha})({\textmu}2
+2+{\sigma}2
+2), (6.84d)
+where in the last equality, we again used the raw-score version of the
+variance (6.44) giving {\sigma}2=E[x2]{-}{\textmu}2. This is rearranged such that the
+expectation of a squared random variable is the sum of the squared mean
+and the variance.
+Therefore, the variance is given by subtracting (6.83d) from (6.84d),
+V[x] =E[x2]{-}(E[x])2(6.85a)
+={\alpha}({\textmu}2
+1+{\sigma}2
+1) + (1 {-}{\alpha})({\textmu}2
+2+{\sigma}2
+2){-}({\alpha}{\textmu}1+ (1{-}{\alpha}){\textmu}2)2(6.85b)
+={\alpha}{\sigma}2
+1+ (1{-}{\alpha}){\sigma}2
+2
++{\alpha}{\textmu}2
+1+ (1{-}{\alpha}){\textmu}2
+2{-}[{\alpha}{\textmu}1+ (1{-}{\alpha}){\textmu}2]2
+. (6.85c)
+Remark. The preceding derivation holds for any density, but since the
+Gaussian is fully determined by the mean and variance, the mixture den-
+sity can be determined in closed form. {\diamond}
+For a mixture density, the individual components can be considered
+to be conditional distributions (conditioned on the component identity).
+Equation (6.85c) is an example of the conditional variance formula, also
+known as the law of total variance , which generally states that for two ran- law of total variance
+dom variables XandYit holds that VX[x] =EY[VX[x|y]]+VY[EX[x|y]],
+i.e., the (total) variance of Xis the expected conditional variance plus the
+variance of a conditional mean.
+We consider in Example 6.17 a bivariate standard Gaussian random
+variable Xand performed a linear transformation Axon it. The outcome
+is a Gaussian random variable with mean zero and covariance AA{\top}. Ob-
+serve that adding a constant vector will change the mean of the distribu-
+tion, without affecting its variance, that is, the random variable x+{\textmu}is
+Gaussian with mean {\textmu}and identity covariance. Hence, any linear/affine
+transformation of a Gaussian random variable is Gaussian distributed. Any linear/affine
+transformation of a
+Gaussian random
+variable is also
+Gaussian
+distributed.Consider a Gaussian distributed random variable X{\sim} N{\textmu},{\Sigma}
+. For
+a given matrix Aof appropriate shape, let Ybe a random variable such
+thaty=Axis a transformed version of x. We can compute the mean of
+yby exploiting that the expectation is a linear operator (6.50) as follows:
+E[y] =E[Ax] =AE[x] =A{\textmu}. (6.86)
+Similarly the variance of ycan be found by using (6.51):
+V[y] =V[Ax] =AV[x]A{\top}=A{\Sigma}A{\top}. (6.87)
+This means that the random variable yis distributed according to
+p(y) =Ny|A{\textmu},A{\Sigma}A{\top}. (6.88)
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).
+204 Probability and Distributions
+Let us now consider the reverse transformation: when we know that a
+random variable has a mean that is a linear transformation of another
+random variable. For a given full rank matrix A{\in}RM{\texttimes}N, where M{\geqslant}N,
+lety{\in}RMbe a Gaussian random variable with mean Ax, i.e.,
+p(y) =Ny|Ax,{\Sigma}. (6.89)
+What is the corresponding probability distribution p(x)? IfAis invert-
+ible, then we can write x=A{-}1yand apply the transformation in the
+previous paragraph. However, in general Ais not invertible, and we use
+an approach similar to that of the pseudo-inverse (3.57). That is, we pre-
+multiply both sides with A{\top}and then invert A{\top}A, which is symmetric
+and positive definite, giving us the relation
+y=Ax{\Leftarrow}{\Rightarrow} (A{\top}A){-}1A{\top}y=x. (6.90)
+Hence, xis a linear transformation of y, and we obtain
+p(x) =Nx|(A{\top}A){-}1A{\top}y,(A{\top}A){-}1A{\top}{\Sigma}A(A{\top}A){-}1.(6.91)
+6.5.4 Sampling from Multivariate Gaussian Distributions
+We will not explain the subtleties of random sampling on a computer, and
+the interested reader is referred to Gentle (2004). In the case of a mul-
+tivariate Gaussian, this process consists of three stages: first, we need a
+source of pseudo-random numbers that provide a uniform sample in the
+interval [0,1]; second, we use a non-linear transformation such as the
+Box-M {\textasciidieresis}uller transform (Devroye, 1986) to obtain a sample from a univari-
+ate Gaussian; and third, we collate a vector of these samples to obtain a
+sample from a multivariate standard normal N0,I
+.
+For a general multivariate Gaussian, that is, where the mean is non
+zero and the covariance is not the identity matrix, we use the proper-
+ties of linear transformations of a Gaussian random variable. Assume we
+are interested in generating samples xi, i= 1, . . . , n, from a multivariate
+Gaussian distribution with mean {\textmu}and covariance matrix {\Sigma}. We would To compute the
+Cholesky
+factorization of a
+matrix, it is required
+that the matrix is
+symmetric and
+positive definite
+(Section 3.2.3).
+Covariance matrices
+possess this
+property.like to construct the sample from a sampler that provides samples from
+the multivariate standard normal N0,I
+.
+To obtain samples from a multivariate normal N{\textmu},{\Sigma}
+, we can use
+the properties of a linear transformation of a Gaussian random variable:
+Ifx{\sim} N0,I
+, then y=Ax+{\textmu}, where AA{\top}={\Sigma}is Gaussian dis-
+tributed with mean {\textmu}and covariance matrix {\Sigma}. One convenient choice of
+Ais to use the Cholesky decomposition (Section 4.3) of the covariance
+matrix {\Sigma}=AA{\top}. The Cholesky decomposition has the benefit that Ais
+triangular, leading to efficient computation.
+Draft (2023-12-19) of {\textquotedblleft}Mathematics for Machine Learning{\textquotedblright}. Feedback: https://mml-book.com .
+6.6 Conjugacy and the Exponential Family 205
+6.6 Conjugacy and the Exponential Family
+Many of the probability distributions {\textquotedblleft}with names{\textquotedblright} that we find in statis-
+tics textbooks were discovered to model particular types of phenomena.
+For example, we have seen the Gaussian distribution in Section 6.5. The
+distributions are also related to each other in complex ways (Leemis and
+McQueston, 2008). For a beginner in the field, it can be overwhelming to
+figure out which distribution to use. In addition, many of these distribu-
+tions were discovered at a time that statistics and computation were done {\textquotedblleft}Computers{\textquotedblright} used to
+be a job description. by pencil and paper. It is natural to ask what are meaningful concepts
+in the computing age (Efron and Hastie, 2016). In the previous section,
+we saw that many of the operations required for inference can be conve-
+niently calculated when the distribution is Gaussian. It is worth recalling
+at this point the desiderata for manipulating probability distributions in
+the machine learning context:
+1. There is some {\textquotedblleft}closure property{\textquotedblright} when applying the rules of probability,
+e.g., Bayes` theorem. By closure, we mean that applying a particular
+operation returns an object of the same type.
+2. As we collect more data, we do not need more parameters to describe
+the distribution.
+3. Since we are interested in learning from data, we want parameter es-
+timation to behave nicely.
+It turns out that the class of distributions called the exponential family exponential family
+provides the right balance of generality while retaining favorable compu-
+tation and inference properties. Before we introduce the exponential fam-
+ily, let us see three more members of {\textquotedblleft}named{\textquotedblright} probability distributions,
+the Bernoulli (Example 6.8), Binomial (Example 6.9), and Beta (Exam-
+ple 6.10) distributions.
+Example 6.8
+The Bernoulli distribution is a distribution for a single binary random Bernoulli
+distribution variable Xwith state x{\in} {\{}0,1{\}}. It is governed by a single continuous pa-
+rameter {\textmu}{\in}[0,1]that represents the probability of X= 1. The Bernoulli
+distribution Ber ({\textmu})is defined as
+p(x|{\textmu}) ={\textmu}x(1{-}{\textmu})1{-}x, x{\in} {\{}0,1{\}}, (6.92)
+E[x] ={\textmu} , (6.93)
+V[x] ={\textmu}(1{-}{\textmu}), (6.94)
+where E[x]andV[x]are the mean and variance of the binary random
+variable X.
+An example where the Bernoulli distribution can be used is when we
+are interested in modeling the probability of {\textquotedblleft}heads{\textquotedblright} when flipping a coin.
+{\textcopyright}2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).

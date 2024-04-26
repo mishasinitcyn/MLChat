@@ -1,0 +1,6 @@
+pylatexenc
+langchain
+pypdf
+html2text
+dotenv
+tiktoken

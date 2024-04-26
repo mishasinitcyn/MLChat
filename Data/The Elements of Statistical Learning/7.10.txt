@@ -1,0 +1,330 @@
+7.10 Cross-Validation 241
+and worst possible model choices: min {\alpha}ErrT({\alpha}) and max {\alpha}ErrT({\alpha}). The
+boxplots show the distribution of the quantity
+100{\texttimes}ErrT({\textasciicircum}{\alpha}){-}min{\alpha}ErrT({\alpha})
+max{\alpha}ErrT({\alpha}){-}min{\alpha}ErrT({\alpha}),
+which represents the error in using the chosen model relativ e to the best
+model. For linear regression the model complexity was measu red by the
+number of features; as mentioned in Section 7.5, this undere stimates the
+df, since it does not chargefor the search for the best model of that size.
+This was also used for the VC dimension of the linear classifie r. Fork-
+nearest neighbors, we used the quantity N/k. Under an additive-error re-
+gression model, this can be justified as the exact effective de grees of free-
+dom (Exercise 7.6); we do not know if it corresponds to the VC d imen-
+sion. We used a1=a2= 1 for the constants in (7.46); the results for SRM
+changedwithdifferentconstants,andthischoicegavethemo stfavorablere-
+sults. We repeated the SRM selection using the alternative p ractical bound
+(7.47), and got almost identical results. For misclassifica tion error we used
+{\textasciicircum}{\sigma}{\varepsilon}2= [N/(N{-}d)]{\textperiodcentered}err({\alpha}) for the least restrictive model ( k= 5 for KNN,
+sincek= 1 results in zero training error). The AIC criterion seems t o work
+well in all four scenarios, despite the lack of theoretical s upport with 0{\textendash}1
+loss. BIC does nearly as well, while the performance of SRM is mixed.
+7.10 Cross-Validation
+Probably the simplest and most widely used method for estima ting predic-
+tion error is cross-validation. This method directly estim ates the expected
+extra-sample error Err = E[ L(Y,{\textasciicircum}f(X))], the average generalization error
+when the method {\textasciicircum}f(X) is applied to an independent test sample from the
+joint distribution of XandY. As mentioned earlier, we might hope that
+cross-validation estimates the conditional error, with th e training setT
+held fixed. But as we will see in Section 7.12, cross-validati on typically
+estimates well only the expected prediction error.
+7.10.1K-Fold Cross-Validation
+Ideally, if we had enough data, we would set aside a validatio n set and use
+it to assess the performance of our prediction model. Since d ata are often
+scarce, this is usually not possible. To finesse the problem, K-fold cross-
+validation uses part of the available data to fit the model, an d a different
+part to test it. We split the data into Kroughly equal-sized parts; for
+example, when K= 5, the scenario looks like this:
+242 7. Model Assessment and Selection
+Validation Train1 2 3 4 5
+Train Train Train
+For thekth part (third above), we fit the model to the other K{-}1 parts
+of the data, and calculate the prediction error of the fitted m odel when
+predicting the kth part of the data. We do this for k= 1,2,...,Kand
+combine the Kestimates of prediction error.
+Here are more details. Let {\kappa}:{\{}1,...,N{\}}{\mapsto}{\textrightarrow}{\{}1,...,K{\}}be an indexing
+function that indicates the partition to which observation iis allocated by
+the randomization. Denote by {\textasciicircum}f{-}k(x) the fitted function, computed with
+thekth part of the data removed. Then the cross-validation estim ate of
+prediction error is
+CV({\textasciicircum}f) =1
+NN{\sum}
+i=1L(yi,{\textasciicircum}f{-}{\kappa}(i)(xi)). (7.48)
+Typical choices of Kare 5 or 10 (see below). The case K=Nis known
+asleave-one-out cross-validation. In this case {\kappa}(i) =i, and for the ith
+observation the fit is computed using all the data except the ith.
+Given a set of models f(x,{\alpha}) indexed by a tuning parameter {\alpha}, denote
+by{\textasciicircum}f{-}k(x,{\alpha}) the{\alpha}th model fit with the kth part of the data removed. Then
+for this set of models we define
+CV({\textasciicircum}f,{\alpha}) =1
+NN{\sum}
+i=1L(yi,{\textasciicircum}f{-}{\kappa}(i)(xi,{\alpha})). (7.49)
+The function CV( {\textasciicircum}f,{\alpha}) provides an estimate of the test error curve, and we
+find the tuning parameter {\textasciicircum} {\alpha}that minimizes it. Our final chosen model is
+f(x,{\textasciicircum}{\alpha}), which we then fit to all the data.
+It is interesting to wonder about what quantity K-fold cross-validation
+estimates. With K= 5 or 10, we might guess that it estimates the ex-
+pected error Err, since the training sets in each fold are qui te different
+from the original training set. On the other hand, if K=Nwe might
+guess that cross-validation estimates the conditional err or Err T. It turns
+out that cross-validation only estimates effectively the av erage error Err,
+as discussed in Section 7.12.
+What value should we choose for K? WithK=N, the cross-validation
+estimator is approximately unbiased for the true (expected ) prediction er-
+ror, but can have high variance because the N{\textquotedblleft}training sets{\textquotedblright} are so similar
+to one another. The computational burden is also considerab le, requiring
+Napplications of the learning method. In certain special pro blems, this
+computation can be done quickly{\textemdash}see Exercises 7.3 and 5.13.
+7.10 Cross-Validation 243
+Size of Training Set1-Err
+0 50 100 150 2000.0 0.2 0.4 0.6 0.8
+FIGURE 7.8. Hypothetical learning curve for a classifier on a given task: a
+plot of1{-}Errversus the size of the training set N. With a dataset of 200
+observations, 5-fold cross-validation would use training sets of size 160, which
+would behave much like the full set. However, with a dataset of 50observations
+fivefold cross-validation would use training sets of size 40, and this would result
+in a considerable overestimate of prediction error.
+On the other hand, with K= 5 say, cross-validation has lower variance.
+But bias could be a problem, depending on how the performance of the
+learning method varies with the size of the training set. Fig ure 7.8 shows
+a hypothetical {\textquotedblleft}learning curve{\textquotedblright} for a classifier on a given ta sk, a plot of
+1{-}Err versus the size of the training set N. The performance of the
+classifier improves as the training set size increases to 100 observations;
+increasing the number further to 200 brings only a small bene fit. If our
+training set had 200 observations, fivefold cross-validati on would estimate
+the performance of our classifier over training sets of size 1 60, which from
+Figure 7.8 is virtually the same as the performance for train ing set size
+200. Thus cross-validation would not suffer from much bias. H owever if the
+training set had 50 observations, fivefold cross-validatio n would estimate
+the performance of our classifier over training sets of size 4 0, and from the
+figure that would be an underestimate of 1 {-}Err. Hence as an estimate of
+Err, cross-validation would be biased upward.
+To summarize, if the learning curve has a considerable slope at the given
+training set size, five- or tenfold cross-validation will ov erestimate the true
+prediction error. Whether this bias is a drawback in practic e depends on
+the objective. On the other hand, leave-one-out cross-vali dation has low
+bias but can have high variance. Overall, five- or tenfold cro ss-validation
+are recommended as a good compromise: see Breiman and Specto r (1992)
+and Kohavi (1995).
+Figure 7.9 shows the prediction error and tenfold cross-val idation curve
+estimated from a single training set, from the scenario in th e bottom right
+panel of Figure 7.3. This is a two-class classification probl em, using a lin-
+244 7. Model Assessment and Selection
+Subset Size pMisclassification Error
+5 10 15 200.0 0.1 0.2 0.3 0.4 0.5 0.6
+
+
+
+
+  
+
+
+
+
+
+      
+FIGURE 7.9. Prediction error (orange) and tenfold cross-validation curv e
+(blue) estimated from a single training set, from the scenario in the bottom right
+panel of Figure 7.3.
+ear model with best subsets regression of subset size p. Standard error bars
+are shown, which are the standard errors of the individual mi sclassification
+error rates for each of the ten parts. Both curves have minima atp= 10,
+although the CV curve is rather {fl}at beyond 10. Often a {\textquotedblleft}one-st andard
+error{\textquotedblright} rule is used with cross-validation, in which we choos e the most par-
+simonious model whose error is no more than one standard erro r above
+the error of the best model. Here it looks like a model with abo utp= 9
+predictors would be chosen, while the true model uses p= 10.
+Generalized cross-validation providesaconvenientapproximationtoleave-
+one out cross-validation, for linear fitting under squared- error loss. As de-
+fined in Section 7.6, a linear fitting method is one for which we can write
+{\textasciicircum}y=Sy. (7.50)
+Now for many linear fitting methods,
+1
+NN{\sum}
+i=1[yi{-}{\textasciicircum}f{-}i(xi)]2=1
+NN{\sum}
+i=1[yi{-}{\textasciicircum}f(xi)
+1{-}Sii]2
+,(7.51)
+whereSiiis theith diagonal element of S(see Exercise 7.3). The GCV
+approximation is
+GCV({\textasciicircum}f) =1
+NN{\sum}
+i=1[
+yi{-}{\textasciicircum}f(xi)
+1{-}trace(S)/N]2
+. (7.52)
+7.10 Cross-Validation 245
+The quantity trace( S) is the effective number of parameters, as defined in
+Section 7.6.
+GCV can have a computational advantage in some settings, whe re the
+trace ofScan be computed more easily than the individual elements Sii.
+In smoothing problems, GCV can also alleviate the tendency o f cross-
+validation to undersmooth. The similarity between GCV and A IC can be
+seen from the approximation 1 /(1{-}x)2{\approx}1+2x(Exercise 7.7).
+7.10.2 The Wrong and Right Way to Do Cross-validation
+Consider a classification problem with a large number of pred ictors, as may
+arise, for example, in genomic or proteomic applications. A typical strategy
+for analysis might be as follows:
+1. Screen the predictors: find a subset of {\textquotedblleft}good{\textquotedblright} predictors t hat show
+fairly strong (univariate) correlation with the class labe ls
+2. Using just this subset of predictors, build a multivariat e classifier.
+3. Use cross-validation to estimate the unknown tuning para meters and
+to estimate the prediction error of the final model.
+Is this a correct application of cross-validation? Conside r a scenario with
+N= 50 samples in two equal-sized classes, and p= 5000 quantitative
+predictors (standard Gaussian) that are independent of the class labels.
+The true (test) error rate of any classifier is 50{\%}. We carried out the above
+recipe, choosing in step (1) the 100 predictors having highe st correlation
+with the class labels, and then using a 1-nearest neighbor cl assifier, based
+on just these 100 predictors, in step (2). Over 50 simulation s from this
+setting, the average CV error rate was 3{\%}. This is far lower th an the true
+error rate of 50{\%}.
+What has happened? The problem is that the predictors have an unfair
+advantage, as they were chosen in step (1) on the basis of all of the samples .
+Leaving samples out afterthe variables have been selected does not cor-
+rectly mimic the application of the classifier to a completel y independent
+test set, since these predictors {\textquotedblleft}have already seen{\textquotedblright} the lef t out samples.
+Figure 7.10 (top panel) illustrates the problem. We selecte d the 100 pre-
+dictors having largest correlation with the class labels ov er all 50 samples.
+Thenwechosearandomsetof10samples,aswewoulddoinfive-f oldcross-
+validation, and computed the correlations of the pre-selec ted 100 predictors
+with the class labels over just these 10 samples (top panel). We see that
+the correlations average about 0.28, rather than 0, as one mi ght expect.
+Here is the correct way to carry out cross-validation in this example:
+1. Divide the samples into Kcross-validation folds (groups) at random.
+2. For each fold k= 1,2,...,K
+246 7. Model Assessment and Selection
+Correlations of Selected Predictors with OutcomeFrequency
+{-}1.0 {-}0.5 0.0 0.5 1.00 10 20 30Wrong way
+Correlations of Selected Predictors with OutcomeFrequency
+{-}1.0 {-}0.5 0.0 0.5 1.00 10 20 30Right way
+FIGURE 7.10. Cross-validation the wrong and right way: histograms shows t he
+correlation of class labels, in 10randomly chosen samples, with the 100predic-
+tors chosen using the incorrect (upper red) and correct (lowe r green) versions of
+cross-validation.
+(a) Find a subset of {\textquotedblleft}good{\textquotedblright} predictors that show fairly stron g (uni-
+variate) correlation with the class labels, using all of the samples
+except those in fold k.
+(b) Using just this subset of predictors, build a multivaria te classi-
+fier, using all of the samples except those in fold k.
+(c) Use the classifier to predict the class labels for the samp les in
+foldk.
+Theerrorestimatesfromstep2(c)arethenaccumulated over allKfolds,to
+produce the cross-validation estimate of prediction error . The lower panel
+of Figure 7.10 shows the correlations of class labels with th e 100 predictors
+chosen in step 2(a) of the correct procedure, over the sample s in a typical
+foldk. We see that they average about zero, as they should.
+In general, with a multistep modeling procedure, cross-val idation must
+be applied to the entire sequence of modeling steps. In parti cular, samples
+must be {\textquotedblleft}left out{\textquotedblright} before any selection or filtering steps are applied. There
+is one qualification: initial unsupervised screening steps can be done be-
+fore samples are left out. For example, we could select the 10 00 predictors
+7.10 Cross-Validation 247
+with highest variance across all 50 samples, before startin g cross-validation.
+Since this filtering does not involve the class labels, it doe s not give the
+predictors an unfair advantage.
+While this point may seem obvious to the reader, we have seen t his
+blunder committed many times in published papers in top rank journals.
+With the large numbers of predictors that are so common in gen omic and
+other areas, the potential consequences of this error have a lso increased
+dramatically; see Ambroise and McLachlan (2002) for a detai led discussion
+of this issue.
+7.10.3 Does Cross-Validation Really Work?
+Weonceagainexaminethebehaviorofcross-validationinah igh-dimensional
+classification problem. Consider a scenario with N= 20 samples in two
+equal-sized classes, and p= 500 quantitative predictors that are indepen-
+dent of the class labels. Once again, the true error rate of an y classifier is
+50{\%}. Consider a simple univariate classifier: a single split that minimizes
+the misclassification error (a {\textquotedblleft}stump{\textquotedblright}). Stumps are trees wi th a single split,
+and are used in boosting methods (Chapter 10). A simple argum ent sug-
+gests that cross-validation will not work properly in this s etting2:
+Fitting to the entire training set, we will find a predictor th at
+splits the data very well. If we do 5-fold cross-validation, this
+same predictor should split any 4/5ths and 1/5th of the data
+well too, and hence its cross-validation error will be small (much
+less than 50{\%}.) Thus CV does not give an accurate estimate of
+error.
+To investigate whether this argument is correct, Figure 7.1 1 shows the
+result of a simulation from this setting. There are 500 predi ctors and 20
+samples, in each of two equal-sized classes, with all predic tors having a
+standard Gaussian distribution. The panel in the top left sh ows the number
+of training errors for each of the 500 stumps fit to the trainin g data. We
+have marked in color the six predictors yielding the fewest e rrors. In the top
+right panel, the training errors are shown for stumps fit to a r andom 4/5ths
+partition of the data (16 samples), and tested on the remaini ng 1/5th (four
+samples). The colored points indicate the same predictors m arked in the
+top left panel. We see that the stump for the blue predictor (w hose stump
+was the best in the top left panel), makes two out of four test e rrors (50{\%}),
+and is no better than random.
+What has happened? The preceding argument has ignored the fa ct that
+in cross-validation, the model must be completely retraine d for each fold
+2This argument was made to us by a scientist at a proteomics lab meeting, a nd led
+to material in this section.
+248 7. Model Assessment and Selection
+0 100 200 300 400 5002 3 4 5 6 7 8 9
+PredictorError on Full Training Set
+1 2 3 4 5 6 7 80 1 2 3 4
+Error on 4/5Error on 1/5
+{-}1 0 1 2
+Predictor 436 (blue)Class Label
+0 1
+full
+4/5
+0.0 0.2 0.4 0.6 0.8 1.0
+CV Errors
+FIGURE 7.11. Simulation study to investigate the performance of cross vali -
+dation in a high-dimensional problem where the predictors ar e independent of the
+class labels. The top-left panel shows the number of errors made b y individual
+stump classifiers on the full training set ( 20observations). The top right panel
+shows the errors made by individual stumps trained on a rando m split of the
+dataset into 4/5ths (16observations) and tested on the remaining 1/5th (4ob-
+servations). The best performers are depicted by colored dot s in each panel. The
+bottom left panel shows the effect of re-estimating the split po int in each fold: the
+colored points correspond to the four samples in the 1/5th validation set. The split
+point derived from the full dataset classifies all four samples correctly, but when
+the split point is re-estimated on the 4/5ths data (as it should be), it commits
+two errors on the four validation samples. In the bottom right w e see the overall
+result of five-fold cross-validation applied to 50simulated datasets. The average
+error rate is about 50{\%}, as it should be.
+7.11 Bootstrap Methods 249
+of the process. In the present example, this means that the be st predictor
+and corresponding split point are found from 4 /5ths of the data. The effect
+of predictor choice is seen in the top right panel. Since the c lass labels are
+independent of the predictors, the performance of a stump on the 4/5ths
+training data contains no information about its performanc e in the remain-
+ing 1/5th. The effect of the choice of split point is shown in the bott om left
+panel. Here we see the data for predictor 436, corresponding to the blue
+dot in the top left plot. The colored points indicate the 1 /5th data, while
+the remaining points belong to the 4 /5ths. The optimal split points for this
+predictor based on both the full training set and 4 /5ths data are indicated.
+The split based on the full data makes no errors on the 1 /5ths data. But
+cross-validation must base its split on the 4 /5ths data, and this incurs two
+errors out of four samples.
+The results of applying five-fold cross-validation to each o f 50 simulated
+datasets is shown in the bottom right panel. As we would hope, the average
+cross-validation error is around 50{\%}, which is the true expe cted prediction
+error for this classifier. Hence cross-validation has behav ed as it should.
+On the other hand, there is considerable variability in the e rror, underscor-
+ing the importance of reporting the estimated standard erro r of the CV
+estimate. See Exercise 7.10 for another variation of this pr oblem.
+7.11 Bootstrap Methods
+The bootstrap is a general tool for assessing statistical ac curacy. First we
+describe the bootstrap in general, and then show how it can be used to
+estimate extra-sample prediction error. As with cross-val idation, the boot-
+strap seeks to estimate the conditional error Err T, but typically estimates
+well only the expected prediction error Err.
+Suppose we have a model fit to a set of training data. We denote t he
+training set by Z= (z1,z2,...,z N) wherezi= (xi,yi). The basic idea is
+to randomly draw datasets with replacement from the trainin g data, each
+sample the same size as the original training set. This is don eBtimes
+(B= 100 say), producing Bbootstrap datasets, as shown in Figure 7.12.
+Then we refit the model to each of the bootstrap datasets, and e xamine
+the behavior of the fits over the Breplications.
+In the figure, S(Z) is any quantity computed from the data Z, for ex-
+ample, the prediction at some input point. From the bootstra p sampling
+we can estimate any aspect of the distribution of S(Z), for example, its
+variance,
+{\textasciicircum}Var[S(Z)] =1
+B{-}1B{\sum}
+b=1(S(Z{*}b){-}{\textasciimacron}S{*})2, (7.53)

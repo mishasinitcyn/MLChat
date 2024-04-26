@@ -1,0 +1,311 @@
+Chapter 9
+Regularization and model
+selection
+9.1 Regularization
+Recall that as discussed in Section 8.1, overftting is typically a result of using
+too complex models, and we need to choose a proper model complexity to
+achieve the optimal bias-variance tradeoff. When the model complexity is
+measured by the number of parameters, we can vary the size of the model
+(e.g., the width of a neural net). However, the correct, informative complex-
+ity measure of the models can be a function of the parameters (e.g., {\ell}2norm
+of the parameters), which may not necessarily depend on the number of pa-
+rameters. In such cases, we will use regularization, an important technique
+in machine learning, control the model complexity and prevent overfitting.
+Regularization typically involves adding an additional term, called a reg-
+ularizer and denoted by R({\theta}) here, to the training loss/cost function:
+J{\lambda}({\theta}) =J({\theta}) +{\lambda}R({\theta}) (9.1)
+HereJ{\lambda}is often called the regularized loss, and {\lambda}{\geq}0 is called the regular-
+ization parameter. The regularizer R({\theta}) is a nonnegative function (in almost
+all cases). In classical methods, R({\theta}) is purely a function of the parameter {\theta},
+but some modern approach allows R({\theta}) to depend on the training dataset.1
+The regularizer R({\theta}) is typically chosen to be some measure of the com-
+plexity of the model {\theta}. Thus, when using the regularized loss, we aim to
+find a model that both fit the data (a small loss J({\theta})) and have a small
+1Here our notations generally omit the dependency on the training dataset for
+simplicity{\textemdash}we write J({\theta}) even though it obviously needs to depend on the training dataset.
+135
+136
+model complexity (a small R({\theta})). The balance between the two objectives is
+controlled by the regularization parameter {\lambda}. When{\lambda}= 0, the regularized
+loss is equivalent to the original loss. When {\lambda}is a sufficiently small positive
+number, minimizing the regularized loss is effectively minimizing the original
+loss with the regularizer as the tie-breaker. When the regularizer is extremely
+large, then the original loss is not effective (and likely the model will have a
+large bias.)
+The most commonly used regularization is perhaps {\ell}2regularization,
+whereR({\theta}) =1
+2{\parallel}{\theta}{\parallel}2
+2. It encourages the optimizer to find a model with
+small{\ell}2norm. In deep learning, it`s oftentimes referred to as weight de-
+cay, because gradient descent with learning rate {\eta}on the regularized loss
+R{\lambda}({\theta}) is equivalent to shrinking/decaying {\theta}by a scalar factor of 1 {-}{\eta}{\lambda}and
+then applying the standard gradient
+{\theta}{\textleftarrow}{\theta}{-}{\eta}{\nabla}J{\lambda}({\theta}) ={\theta}{-}{\eta}{\lambda}{\theta}{-}{\eta}{\nabla}J({\theta})
+= (1{-}{\lambda}{\eta}){\theta}
+decaying weights{-}{\eta}{\nabla}J({\theta}) (9.2)
+Besides encouraging simpler models, regularization can also impose in-
+ductive biases or structures on the model parameters. For example, suppose
+we had a prior belief that the number of non-zeros in the ground-truth model
+parameters is small,2{\textemdash}which is oftentimes called sparsity of the model{\textemdash}, we
+can impose a regularization on the number of non-zeros in {\theta}, denoted by
+{\parallel}{\theta}{\parallel}0, to leverage such a prior belief. Imposing additional structure of the
+parameters narrows our search space and makes the complexity of the model
+family smaller,{\textemdash}e.g., the family of sparse models can be thought of as having
+lower complexity than the family of all models{\textemdash}, and thus tends to lead to a
+better generalization. On the other hand, imposing additional structure may
+risk increasing the bias. For example, if we regularize the sparsity strongly
+but no sparse models can predict the label accurately, we will suffer from
+large bias (analogously to the situation when we use linear models to learn
+data than can only be represented by quadratic functions in Section 8.1.)
+The sparsity of the parameters is not a continuous function of the param-
+eters, and thus we cannot optimize it with (stochastic) gradient descent. A
+common relaxation is to use R({\theta}) ={\parallel}{\theta}{\parallel}1as a continuous surrogate.3
+2For linear models, this means the model just uses a few coordinates of the inputs to
+make an accurate prediction.
+3There has been a rich line of theoretical work that explains why {\parallel}{\theta}{\parallel}1is a good sur-
+rogate for encouraging sparsity, but it`s beyond the scope of this course. An intuition is:
+assuming the parameter is on the unit sphere, the parameter with smallest {\ell}1norm also
+137
+TheR({\theta}) ={\parallel}{\theta}{\parallel}1(also called LASSO) and R({\theta}) =1
+2{\parallel}{\theta}{\parallel}2
+2are perhaps
+among the most commonly used regularizers for linear models. Other norm
+and powers of norms are sometimes also used. The {\ell}2norm regularization is
+much more commonly used with kernel methods because {\ell}1regularization is
+typically not compatible with the kernel trick (the optimal solution cannot
+be written as functions of inner products of features.)
+In deep learning, the most commonly used regularizer is {\ell}2regularization
+or weight decay. Other common ones include dropout, data augmentation,
+regularizing the spectral norm of the weight matrices, and regularizing the
+Lipschitzness of the model, etc. Regularization in deep learning is an ac-
+tive research area, and it`s known that there is another implicit source of
+regularization, as discussed in the next section.
+9.2 Implicit regularization effect (optional
+reading)
+The implicit regularization effect of optimizers, or implicit bias or algorithmic
+regularization, is a new concept/phenomenon observed in the deep learning
+era. It largely refers to that the optimizers can implicitly impose structures
+on parameters beyond what has been imposed by the regularized loss.
+In most classical settings, the loss or regularized loss has a unique global
+minimum, and thus any reasonable optimizer should converge to that global
+minimum and cannot impose any additional preferences. However, in deep
+learning, oftentimes the loss or regularized loss has more than one (approx-
+imate) global minima, and difference optimizers may converge to different
+global minima. Though these global minima have the same or similar train-
+ing losses, they may be of different nature and have dramatically different
+generalization performance. See Figures 9.1 and 9.2 and its caption for an
+illustration and some experiment results. For example, it`s possible that one
+global minimum gives a much more Lipschitz or sparse model than others
+and thus has a better test error. It turns out that many commonly-used op-
+timizers (or their components) prefer or bias towards finding global minima
+of certain properties, leading to a better test performance.
+happen to be the sparsest parameter with only 1 non-zero coordinate. Thus, sparsity and
+{\ell}1norm gives the same extremal points to some extent.
+138
+{\theta}loss
+Figure 9.1: An Illustration that different global minima of the training loss
+can have different test performance.
+Figure 9.2: Left: Performance of neural networks trained by two different
+learning rates schedules on the CIFAR-10 dataset. Although both exper-
+iments used exactly the same regularized losses and the optimizers fit the
+training data perfectly, the models` generalization performance differ much.
+Right: On a different synthetic dataset, optimizers with different initializa-
+tions have the same training error but different generalization performance.4
+In summary, the takehome message here is that the choice of optimizer
+does not only affect minimizing the training loss, but also imposes implicit
+regularization and affects the generalization of the model. Even if your cur-
+rent optimizer already converges to a small training error perfectly, you may
+still need to tune your optimizer for a better generalization, .
+4The setting is the same as in Woodworth et al. [2020], HaoChen et al. [2020]
+139
+One may wonder which components of the optimizers bias towards what
+type of global minima and what type of global minima may generalize bet-
+ter. These are open questions that researchers are actively investigating.
+Empirical and theoretical research have offered some clues and heuristics.
+In many (but definitely far from all) situations, among those setting where
+optimization can succeed in minimizing the training loss, the use of larger
+initial learning rate, smaller initialization, smaller batch size, and momen-
+tum appears to help with biasing towards more generalizable solutions. A
+conjecture (that can be proven in certain simplified case) is that stochas-
+ticity in the optimization process help the optimizer to find {fl}atter global
+minima (global minima where the curvature of the loss is small), and {fl}at
+global minima tend to give more Lipschitz models and better generalization.
+Characterizing the implicit regularization effect formally is still a challenging
+open research question.
+9.3 Model selection via cross validation
+Suppose we are trying select among several different models for a learning
+problem. For instance, we might be using a polynomial regression model
+h{\theta}(x) =g({\theta}0+{\theta}1x+{\theta}2x2+{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}+{\theta}kxk), and wish to decide if kshould be
+0, 1, . . . , or 10. How can we automatically select a model that represents
+a good tradeoff between the twin evils of bias and variance5? Alternatively,
+suppose we want to automatically choose the bandwidth parameter {\tau}for
+locally weighted regression, or the parameter Cfor our{\ell}1-regularized SVM.
+How can we do that?
+For the sake of concreteness, in these notes we assume we have some
+finite set of models M={\{}M1,...,Md{\}}that we`re trying to select among.
+For instance, in our first example above, the model Miwould be an i-th
+degree polynomial regression model. (The generalization to infinite Mis
+not hard.6) Alternatively, if we are trying to decide between using an SVM,
+a neural network or logistic regression, then Mmay contain these models.
+5Given that we said in the previous set of notes that bias and variance are two very
+different beasts, some readers may be wondering if we should be calling them {\textquotedblleft}twin{\textquotedblright} evils
+here. Perhaps it`d be better to think of them as non-identical twins. The phrase {\textquotedblleft}the
+fraternal twin evils of bias and variance{\textquotedblright} doesn`t have the same ring to it, though.
+6If we are trying to choose from an infinite set of models, say corresponding to the
+possible values of the bandwidth {\tau}{\in}R+, we may discretize {\tau}and consider only a finite
+number of possible values for it. More generally, most of the algorithms described here
+can all be viewed as performing optimization search in the space of models, and we can
+perform this search over infinite model classes as well.
+140
+Cross validation. Lets suppose we are, as usual, given a training set S.
+Given what we know about empirical risk minimization, here`s what might
+initially seem like a algorithm, resulting from using empirical risk minimiza-
+tion for model selection:
+1. Train each model MionS, to get some hypothesis hi.
+2. Pick the hypotheses with the smallest training error.
+This algorithm does notwork. Consider choosing the degree of a poly-
+nomial. The higher the degree of the polynomial, the better it will fit the
+training set S, and thus the lower the training error. Hence, this method will
+always select a high-variance, high-degree polynomial model, which we saw
+previously is often poor choice.
+Here`s an algorithm that works better. In hold-out cross validation
+(also called simple cross validation ), we do the following:
+1. Randomly split SintoStrain(say, 70{\%} of the data) and Scv(the remain-
+ing 30{\%}). Here, Scvis called the hold-out cross validation set.
+2. Train each model MionStrainonly, to get some hypothesis hi.
+3. Select and output the hypothesis hithat had the smallest error {\textasciicircum} {\varepsilon}Scv(hi)
+on the hold out cross validation set. (Here {\textasciicircum} {\varepsilon}Scv(h) denotes the average
+error ofhon the set of examples in Scv.) The error on the hold out
+validation set is also referred to as the validation error.
+By testing/validating on a set of examples Scvthat the models were not
+trained on, we obtain a better estimate of each hypothesis hi`s true general-
+ization/test error. Thus, this approach is essentially picking the model with
+the smallest estimated generalization/test error. The size of the validation
+set depends on the total number of available examples. Usually, somewhere
+between 1/4{-}1/3 of the data is used in the hold out cross validation set, and
+30{\%} is a typical choice. However, when the total dataset is huge, validation
+set can be a smaller fraction of the total examples as long as the absolute
+number of validation examples is decent. For example, for the ImageNet
+dataset that has about 1M training images, the validation set is sometimes
+set to be 50K images, which is only about 5{\%} of the total examples.
+Optionally, step 3 in the algorithm may also be replaced with selecting
+the modelMiaccording to arg min i{\textasciicircum}{\varepsilon}Scv(hi), and then retraining Mion the
+entire training set S. (This is often a good idea, with one exception being
+learning algorithms that are be very sensitive to perturbations of the initial
+141
+conditions and/or data. For these methods, Midoing well on Straindoes not
+necessarily mean it will also do well on Scv, and it might be better to forgo
+this retraining step.)
+The disadvantage of using hold out cross validation is that it {\textquotedblleft}wastes{\textquotedblright}
+about 30{\%} of the data. Even if we were to take the optional step of retraining
+the model on the entire training set, it`s still as if we`re trying to find a good
+model for a learning problem in which we had 0 .7ntraining examples, rather
+thanntraining examples, since we`re testing models that were trained on
+only 0.7nexamples each time. While this is fine if data is abundant and/or
+cheap, in learning problems in which data is scarce (consider a problem with
+n= 20, say), we`d like to do something better.
+Here is a method, called k-fold cross validation , that holds out less
+data each time:
+1. Randomly split Sintokdisjoint subsets of m/k training examples each.
+Lets call these subsets S1,...,Sk.
+2. For each model Mi, we evaluate it as follows:
+Forj= 1,...,k
+Train the model MionS1{\cup}{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}{\cup}Sj{-}1{\cup}Sj+1{\cup}{\textperiodcentered}{\textperiodcentered}{\textperiodcentered}Sk(i.e., train
+on all the data except Sj) to get some hypothesis hij.
+Test the hypothesis hijonSj, to get {\textasciicircum}{\varepsilon}Sj(hij).
+The estimated generalization error of model Miis then calculated
+as the average of the {\textasciicircum} {\varepsilon}Sj(hij)`s (averaged over j).
+3. Pick the model Miwith the lowest estimated generalization error, and
+retrain that model on the entire training set S. The resulting hypothesis
+is then output as our final answer.
+A typical choice for the number of folds to use here would be k= 10.
+While the fraction of data held out each time is now 1 /k{\textemdash}much smaller
+than before{\textemdash}this procedure may also be more computationally expensive
+than hold-out cross validation, since we now need train to each model k
+times.
+Whilek= 10 is a commonly used choice, in problems in which data is
+really scarce, sometimes we will use the extreme choice of k=min order
+to leave out as little data as possible each time. In this setting, we would
+repeatedly train on all but one of the training examples in S, and test on that
+held-out example. The resulting m=kerrors are then averaged together to
+obtain our estimate of the generalization error of a model. This method has
+142
+its own name; since we`re holding out one training example at a time, this
+method is called leave-one-out cross validation.
+Finally, even though we have described the different versions of cross vali-
+dation as methods for selecting a model, they can also be used more simply to
+evaluate a single model or algorithm. For example, if you have implemented
+some learning algorithm and want to estimate how well it performs for your
+application (or if you have invented a novel learning algorithm and want to
+report in a technical paper how well it performs on various test sets), cross
+validation would give a reasonable way of doing so.
+9.4 Bayesian statistics and regularization
+In this section, we will talk about one more tool in our arsenal for our battle
+against overfitting.
+At the beginning of the quarter, we talked about parameter fitting using
+maximum likelihood estimation (MLE), and chose our parameters according
+to
+{\theta}MLE= arg max
+{\theta}n{\prod}
+i=1p(y(i)|x(i);{\theta}).
+Throughout our subsequent discussions, we viewed {\theta}as an unknown param-
+eter of the world. This view of the {\theta}as being constant-valued but unknown
+is taken in frequentist statistics. In the frequentist this view of the world, {\theta}
+is not random{\textemdash}it just happens to be unknown{\textemdash}and it`s our job to come up
+with statistical procedures (such as maximum likelihood) to try to estimate
+this parameter.
+An alternative way to approach our parameter estimation problems is to
+take the Bayesian view of the world, and think of {\theta}as being a random
+variable whose value is unknown. In this approach, we would specify a
+prior distribution p({\theta}) on{\theta}that expresses our {\textquotedblleft}prior beliefs{\textquotedblright} about the
+parameters. Given a training set S={\{}(x(i),y(i)){\}}n
+i=1, when we are asked to
+make a prediction on a new value of x, we can then compute the posterior
+distribution on the parameters
+p({\theta}|S) =p(S|{\theta})p({\theta})
+p(S)
+=({\prod}n
+i=1p(y(i)|x(i),{\theta}))
+p({\theta}){\int}
+{\theta}({\prod}n
+i=1p(y(i)|x(i),{\theta})p({\theta}))d{\theta}(9.3)
+In the equation above, p(y(i)|x(i),{\theta}) comes from whatever model you`re using
+143
+for your learning problem. For example, if you are using Bayesian logistic re-
+gression, then you might choose p(y(i)|x(i),{\theta}) =h{\theta}(x(i))y(i)(1{-}h{\theta}(x(i)))(1{-}y(i)),
+whereh{\theta}(x(i)) = 1/(1 + exp({-}{\theta}Tx(i))).7
+When we are given a new test example xand asked to make it prediction
+on it, we can compute our posterior distribution on the class label using the
+posterior distribution on {\theta}:
+p(y|x,S) ={\int}
+{\theta}p(y|x,{\theta})p({\theta}|S)d{\theta} (9.4)
+In the equation above, p({\theta}|S) comes from Equation (9.3). Thus, for example,
+if the goal is to the predict the expected value of ygivenx, then we would
+output8
+E[y|x,S] ={\int}
+yyp(y|x,S)dy
+The procedure that we`ve outlined here can be thought of as doing {\textquotedblleft}fully
+Bayesian{\textquotedblright} prediction, where our prediction is computed by taking an average
+with respect to the posterior p({\theta}|S) over{\theta}. Unfortunately, in general it is
+computationally very difficult to compute this posterior distribution. This is
+because it requires taking integrals over the (usually high-dimensional) {\theta}as
+in Equation (9.3), and this typically cannot be done in closed-form.
+Thus, in practice we will instead approximate the posterior distribution
+for{\theta}. One common approximation is to replace our posterior distribution for
+{\theta}(as in Equation 9.4) with a single point estimate. The MAP (maximum
+a posteriori) estimate for {\theta}is given by
+{\theta}MAP= arg max
+{\theta}n{\prod}
+i=1p(y(i)|x(i),{\theta})p({\theta}). (9.5)
+Note that this is the same formulas as for the MLE (maximum likelihood)
+estimate for {\theta}, except for the prior p({\theta}) term at the end.
+In practical applications, a common choice for the prior p({\theta}) is to assume
+that{\theta}{\sim}N(0,{\tau}2I). Using this choice of prior, the fitted parameters {\theta}MAPwill
+have smaller norm than that selected by maximum likelihood. In practice,
+this causes the Bayesian MAP estimate to be less susceptible to overfitting
+than the ML estimate of the parameters. For example, Bayesian logistic
+regression turns out to be an effective algorithm for text classification, even
+though in text classification we usually have d{\gg}n.
+7Since we are now viewing {\theta}as a random variable, it is okay to condition on it value,
+and write {\textquotedblleft} p(y|x,{\theta}){\textquotedblright} instead of {\textquotedblleft} p(y|x;{\theta}).{\textquotedblright}
+8The integral below would be replaced by a summation if yis discrete-valued.

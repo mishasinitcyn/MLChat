@@ -1,0 +1,797 @@
+This is page 417
+Printer: Opaque this
+12
+Support Vector Machines and
+Flexible Discriminants
+12.1 Introduction
+In this chapter we describe generalizations of linear decis ion boundaries
+for classification. Optimal separating hyperplanes are int roduced in Chap-
+ter 4 for the case when two classes are linearly separable. He re we cover
+extensions to the nonseparable case, where the classes over lap. These tech-
+niquesarethengeneralizedtowhatisknownasthe support vector machine ,
+which produces nonlinear boundaries by constructing a line ar boundary in
+alarge, transformed versionof the featurespace. Thesecon dsetof methods
+generalize Fisher`s linear discriminant analysis (LDA). T he generalizations
+include{fl}exible discriminant analysis which facilitates construction of non-
+linear boundaries in a manner very similar to the support vec tor machines,
+penalized discriminant analysis for problems such as signal and image clas-
+sification where the large number of features are highly corr elated, and
+mixture discriminant analysis for irregularly shaped classes.
+12.2 The Support Vector Classifier
+In Chapter 4 we discussed a technique for constructing an optimalseparat-
+ing hyperplane between two perfectly separated classes. We review this and
+generalize to the nonseparable case, where the classes may n ot be separable
+by a linear boundary.
+418 12. Flexible Discriminants
+
+
+
+
+
+
+
+
+
+
+
+marginM=1
+{\parallel}{\beta}{\parallel}
+M=1
+{\parallel}{\beta}{\parallel}xT{\beta}+{\beta}0= 0
+
+
+
+
+
+
+
+
+
+
+
+ 
+margin{\xi}{*}
+1{\xi}{*}
+1{\xi}{*}
+1
+{\xi}{*}
+2{\xi}{*}
+2{\xi}{*}
+2{\xi}{*}
+3{\xi}{*}
+3{\xi}{*}
+4{\xi}{*}
+4{\xi}{*}
+4{\xi}{*}
+5
+M=1
+{\parallel}{\beta}{\parallel}
+M=1
+{\parallel}{\beta}{\parallel}xT{\beta}+{\beta}0= 0
+FIGURE 12.1. Support vector classifiers. The left panel shows the separable
+case. The decision boundary is the solid line, while broken lines bound the shaded
+maximal margin of width 2M= 2/{\parallel}{\beta}{\parallel}. The right panel shows the nonseparable
+(overlap) case. The points labeled {\xi}{*}
+jare on the wrong side of their margin by
+an amount {\xi}{*}
+j=M{\xi}j; points on the correct side have {\xi}{*}
+j= 0. The margin is
+maximized subject to a total budget{\sum}{\xi}i{\leq}constant. Hence{\sum}{\xi}{*}
+jis the total
+distance of points on the wrong side of their margin.
+Our training data consists of Npairs (x1,y1),(x2,y2),...,(xN,yN), with
+xi{\in}IRpandyi{\in} {\{}{-}1,1{\}}. Define a hyperplane by
+{\{}x:f(x) =xT{\beta}+{\beta}0= 0{\}}, (12.1)
+where{\beta}is a unit vector:{\parallel}{\beta}{\parallel}= 1. A classification rule induced by f(x) is
+G(x) = sign[xT{\beta}+{\beta}0]. (12.2)
+ThegeometryofhyperplanesisreviewedinSection4.5,wher eweshowthat
+f(x) in (12.1) gives the signed distance from a point xto the hyperplane
+f(x) =xT{\beta}+{\beta}0= 0. Since the classes are separable, we can find a function
+f(x) =xT{\beta}+{\beta}0withyif(xi){>}0{\forall}i. Hence we are able to find the
+hyperplane that creates the biggest marginbetween the training points for
+class 1 and{-}1 (see Figure 12.1). The optimization problem
+max
+{\beta},{\beta}0,{\parallel}{\beta}{\parallel}=1M
+subject toyi(xT
+i{\beta}+{\beta}0){\geq}M, i= 1,...,N,(12.3)
+captures this concept. The band in the figure is Munits away from the
+hyperplane on either side, and hence 2 Munits wide. It is called the margin.
+We showed that this problem can be more conveniently rephras ed as
+min
+{\beta},{\beta}0{\parallel}{\beta}{\parallel}
+subject toyi(xT
+i{\beta}+{\beta}0){\geq}1, i= 1,...,N,(12.4)
+12.2 The Support Vector Classifier 419
+where we have dropped the norm constraint on {\beta}. Note that M= 1/{\parallel}{\beta}{\parallel}.
+Expression (12.4) is the usual way of writing the support vec tor criterion
+for separated data. This is a convex optimization problem (q uadratic cri-
+terion, linear inequality constraints), and the solution i s characterized in
+Section 4.5.2.
+Suppose now that the classes overlap in feature space. One wa y to deal
+with the overlap is to still maximize M, but allow for some points to be on
+the wrong side of the margin. Define the slack variables {\xi}= ({\xi}1,{\xi}2,...,{\xi} N).
+There are two natural ways to modify the constraint in (12.3) :
+yi(xT
+i{\beta}+{\beta}0){\geq}M{-}{\xi}i, (12.5)
+or
+yi(xT
+i{\beta}+{\beta}0){\geq}M(1{-}{\xi}i), (12.6)
+{\forall}i, {\xi}i{\geq}0,{\sum}N
+i=1{\xi}i{\leq}constant. The two choices lead to different solutions.
+The first choice seems more natural, since it measures overla p in actual
+distancefromthemargin;thesecondchoicemeasurestheove rlapinrelative
+distance, which changes with the width of the margin M. However, the first
+choice results in a nonconvex optimization problem, while t he second is
+convex; thus (12.6) leads to the {\textquotedblleft}standard{\textquotedblright} support vector c lassifier, which
+we use from here on.
+Hereistheideaoftheformulation.Thevalue {\xi}iintheconstraint yi(xT
+i{\beta}+
+{\beta}0){\geq}M(1{-}{\xi}i) is the proportional amount by which the prediction
+f(xi) =xT
+i{\beta}+{\beta}0is on the wrong side of its margin. Hence by bounding the
+sum{\sum}{\xi}i, we bound the total proportional amount by which prediction s
+fall on the wrong side of their margin. Misclassifications oc cur when{\xi}i{>}1,
+so bounding{\sum}{\xi}iat a valueKsay, bounds the total number of training
+misclassifications at K.
+As in (4.48) in Section 4.5.2, we can drop the norm constraint on{\beta},
+defineM= 1/{\parallel}{\beta}{\parallel}, and write (12.4) in the equivalent form
+min{\parallel}{\beta}{\parallel}subject to{\{}
+yi(xT
+i{\beta}+{\beta}0){\geq}1{-}{\xi}i{\forall}i,
+{\xi}i{\geq}0,{\sum}{\xi}i{\leq}constant.(12.7)
+This is the usual way the support vector classifier is defined f or the non-
+separable case. However we find confusing the presence of the fixed scale
+{\textquotedblleft}1{\textquotedblright} in the constraint yi(xT
+i{\beta}+{\beta}0){\geq}1{-}{\xi}i, and prefer to start with (12.6).
+The right panel of Figure 12.1 illustrates this overlapping case.
+By the nature of the criterion (12.7), we see that points well inside their
+class boundary do not play a big role in shaping the boundary. This seems
+like an attractive property, and one that differentiates it f rom linear dis-
+criminant analysis (Section 4.3). In LDA, the decision boun dary is deter-
+mined by the covariance of the class distributions and the po sitions of the
+class centroids. We will see in Section 12.3.3 that logistic regression is more
+similar to the support vector classifier in this regard.
+420 12. Flexible Discriminants
+12.2.1 Computing the Support Vector Classifier
+The problem (12.7) is quadratic with linear inequality cons traints, hence it
+is a convex optimization problem. We describe a quadratic pr ogramming
+solution using Lagrange multipliers. Computationally it i s convenient to
+re-express (12.7) in the equivalent form
+min
+{\beta},{\beta}01
+2{\parallel}{\beta}{\parallel}2+CN{\sum}
+i=1{\xi}i
+subject to {\xi}i{\geq}0, yi(xT
+i{\beta}+{\beta}0){\geq}1{-}{\xi}i{\forall}i,(12.8)
+where the {\textquotedblleft}cost{\textquotedblright} parameter Creplaces the constant in (12.7); the separable
+case corresponds to C={\infty}.
+The Lagrange (primal) function is
+LP=1
+2{\parallel}{\beta}{\parallel}2+CN{\sum}
+i=1{\xi}i{-}N{\sum}
+i=1{\alpha}i[yi(xT
+i{\beta}+{\beta}0){-}(1{-}{\xi}i)]{-}N{\sum}
+i=1{\textmu}i{\xi}i,(12.9)
+which we minimize w.r.t {\beta},{\beta}0and{\xi}i. Setting the respective derivatives to
+zero, we get
+{\beta}=N{\sum}
+i=1{\alpha}iyixi, (12.10)
+0 =N{\sum}
+i=1{\alpha}iyi, (12.11)
+{\alpha}i=C{-}{\textmu}i,{\forall}i, (12.12)
+as well as the positivity constraints {\alpha}i, {\textmu}i, {\xi}i{\geq}0{\forall}i. By substituting
+(12.10){\textendash}(12.12) into (12.9), we obtain the Lagrangian (Wol fe) dual objec-
+tive function
+LD=N{\sum}
+i=1{\alpha}i{-}1
+2N{\sum}
+i=1N{\sum}
+i{'}=1{\alpha}i{\alpha}i{'}yiyi{'}xT
+ixi{'}, (12.13)
+which gives a lower bound on the objective function (12.8) fo r any feasible
+point. We maximize LDsubject to 0{\leq}{\alpha}i{\leq}Cand{\sum}N
+i=1{\alpha}iyi= 0. In
+addition to (12.10){\textendash}(12.12), the Karush{\textendash}Kuhn{\textendash}Tucker cond itions include
+the constraints
+{\alpha}i[yi(xT
+i{\beta}+{\beta}0){-}(1{-}{\xi}i)] = 0, (12.14)
+{\textmu}i{\xi}i= 0, (12.15)
+yi(xT
+i{\beta}+{\beta}0){-}(1{-}{\xi}i){\geq}0, (12.16)
+fori= 1,...,N. Together these equations (12.10){\textendash}(12.16) uniquely char-
+acterize the solution to the primal and dual problem.
+12.2 The Support Vector Classifier 421
+From (12.10) we see that the solution for {\beta}has the form
+{\textasciicircum}{\beta}=N{\sum}
+i=1{\textasciicircum}{\alpha}iyixi, (12.17)
+with nonzero coefficients {\textasciicircum} {\alpha}ionly for those observations ifor which the
+constraints in (12.16) are exactly met (due to (12.14)). The se observations
+are called the support vectors , since{\textasciicircum}{\beta}is represented in terms of them
+alone. Among these support points, some will lie on the edge o f the margin
+({\textasciicircum}{\xi}i= 0), and hence from (12.15) and (12.12) will be characterize d by
+0{<}{\textasciicircum}{\alpha}i{<} C; the remainder ( {\textasciicircum}{\xi}i{>}0) have {\textasciicircum}{\alpha}i=C. From (12.14) we can
+see that any of these margin points (0 {<}{\textasciicircum}{\alpha}i,{\textasciicircum}{\xi}i= 0) can be used to solve
+for{\beta}0, and we typically use an average of all the solutions for nume rical
+stability.
+Maximizing the dual (12.13) is a simpler convex quadratic pr ogramming
+problemthantheprimal(12.9),andcanbesolvedwithstanda rdtechniques
+(Murray et al., 1981, for example).
+Given the solutions {\textasciicircum}{\beta}0and{\textasciicircum}{\beta}, the decision function can be written as
+{\textasciicircum}G(x) = sign[ {\textasciicircum}f(x)]
+= sign[xT{\textasciicircum}{\beta}+{\textasciicircum}{\beta}0]. (12.18)
+The tuning parameter of this procedure is the cost parameter C.
+12.2.2 Mixture Example (Continued)
+Figure 12.2 shows the support vector boundary for the mixtur e example
+of Figure 2.5 on page 21, with two overlapping classes, for tw o different
+values of the cost parameter C. The classifiers are rather similar in their
+performance. Points on the wrong side of the boundary are sup port vectors.
+In addition, points on the correct side of the boundary but cl ose to it (in
+the margin), are also support vectors. The margin is larger f orC= 0.01
+than it is for C= 10,000. Hence larger values of Cfocus attention more
+on (correctly classified) points near the decision boundary , while smaller
+values involve data further away. Either way, misclassified points are given
+weight, no matter how far away. In this example the procedure is not very
+sensitive to choices of C, because of the rigidity of a linear boundary.
+The optimal value for Ccan be estimated by cross-validation, as dis-
+cussed in Chapter 7. Interestingly, the leave-one-out cros s-validation error
+can be bounded above by the proportion of support points in th e data. The
+reason is that leaving out an observation that is not a suppor t vector will
+not change the solution. Hence these observations, being cl assified correctly
+by the original boundary, will be classified correctly in the cross-validation
+process. However this bound tends to be too high, and not gene rally useful
+for choosing C(62{\%} and 85{\%}, respectively, in our examples).
+422 12. Flexible Discriminants
+
+
+FIGURE 12.2. The linear support vector boundary for the mixture data exam-
+ple with two overlapping classes, for two different values of C. The broken lines
+indicate the margins, where f(x) ={\pm}1. The support points ( {\alpha}i{>}0) are all the
+points on the wrong side of their margin. The black solid dots ar e those support
+points falling exactly on the margin ( {\xi}i= 0, {\alpha}i{>}0). In the upper panel 62{\%}of
+the observations are support points, while in the lower panel 85{\%}are. The broken
+purple curve in the background is the Bayes decision boundary .
+12.3 Support Vector Machines and Kernels 423
+12.3 Support Vector Machines and Kernels
+The support vector classifier described so far finds linear bo undaries in the
+input feature space. As with other linear methods, we can mak e the pro-
+cedure more {fl}exible by enlarging the feature space using bas is expansions
+such as polynomials or splines (Chapter 5). Generally linea r boundaries
+in the enlarged space achieve better training-class separa tion, and trans-
+late to nonlinear boundaries in the original space. Once the basis functions
+hm(x), m= 1,...,Mare selected, the procedure is the same as before. We
+fittheSVclassifierusinginputfeatures h(xi) = (h1(xi),h2(xi),...,h M(xi)),
+i= 1,...,N, and produce the (nonlinear) function {\textasciicircum}f(x) =h(x)T{\textasciicircum}{\beta}+{\textasciicircum}{\beta}0.
+The classifier is {\textasciicircum}G(x) = sign( {\textasciicircum}f(x)) as before.
+Thesupport vector machine classifier is an extension of this idea, where
+the dimension of the enlarged space is allowed to get very lar ge, infinite
+in some cases. It might seem that the computations would beco me pro-
+hibitive. It would also seem that with sufficient basis functi ons, the data
+would be separable, and overfitting would occur. We first show how the
+SVM technology deals with these issues. We then see that in fa ct the SVM
+classifier is solving a function-fitting problem using a part icular criterion
+and form of regularization, and is part of a much bigger class of problems
+that includes the smoothing splines of Chapter 5. The reader may wish
+to consult Section 5.8, which provides background material and overlaps
+somewhat with the next two sections.
+12.3.1 Computing the SVM for Classification
+We can represent the optimization problem (12.9) and its sol ution in a
+special way that only involves the input features via inner p roducts. We do
+this directly for the transformed feature vectors h(xi). We then see that for
+particular choices of h, these inner products can be computed very cheaply.
+The Lagrange dual function (12.13) has the form
+LD=N{\sum}
+i=1{\alpha}i{-}1
+2N{\sum}
+i=1N{\sum}
+i{'}=1{\alpha}i{\alpha}i{'}yiyi{'}{\langle}h(xi),h(xi{'}){\rangle}. (12.19)
+From (12.10) we see that the solution function f(x) can be written
+f(x) =h(x)T{\beta}+{\beta}0
+=N{\sum}
+i=1{\alpha}iyi{\langle}h(x),h(xi){\rangle}+{\beta}0. (12.20)
+As before, given {\alpha}i,{\beta}0can be determined by solving yif(xi) = 1 in (12.20)
+for any (or all) xifor which 0 {<}{\alpha}i{<}C.
+424 12. Flexible Discriminants
+So both (12.19) and (12.20) involve h(x) only through inner products. In
+fact, we need not specify the transformation h(x) at all, but require only
+knowledge of the kernel function
+K(x,x{'}) ={\langle}h(x),h(x{'}){\rangle} (12.21)
+that computes inner products in the transformed space. Kshould be a
+symmetric positive (semi-) definite function; see Section 5 .8.1.
+Three popular choices for Kin the SVM literature are
+dth-Degree polynomial: K(x,x{'}) = (1+{\langle}x,x{'}{\rangle})d,
+Radial basis: K(x,x{'}) = exp({-}{\gamma}{\parallel}x{-}x{'}{\parallel}2),
+Neural network: K(x,x{'}) = tanh({\kappa}1{\langle}x,x{'}{\rangle}+{\kappa}2).(12.22)
+Consider for example a feature space with two inputs X1andX2, and a
+polynomial kernel of degree 2. Then
+K(X,X{'}) = (1+{\langle}X,X{'}{\rangle})2
+= (1+X1X{'}
+1+X2X{'}
+2)2
+= 1+2X1X{'}
+1+2X2X{'}
+2+(X1X{'}
+1)2+(X2X{'}
+2)2+2X1X{'}
+1X2X{'}
+2.
+(12.23)
+ThenM= 6, and if we choose h1(X) = 1,h2(X) ={\sqrt{}}
+2X1,h3(X) ={\sqrt{}}
+2X2,h4(X) =X2
+1,h5(X) =X2
+2,andh6(X) ={\sqrt{}}
+2X1X2,thenK(X,X{'}) =
+{\langle}h(X),h(X{'}){\rangle}. From (12.20) we see that the solution can be written
+{\textasciicircum}f(x) =N{\sum}
+i=1{\textasciicircum}{\alpha}iyiK(x,xi)+{\textasciicircum}{\beta}0. (12.24)
+The role of the parameter Cis clearer in an enlarged feature space,
+since perfect separation is often achievable there. A large value ofCwill
+discourage any positive {\xi}i, and lead to an overfit wiggly boundary in the
+original feature space; a small value of Cwill encourage a small value of
+{\parallel}{\beta}{\parallel}, which in turn causes f(x) and hence the boundary to be smoother.
+Figure 12.3 show two nonlinear support vector machines appl ied to the
+mixture example of Chapter 2. The regularization parameter was chosen
+in both cases to achieve good test error. The radial basis ker nel produces
+a boundary quite similar to the Bayes optimal boundary for th is example;
+compare Figure 2.5.
+In the early literature on support vectors, there were claim s that the
+kernel property of the support vector machine is unique to it and allows
+one to finesse the curse of dimensionality. Neither of these c laims is true,
+and we go into both of these issues in the next three subsectio ns.
+12.3 Support Vector Machines and Kernels 425
+SVM - Degree-4 Polynomial in Feature Space
+
+FIGURE 12.3. Two nonlinear SVMs for the mixture data. The upper plot uses
+a4th degree polynomial kernel, the lower a radial basis kernel (wi th{\gamma}= 1). In
+each caseCwas tuned to approximately achieve the best test error perfor mance,
+andC= 1worked well in both cases. The radial basis kernel performs t he best
+(close to Bayes optimal), as might be expected given the data ar ise from mixtures
+of Gaussians. The broken purple curve in the background is the B ayes decision
+boundary.
+426 12. Flexible Discriminants
+{-}3 {-}2 {-}1 0 1 2 30.0 0.5 1.0 1.5 2.0 2.5 3.0Hinge Loss
+Binomial Deviance
+Squared Error
+Class HuberLoss
+yf
+FIGURE 12.4. The support vector loss function (hinge loss), compared to the
+negative log-likelihood loss (binomial deviance) for logistic r egression, squared-er-
+ror loss, and a {\textquotedblleft}Huberized{\textquotedblright} version of the squared hinge loss. A ll are shown as a
+function of yfrather than f, because of the symmetry between the y= +1and
+y={-}1case. The deviance and Huber have the same asymptotes as the S VM
+loss, but are rounded in the interior. All are scaled to have the limiting left-tail
+slope of{-}1.
+12.3.2 The SVM as a Penalization Method
+Withf(x) =h(x)T{\beta}+{\beta}0, consider the optimization problem
+min
+{\beta}0, {\beta}N{\sum}
+i=1[1{-}yif(xi)]++{\lambda}
+2{\parallel}{\beta}{\parallel}2(12.25)
+where the subscript {\textquotedblleft}+{\textquotedblright} indicates positive part. This has th e formloss+
+penalty, which is a familiar paradigm in function estimation. It is e asy to
+show (Exercise 12.1) that the solution to (12.25), with {\lambda}= 1/C, is the
+same as that for (12.8).
+Examination of the {\textquotedblleft}hinge{\textquotedblright} loss function L(y,f) = [1{-}yf]+shows that
+it is reasonable for two-class classification, when compare d to other more
+traditional loss functions. Figure 12.4 compares it to the l og-likelihood loss
+for logistic regression, as well as squared-error loss and a variant thereof.
+The (negative) log-likelihood or binomial deviance has sim ilar tails as the
+SVM loss, giving zero penalty to points well inside their mar gin, and a
+12.3 Support Vector Machines and Kernels 427
+TABLE 12.1. The population minimizers for the different loss functions in F ig-
+ure 12.4. Logistic regression uses the binomial log-likelihoo d or deviance. Linear
+discriminant analysis (Exercise 4.2) uses squared-error los s. The SVM hinge loss
+estimates the mode of the posterior class probabilities, wher eas the others estimate
+a linear transformation of these probabilities.
+Loss Function L[y,f(x)] Minimizing Function
+Binomial
+Deviance log[1+e{-}yf(x)]f(x) = logPr(Y= +1|x)
+Pr(Y= -1|x)
+SVM Hinge
+Loss[1{-}yf(x)]+ f(x) = sign[Pr( Y= +1|x){-}1
+2]
+Squared
+Error[y{-}f(x)]2= [1{-}yf(x)]2f(x) = 2Pr(Y= +1|x){-}1
+{\textquotedblleft}Huberised{\textquotedblright}
+Square
+Hinge Loss{-}4yf(x), yf (x){<}-1
+[1{-}yf(x)]2
++otherwisef(x) = 2Pr(Y= +1|x){-}1
+linear penalty to points on the wrong side and far away. Squar ed-error, on
+the other hand gives a quadratic penalty, and points well ins ide their own
+margin have a strong in{fl}uence on the model as well. The square d hinge
+lossL(y,f) = [1{-}yf]2
++is like the quadratic, except it is zero for points
+inside their margin. It still rises quadratically in the lef t tail, and will be
+less robust than hinge or deviance to misclassified observat ions. Recently
+RossetandZhu(2007)proposeda{\textquotedblleft}Huberized{\textquotedblright}versionofthes quaredhinge
+loss, which converts smoothly to a linear loss at yf={-}1.
+We can characterize these loss functions in terms of what the y are es-
+timating at the population level. We consider minimizing E L(Y,f(X)).
+Table 12.1 summarizes the results. Whereas the hinge loss es timates the
+classifierG(x) itself, all the others estimate a transformation of the cla ss
+posterior probabilities. The {\textquotedblleft}Huberized{\textquotedblright} square hinge los s shares attractive
+properties of logistic regression (smooth loss function, e stimates probabili-
+ties), as well as the SVM hinge loss (support points).
+Formulation (12.25) casts the SVM as a regularized function estimation
+problem, where the coefficients of the linear expansion f(x) ={\beta}0+h(x)T{\beta}
+areshrunktowardzero(excludingtheconstant).If h(x)representsahierar-
+chical basis having some ordered structure (such as ordered in roughness),
+428 12. Flexible Discriminants
+then the uniform shrinkage makes more sense if the rougher el ementshjin
+the vectorhhave smaller norm.
+All the loss-functions in Table 12.1 except squared-error a re so called
+{\textquotedblleft}margin maximizing loss-functions{\textquotedblright} (Rosset et al., 2004b) . This means that
+if the data are separable, then the limit of {\textasciicircum}{\beta}{\lambda}in (12.25) as {\lambda}{\textrightarrow}0 defines
+the optimal separating hyperplane1.
+12.3.3 Function Estimation and Reproducing Kernels
+Here we describe SVMs in terms of function estimation in repr oducing
+kernel Hilbert spaces, where the kernel property abounds. T his material is
+discussed in some detail in Section 5.8. This provides anoth er view of the
+support vector classifier, and helps to clarify how it works.
+Suppose the basis harises from the (possibly finite) eigen-expansion of
+a positive definite kernel K,
+K(x,x{'}) ={\infty}{\sum}
+m=1{\varphi}m(x){\varphi}m(x{'}){\delta}m (12.26)
+andhm(x) ={\sqrt{}}{\delta}m{\varphi}m(x). Then with {\theta}m={\sqrt{}}{\delta}m{\beta}m, we can write (12.25)
+as
+min
+{\beta}0, {\theta}N{\sum}
+i=1[
+1{-}yi({\beta}0+{\infty}{\sum}
+m=1{\theta}m{\varphi}m(xi))]
+++{\lambda}
+2{\infty}{\sum}
+m=1{\theta}2
+m
+{\delta}m.(12.27)
+Now (12.27) is identical in form to (5.49) on page 169 in Secti on 5.8, and
+the theory of reproducing kernel Hilbert spaces described t here guarantees
+a finite-dimensional solution of the form
+f(x) ={\beta}0+N{\sum}
+i=1{\alpha}iK(x,xi). (12.28)
+In particular we see there an equivalent version of the optim ization crite-
+rion (12.19) [Equation (5.67) in Section 5.8.2; see also Wah ba et al. (2000)],
+min
+{\beta}0,{\alpha}N{\sum}
+i=1(1{-}yif(xi))++{\lambda}
+2{\alpha}TK{\alpha}, (12.29)
+whereKis theN{\texttimes}Nmatrix of kernel evaluations for all pairs of training
+features (Exercise 12.2).
+These models are quite general, and include, for example, th e entire fam-
+ily of smoothing splines, additive and interaction spline m odels discussed
+1For logistic regression with separable data, {\textasciicircum}{\beta}{\lambda}diverges, but {\textasciicircum}{\beta}{\lambda}/{\parallel}{\textasciicircum}{\beta}{\lambda}{\parallel}converges to
+the optimal separating direction.
+12.3 Support Vector Machines and Kernels 429
+in Chapters 5 and 9, and in more detail in Wahba (1990) and Hast ie and
+Tibshirani (1990). They can be expressed more generally as
+min
+f{\in}HN{\sum}
+i=1[1{-}yif(xi)]++{\lambda}J(f), (12.30)
+whereHis the structured space of functions, and J(f) an appropriate reg-
+ularizer on that space. For example, suppose His the space of additive
+functionsf(x) ={\sum}p
+j=1fj(xj), andJ(f) ={\sum}
+j{\int}
+{\{}f{'}{'}
+j(xj){\}}2dxj. Then the
+solution to (12.30) is an additive cubic spline, and has a ker nel representa-
+tion (12.28) with K(x,x{'}) ={\sum}p
+j=1Kj(xj,x{'}
+j). Each of the Kjis the kernel
+appropriate for the univariate smoothing spline in xj(Wahba, 1990).
+Converselythisdiscussionalsoshowsthat,forexample, anyofthekernels
+described in (12.22) above can be used with anyconvex loss function, and
+will also lead to a finite-dimensional representation of the form (12.28).
+Figure 12.5 uses the same kernel functions as in Figure 12.3, except using
+the binomial log-likelihood as a loss function2. The fitted function is hence
+an estimate of the log-odds,
+{\textasciicircum}f(x) = log{\textasciicircum}Pr(Y= +1|x)
+{\textasciicircum}Pr(Y={-}1|x)
+={\textasciicircum}{\beta}0+N{\sum}
+i=1{\textasciicircum}{\alpha}iK(x,xi), (12.31)
+or conversely we get an estimate of the class probabilities
+{\textasciicircum}Pr(Y= +1|x) =1
+1+e{-}{\textasciicircum}{\beta}0{-}{\sum}N
+i=1{\textasciicircum}{\alpha}iK(x,xi). (12.32)
+The fitted models are quite similar in shape and performance. Examples
+and more details are given in Section 5.8.
+It does happen that for SVMs, a sizable fraction of the Nvalues of{\alpha}i
+can be zero (the nonsupport points). In the two examples in Fi gure 12.3,
+these fractions are 42{\%} and 45{\%}, respectively. This is a cons equence of the
+piecewise linear nature of the first part of the criterion (12 .25). The lower
+the class overlap (on the training data), the greater this fr action will be.
+Reducing{\lambda}will generally reduce the overlap (allowing a more {fl}exible f).
+A small number of support points means that {\textasciicircum}f(x) can be evaluated more
+quickly, which is important at lookup time. Of course, reduc ing the overlap
+too much can lead to poor generalization.
+2Ji Zhu assisted in the preparation of these examples.
+430 12. Flexible Discriminants
+LR - Degree-4 Polynomial in Feature Space
+
+FIGURE 12.5. The logistic regression versions of the SVM models in Fig-
+ure 12.3, using the identical kernels and hence penalties, but the log-likelihood
+loss instead of the SVM loss function. The two broken contours c orrespond to
+posterior probabilities of 0.75and0.25for the +1 class (or vice versa). The bro-
+ken purple curve in the background is the Bayes decision bound ary.
+12.3 Support Vector Machines and Kernels 431
+TABLE 12.2. Skin of the orange: Shown are mean (standard error of the mean )
+of the test error over 50simulations. BRUTO fits an additive spline model adap-
+tively, while MARS fits a low-order interaction model adaptively .
+Test Error (SE)
+Method No Noise Features Six Noise Features
+1 SV Classifier 0.450 (0.003) 0.472 (0.003)
+2 SVM/poly 2 0.078 (0.003) 0.152 (0.004)
+3 SVM/poly 5 0.180 (0.004) 0.370 (0.004)
+4 SVM/poly 10 0.230 (0.003) 0.434 (0.002)
+5 BRUTO 0.084 (0.003) 0.090 (0.003)
+6 MARS 0.156 (0.004) 0.173 (0.005)
+Bayes 0.029 0.029
+12.3.4 SVMs and the Curse of Dimensionality
+In this section, we address the question of whether SVMs have some edge
+on the curse of dimensionality. Notice that in expression (1 2.23) we are not
+allowed a fully general inner product in the space of powers a nd products.
+For example, all terms of the form 2 XjX{'}
+jare given equal weight, and the
+kernel cannot adapt itself to concentrate on subspaces. If t he number of
+featurespwere large, but the class separation occurred only in the lin ear
+subspace spanned by say X1andX2, this kernel would not easily find the
+structure and would suffer from having many dimensions to sea rch over.
+One would have to build knowledge about the subspace into the kernel;
+that is, tell it to ignore all but the first two inputs. If such k nowledge were
+available a priori, much of statistical learning would be ma de much easier.
+A major goal of adaptive methods is to discover such structur e.
+We support these statements with an illustrative example. W e generated
+100 observations in each of two classes. The first class has fo ur standard
+normal independent features X1,X2,X3,X4. The second class also has four
+standard normal independent features, but conditioned on 9 {\leq}{\sum}X2
+j{\leq}16.
+This is a relatively easy problem. As a second harder problem , we aug-
+mented the features with an additional six standard Gaussia n noise fea-
+tures. Hence the second class almost completely surrounds t he first, like the
+skin surrounding the orange, in a four-dimensional subspac e. The Bayes er-
+ror rate for this problem is 0 .029 (irrespective of dimension). We generated
+1000 test observations to compare different procedures. The average test
+errors over 50 simulations, with and without noise features , are shown in
+Table 12.2.
+Line 1 uses the support vector classifier in the original feat ure space.
+Lines2{\textendash}4refertothesupportvectormachinewitha2-,5-and 10-dimension-
+al polynomial kernel. For all support vector procedures, we chose the cost
+parameterCto minimize the test error, to be as fair as possible to the
+432 12. Flexible Discriminants
+1e{-}01 1e+01 1e+030.20 0.25 0.30 0.35
+1e{-}01 1e+01 1e+03 1e{-}01 1e+01 1e+03 1e{-}01 1e+01 1e+03Test Error
+CTest Error Curves {-} SVM with Radial Kernel
+{\gamma}= 5 {\gamma}= 1 {\gamma}= 0.5 {\gamma}= 0.1
+FIGURE 12.6. Test-error curves as a function of the cost parameter Cfor
+the radial-kernel SVM classifier on the mixture data. At the top of each plot is
+the scale parameter {\gamma}for the radial kernel: K{\gamma}(x,y) = exp( {-}{\gamma}||x{-}y||2). The
+optimal value for Cdepends quite strongly on the scale of the kernel. The Bayes
+error rate is indicated by the broken horizontal lines.
+method. Line 5 fits an additive spline model to the ( {-}1,+1) response by
+least squares, using the BRUTO algorithm for additive model s, described
+in Hastie and Tibshirani (1990). Line 6 uses MARS (multivari ate adaptive
+regression splines) allowing interaction of all orders, as described in Chap-
+ter 9; as such it is comparable with the SVM/poly 10. Both BRUT O and
+MARS have the ability to ignore redundant variables. Test er ror was not
+used to choose the smoothing parameters in either of lines 5 o r 6.
+In the original feature space, a hyperplane cannot separate the classes,
+and the support vector classifier (line 1) does poorly. The po lynomial sup-
+port vector machine makes a substantial improvement in test error rate,
+but is adversely affected by the six noise features. It is also very sensitive to
+the choice of kernel: the second degree polynomial kernel (l ine 2) does best,
+since the true decision boundary is a second-degree polynom ial. However,
+higher-degree polynomial kernels (lines 3 and 4) do much wor se. BRUTO
+performs well, since the boundary is additive. BRUTO and MAR S adapt
+well: their performance does not deteriorate much in the pre sence of noise.
+12.3.5 A Path Algorithm for the SVM Classifier
+The regularization parameter for the SVM classifier is the co st parameter
+C, or its inverse {\lambda}in (12.25). Common usage is to set Chigh, leading often
+to somewhat overfit classifiers.
+Figure 12.6 shows the test error on the mixture data as a funct ion of
+C, using different radial-kernel parameters {\gamma}. When{\gamma}= 5 (narrow peaked
+kernels), the heaviest regularization (small C) is called for. With {\gamma}= 1
+12.3 Support Vector Machines and Kernels 433
+{-}0.5 0.0 0.5 1.0 1.5 2.0{-}1.0 {-}0.5 0.0 0.5 1.0 1.5789
+1011
+12
+123
+45
+61/||{\beta}|| f(x) = 0f(x) = +1
+f(x) ={-}1
+0.0 0.2 0.4 0.6 0.8 1.00 2 4 6 8 101
+2
+34
+56
+789
+1011
+12
+{\alpha}i({\lambda}){\lambda}
+FIGURE 12.7. A simple example illustrates the SVM path algorithm. (left
+panel:) This plot illustrates the state of the model at {\lambda}= 1/2. The {\textquoteleft}{\textquoteleft}+1{\textquotedblright} points
+are orange, the {\textquotedblleft} {-}1{\textquotedblright} blue. The width of the soft margin is 2/||{\beta}||= 2{\texttimes}0.587.
+Two blue points {\{}3,5{\}}are misclassified, while the two orange points {\{}10,12{\}}are
+correctly classified, but on the wrong side of their margin f(x) = +1; each of
+these hasyif(xi){<}1. The three square shaped points {\{}2,6,7{\}}are exactly on
+their margins. (right panel:) This plot shows the piecewise lin ear profiles {\alpha}i({\lambda}).
+The horizontal broken line at {\lambda}= 1/2indicates the state of the {\alpha}ifor the model
+in the left plot.
+(the value used in Figure 12.3), an intermediate value of Cis required.
+Clearly in situations such as these, we need to determine a go od choice
+forC, perhaps by cross-validation. Here we describe a path algor ithm (in
+the spirit of Section 3.8) for efficiently fitting the entire se quence of SVM
+models obtained by varying C.
+It is convenient to use the loss+penalty formulation (12.25 ), along with
+Figure 12.4. This leads to a solution for {\beta}at a given value of {\lambda}:
+{\beta}{\lambda}=1
+{\lambda}N{\sum}
+i=1{\alpha}iyixi. (12.33)
+The{\alpha}iare again Lagrange multipliers, but in this case they all lie in [0,1].
+Figure 12.7 illustrates the setup. It can be shown that the KK T optimal-
+ity conditions imply that the labeled points ( xi,yi) fall into three distinct
+groups:
+434 12. Flexible Discriminants
+Observationscorrectlyclassifiedandoutsidetheirmargin s.Theyhave
+yif(xi){>}1, and Lagrange multipliers {\alpha}i= 0. Examples are the
+orange points 8, 9 and 11, and the blue points 1 and 4.
+Observationssittingontheirmarginswith yif(xi) = 1,withLagrange
+multipliers {\alpha}i{\in}[0,1]. Examples are the orange 7 and the blue 2 and
+6.
+Observations inside their margins have yif(xi){<}1, with{\alpha}i= 1.
+Examples are the blue 3 and 5, and the orange 10 and 12.
+The idea for the path algorithm is as follows. Initially {\lambda}is large, the
+margin 1/||{\beta}{\lambda}||is wide, and all points are inside their margin and have
+{\alpha}i= 1. As{\lambda}decreases, 1 /||{\beta}{\lambda}||decreases, and the margin gets narrower.
+Some points will move from inside their margins to outside th eir margins,
+andtheir{\alpha}iwillchangefrom1to0.Bycontinuity ofthe {\alpha}i({\lambda}),thesepoints
+willlingeron the margin during this transition. From (12.33) we see tha t
+the points with {\alpha}i= 1 make fixed contributions to {\beta}({\lambda}), and those with
+{\alpha}i= 0 make no contribution. So all that changes as {\lambda}decreases are the
+{\alpha}i{\in}[0,1] of those (small number) of points on the margin. Since all t hese
+points have yif(xi) = 1, this results in a small set of linear equations that
+prescribe how {\alpha}i({\lambda}) and hence {\beta}{\lambda}changes during these transitions. This
+results in piecewise linear paths for each of the {\alpha}i({\lambda}). The breaks occur
+when points cross the margin. Figure 12.7 (right panel) show s the{\alpha}i({\lambda})
+profiles for the small example in the left panel.
+Although we have described this for linear SVMs, exactly the same idea
+works for nonlinear models, in which (12.33) is replaced by
+f{\lambda}(x) =1
+{\lambda}N{\sum}
+i=1{\alpha}iyiK(x,xi). (12.34)
+Details can be found in Hastie et al. (2004). An Rpackagesvmpath is
+available on CRAN for fitting these models.
+12.3.6 Support Vector Machines for Regression
+In this section we show how SVMs can be adapted for regression with a
+quantitative response, in ways that inherit some of the prop erties of the
+SVM classifier. We first discuss the linear regression model
+f(x) =xT{\beta}+{\beta}0, (12.35)
+and then handle nonlinear generalizations. To estimate {\beta}, we consider min-
+imization of
+H({\beta},{\beta}0) =N{\sum}
+i=1V(yi{-}f(xi))+{\lambda}
+2{\parallel}{\beta}{\parallel}2, (12.36)
+12.3 Support Vector Machines and Kernels 435
+-4 -2 0 2 4-1 0 1 2 3 4
+-4 -2 0 2 40 2 4 6 8 10 12{-} c {-}cVH(r)V(r)
+r r
+FIGURE 12.8. The left panel shows the -insensitive error function used by the
+support vector regression machine. The right panel shows th e error function used
+in Huber`s robust regression (blue curve). Beyond |c|, the function changes from
+quadratic to linear.
+where
+V(r) ={\{}
+0 if|r|{<},
+|r|{-},otherwise.(12.37)
+This is an {\textquotedblleft} -insensitive{\textquotedblright} error measure, ignoring errors of size less t han
+(left panel of Figure 12.8). There is a rough analogy with the support
+vector classification setup, where points on the correct sid e of the deci-
+sion boundary and far away from it, are ignored in the optimiz ation. In
+regression, these {\textquotedblleft}low error{\textquotedblright} points are the ones with small residuals.
+It is interesting to contrast this with error measures used i n robust re-
+gression in statistics. The most popular, due to Huber (1964 ), has the form
+VH(r) ={\{}
+r2/2 if|r|{\leq}c,
+c|r|{-}c2/2,|r|{>}c,(12.38)
+shownintherightpanelofFigure12.8.Thisfunctionreduce sfromquadratic
+to linear the contributions of observations with absolute r esidual greater
+than a prechosen constant c. This makes the fitting less sensitive to out-
+liers. The support vector error measure (12.37) also has lin ear tails (beyond
+), but in addition it {fl}attens the contributions of those case s with small
+residuals.
+If{\textasciicircum}{\beta},{\textasciicircum}{\beta}0are the minimizers of H, the solution function can be shown to
+have the form
+{\textasciicircum}{\beta}=N{\sum}
+i=1({\textasciicircum}{\alpha}{*}
+i{-}{\textasciicircum}{\alpha}i)xi, (12.39)
+{\textasciicircum}f(x) =N{\sum}
+i=1({\textasciicircum}{\alpha}{*}
+i{-}{\textasciicircum}{\alpha}i){\langle}x,xi{\rangle}+{\beta}0, (12.40)
+436 12. Flexible Discriminants
+where {\textasciicircum}{\alpha}i,{\textasciicircum}{\alpha}{*}
+iare positive and solve the quadratic programming problem
+min
+{\alpha}i,{\alpha}{*}
+iN{\sum}
+i=1({\alpha}{*}
+i+{\alpha}i){-}N{\sum}
+i=1yi({\alpha}{*}
+i{-}{\alpha}i)+1
+2N{\sum}
+i,i{'}=1({\alpha}{*}
+i{-}{\alpha}i)({\alpha}{*}
+i{'}{-}{\alpha}i{'}){\langle}xi,xi{'}{\rangle}
+subject to the constraints
+0{\leq}{\alpha}i, {\alpha}{*}
+i{\leq}1/{\lambda},
+N{\sum}
+i=1({\alpha}{*}
+i{-}{\alpha}i) = 0, (12.41)
+{\alpha}i{\alpha}{*}
+i= 0.
+Duetothenatureoftheseconstraints,typicallyonlyasubs etofthesolution
+values ({\textasciicircum}{\alpha}{*}
+i{-}{\textasciicircum}{\alpha}i) are nonzero, and the associated data values are called the
+support vectors. As was the case in the classification settin g, the solution
+depends on the input values only through the inner products {\langle}xi,xi{'}{\rangle}. Thus
+we can generalize the methods to richer spaces by defining an a ppropriate
+inner product, for example, one of those defined in (12.22).
+Note that there are parameters, and{\lambda}, associated with the criterion
+(12.36). These seem to play different roles. is a parameter of the loss
+functionV, just likecis forVH. Note that both VandVHdepend on the
+scale ofyand hencer. If we scale our response (and hence use VH(r/{\sigma}) and
+V(r/{\sigma})instead),thenwemightconsiderusingpresetvaluesfor cand(the
+valuec= 1.345 achieves 95{\%} efficiency for the Gaussian). The quantity {\lambda}
+is a more traditional regularization parameter, and can be e stimated for
+example by cross-validation.
+12.3.7 Regression and Kernels
+As discussed in Section 12.3.3, this kernel property is not u nique to sup-
+port vector machines. Suppose we consider approximation of the regression
+function in terms of a set of basis functions {\{}hm(x){\}},m= 1,2,...,M:
+f(x) =M{\sum}
+m=1{\beta}mhm(x)+{\beta}0. (12.42)
+To estimate {\beta}and{\beta}0we minimize
+H({\beta},{\beta}0) =N{\sum}
+i=1V(yi{-}f(xi))+{\lambda}
+2{\sum}
+{\beta}2
+m (12.43)
+for some general error measure V(r). For any choice of V(r), the solution
+{\textasciicircum}f(x) ={\sum}{\textasciicircum}{\beta}mhm(x)+{\textasciicircum}{\beta}0has the form
+{\textasciicircum}f(x) =N{\sum}
+i=1{\textasciicircum}aiK(x,xi) (12.44)
+12.3 Support Vector Machines and Kernels 437
+withK(x,y) ={\sum}M
+m=1hm(x)hm(y). Notice that this has the same form
+as both the radial basis function expansion and a regulariza tion estimate,
+discussed in Chapters 5 and 6.
+For concreteness, let`s work out the case V(r) =r2. LetHbe theN{\texttimes}M
+basis matrix with imth element hm(xi), and suppose that M {>}Nis large.
+For simplicity we assume that {\beta}0= 0, or that the constant is absorbed in
+h; see Exercise 12.3 for an alternative.
+We estimate {\beta}by minimizing the penalized least squares criterion
+H({\beta}) = (y{-}H{\beta})T(y{-}H{\beta})+{\lambda}{\parallel}{\beta}{\parallel}2. (12.45)
+The solution is
+{\textasciicircum}y=H{\textasciicircum}{\beta} (12.46)
+with{\textasciicircum}{\beta}determined by
+{-}HT(y{-}H{\textasciicircum}{\beta})+{\lambda}{\textasciicircum}{\beta}= 0. (12.47)
+From this it appears that we need to evaluate the M{\texttimes}Mmatrix of inner
+products in the transformed space. However, we can premulti ply byHto
+give
+H{\textasciicircum}{\beta}= (HHT+{\lambda}I){-}1HHTy. (12.48)
+TheN{\texttimes}NmatrixHHTconsists of inner products between pairs of obser-
+vationsi,i{'}; that is, the evaluation of an inner product kernel {\{}HHT{\}}i,i{'}=
+K(xi,xi{'}). It is easy to show (12.44) directly in this case, that the pr edicted
+values at an arbitrary xsatisfy
+{\textasciicircum}f(x) =h(x)T{\textasciicircum}{\beta}
+=N{\sum}
+i=1{\textasciicircum}{\alpha}iK(x,xi), (12.49)
+where {\textasciicircum}{\alpha}= (HHT+{\lambda}I){-}1y. As in the support vector machine, we need not
+specify or evaluate the large set of functions h1(x),h2(x),...,h M(x). Only
+the inner product kernel K(xi,xi{'}) need be evaluated, at the Ntraining
+points for each i,i{'}and at points xfor predictions there. Careful choice
+ofhm(such as the eigenfunctions of particular, easy-to-evalua te kernels
+K) means, for example, that HHTcan be computed at a cost of N2/2
+evaluations of K, rather than the direct cost N2M.
+Note, however, that this property depends on the choice of sq uared norm
+{\parallel}{\beta}{\parallel}2in the penalty. It does not hold, for example, for the L1norm|{\beta}|,
+which may lead to a superior model.

@@ -1,0 +1,157 @@
+2.2 Assessing Model Accuracy 31
+0 20 40 60 80 1002 4 6 8 10 12XY
+2 5 10 200.0 0.5 1.0 1.5 2.0 2.5FlexibilityMean Squared Error
+FIGURE 2.10. Details are as in Figure 2.9, using a different true fthat is
+much closer to linear. In this setting, linear regression provides a very good fit to
+the data.
+patterns that the method found in the training data simply don`t exist
+in the test data. Note that regardless of whether or not overfitting has
+occurred, we almost always expect the training MSE to be smaller than
+the test MSE because most statistical learning methods either directly or
+indirectly seek to minimize the training MSE. Overfitting refers specifically
+to the case in which a less flexible model would have yielded a smaller
+test MSE.
+Figure2.10provides another example in which the true fis approxi-
+mately linear. Again we observe that the training MSE decreases mono-
+tonically as the model flexibility increases, and that there is a U-shape in
+the test MSE. However, because the truth is close to linear, the test MSE
+only decreases slightly before increasing again, so that the orange least
+squares fit is substantially better than the highly flexible green curve. Fi-
+nally, Figure 2.11displays an example in which fis highly non-linear. The
+training and test MSE curves still exhibit the same general patterns, but
+now there is a rapid decrease in both curves before the test MSE starts to
+increase slowly.
+In practice, one can usually compute the training MSE with relative
+ease, but estimating the test MSE is considerably more difficult because
+usuallynotestdata areavailable.Asthe previousthreeexamples illustrate,
+the flexibility level corresponding to the model with the minimal test MSE
+can vary considerably among data sets. Throughout this book, we discuss a
+varietyofapproachesthatcanbeusedinpracticetoestimatethisminimum
+point. One important method is cross-validation (Chapter 5), which is across-
+validation method for estimating the test MSE using the training data.
+2.2.2 The Bias-Variance Trade-Off
+The U-shape observed in the test MSE curves (Figures 2.9{\textendash}2.11) turns out
+to be the result of two competing properties of statistical learning methods.
+32 2. Statistical Learning
+0 20 40 60 80 100{-}10 0 10 20XY
+2 5 10 200 5 10 15 20FlexibilityMean Squared Error
+FIGURE 2.11. Details are as in Figure 2.9, using a different fthat is far from
+linear. In this setting, linear regression provides a very poor fit to the data.
+Though the mathematical proof is beyond the scope of this book, it is
+possible to show that the expected test MSE, for a given value x0, can
+always be decomposed into the sum of three fundamental quantities: the
+variance of{\textasciicircum}f(x0), the squared biasof{\textasciicircum}f(x0)and the variance of the errorvariance
+biasterms{\epsilon}. That is,
+E(
+y0{-}{\textasciicircum}f(x0))2
+=Var({\textasciicircum}f(x0)) + [ Bias({\textasciicircum}f(x0))]2+Var({\epsilon}). (2.7)
+Here the notation E(
+y0{-}{\textasciicircum}f(x0))2
+defines the expected test MSE atx0,expected
+test MSE and refers to the average test MSE that we would obtain if we repeatedly
+estimated fusingalargenumberoftrainingsets,andtestedeachat x0.The
+overall expected test MSE can be computed by averaging E(
+y0{-}{\textasciicircum}f(x0))2
+over all possible values of x0in the test set.
+Equation 2.7tells us that in order to minimize the expected test error,
+we need to select a statistical learning method that simultaneously achieves
+low variance andlow bias. Note that variance is inherently a nonnegative
+quantity, and squared bias is also nonnegative. Hence, we see that the
+expected test MSE can never lie below Var ({\epsilon}), the irreducible error from
+(2.3).
+What do we mean by the variance andbiasof a statistical learning
+method? Variance refers to the amount by which {\textasciicircum}fwould change if we
+estimated it using a different training data set. Since the training data
+are used to fit the statistical learning method, different training data sets
+will result in a different {\textasciicircum}f. But ideally the estimate for fshould not vary
+too much between training sets. However, if a method has high variance
+then small changes in the training data can result in large changes in {\textasciicircum}f. In
+general,moreflexiblestatisticalmethodshavehighervariance.Considerthe
+green and orange curves in Figure 2.9. The flexible green curve is following
+the observations very closely. It has high variance because changing any
+one of these data points may cause the estimate {\textasciicircum}fto change considerably.
+2.2 Assessing Model Accuracy 33
+2 5 10 200.0 0.5 1.0 1.5 2.0 2.5Flexibility2 5 10 200.0 0.5 1.0 1.5 2.0 2.5Flexibility2 5 10 2005 10 15 20
+FlexibilityMSEBiasVar
+FIGURE 2.12. Squared bias (blue curve), variance (orange curve), Var ({\epsilon})
+(dashed line), and test MSE (red curve) for the three data sets in Figures 2.9{\textendash}2.11.
+The vertical dotted line indicates the flexibility level corresponding to the smallest
+test MSE.
+In contrast, the orange least squares line is relatively inflexible and has low
+variance, because moving any single observation will likely cause only a
+small shift in the position of the line.
+On the other hand, biasrefers to the error that is introduced by approxi-
+matingareal-lifeproblem,whichmaybeextremelycomplicated,byamuch
+simpler model. For example, linear regression assumes that there is a linear
+relationship between YandX1,X2,...,X p. It is unlikely that any real-life
+problem truly has such a simple linear relationship, and so performing lin-
+ear regression will undoubtedly result in some bias in the estimate of f. In
+Figure2.11, the true fis substantially non-linear, so no matter how many
+training observations we are given, it will not be possible to produce an
+accurate estimate using linear regression. In other words, linear regression
+results in high bias in this example. However, in Figure 2.10the true f
+is very close to linear, and so given enough data, it should be possible for
+linear regression to produce an accurate estimate. Generally, more flexible
+methods result in less bias.
+As a general rule, as we use more flexible methods, the variance will
+increase and the bias will decrease. The relative rate of change of these
+two quantities determines whether the test MSE increases or decreases. As
+we increase the flexibility of a class of methods, the bias tends to initially
+decrease faster than the variance increases. Consequently, the expected
+test MSE declines. However, at some point increasing flexibility has little
+impact on the bias but starts to significantly increase the variance. When
+this happens the test MSE increases. Note that we observed this pattern
+of decreasing test MSE followed by increasing test MSE in the right-hand
+panels of Figures 2.9{\textendash}2.11.
+The three plots in Figure 2.12illustrate Equation 2.7for the examples in
+Figures2.9{\textendash}2.11. In each case the blue solid curve represents the squared
+bias, for different levels of flexibility, while the orange curve corresponds to
+the variance. The horizontal dashed line represents Var ({\epsilon}), the irreducible
+error. Finally, the red curve, corresponding to the test set MSE, is the sum
+34 2. Statistical Learning
+of these three quantities. In all three cases, the variance increases and the
+bias decreases as the method`s flexibility increases. However, the flexibility
+level corresponding to the optimal test MSE differs considerably among the
+three data sets, because the squared bias and variance change at different
+rates in each of the data sets. In the left-hand panel of Figure 2.12, the
+bias initially decreases rapidly, resulting in an initial sharp decrease in the
+expected test MSE. On the other hand, in the center panel of Figure 2.12
+the truefis close to linear, so there is only a small decrease in bias as flex-
+ibility increases, and the test MSE only declines slightly before increasing
+rapidly as the variance increases. Finally, in the right-hand panel of Fig-
+ure2.12, as flexibility increases, there is a dramatic decline in bias because
+the true fis very non-linear. There is also very little increase in variance
+as flexibility increases. Consequently, the test MSE declines substantially
+before experiencing a small increase as model flexibility increases.
+The relationship between bias, variance, and test set MSE given in Equa-
+tion2.7and displayed in Figure 2.12is referred to as the bias-variance
+trade-off. Good test set performance of a statistical learning method re-bias-variance
+trade-offquires low variance as well as low squared bias. This is referred to as a
+trade-off because it is easy to obtain a method with extremely low bias but
+high variance (for instance, by drawing a curve that passes through every
+single training observation) or a method with very low variance but high
+bias (by fitting a horizontal line to the data). The challenge lies in finding
+a method for which both the variance and the squared bias are low. This
+trade-off is one of the most important recurring themes in this book.
+In a real-life situation in which fis unobserved, it is generally not pos-
+sible to explicitly compute the test MSE, bias, or variance for a statistical
+learning method. Nevertheless, one should always keep the bias-variance
+trade-off in mind. In this book we explore methods that are extremely
+flexible and hence can essentially eliminate bias. However, this does not
+guarantee that they will outperform a much simpler method such as linear
+regression. To take an extreme example, suppose that the true fis linear.
+In this situation linear regression will have no bias, making it very hard
+for a more flexible method to compete. In contrast, if the true fis highly
+non-linear and we have an ample number of training observations, then
+we may do better using a highly flexible approach, as in Figure 2.11. In
+Chapter 5we discuss cross-validation, which is a way to estimate the test
+MSE using the training data.
+2.2.3 The Classification Setting
+Thus far, our discussion of model accuracy has been focused on the regres-
+sion setting. But many of the concepts that we have encountered, such
+as the bias-variance trade-off, transfer over to the classification setting
+with only some modifications due to the fact that yiis no longer quan-
+titative. Suppose that we seek to estimate fon the basis of training obser-
+vations{\{}(x1,y1),...,(xn,yn){\}}, where now y1,...,y nare qualitative. The
+most common approach for quantifying the accuracy of our estimate {\textasciicircum}fis
+thetraining error rate ,theproportionofmistakesthataremadeifweapplyerror rate

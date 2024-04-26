@@ -1,0 +1,60 @@
+151
+that will allow us to easily apply it to other estimation problems in which
+there are also latent variables, and which will allow us to give a convergence
+guarantee.
+11.2 Jensen`s inequality
+We begin our discussion with a very useful result called Jensen`s inequality
+Letfbe a function whose domain is the set of real numbers. Recall that
+fis a convex function if f{'}{'}(x){\geq}0 (for allx{\in}R). In the case of ftaking
+vector-valued inputs, this is generalized to the condition that its hessian H
+is positive semi-definite ( H{\geq}0). Iff{'}{'}(x){>}0 for allx, then we say fis
+strictly convex (in the vector-valued case, the corresponding statement is
+thatHmust be positive definite, written H {>} 0). Jensen`s inequality can
+then be stated as follows:
+Theorem. Letfbe a convex function, and let Xbe a random variable.
+Then:
+E[f(X)]{\geq}f(EX).
+Moreover, if fis strictly convex, then E[ f(X)] =f(EX) holds true if and
+only ifX= E[X] with probability 1 (i.e., if Xis a constant).
+Recall our convention of occasionally dropping the parentheses when writ-
+ing expectations, so in the theorem above, f(EX) =f(E[X]).
+For an interpretation of the theorem, consider the figure below.
+a E[X] bf(a)
+f(b)
+f(EX)E[f(X)]f
+Here,fis a convex function shown by the solid line. Also, Xis a random
+variable that has a 0.5 chance of taking the value a, and a 0.5 chance of
+152
+taking the value b(indicated on the x-axis). Thus, the expected value of X
+is given by the midpoint between aandb.
+We also see the values f(a),f(b) andf(E[X]) indicated on the y-axis.
+Moreover, the value E[ f(X)] is now the midpoint on the y-axis between f(a)
+andf(b). From our example, we see that because fis convex, it must be the
+case that E[ f(X)]{\geq}f(EX).
+Incidentally, quite a lot of people have trouble remembering which way
+the inequality goes, and remembering a picture like this is a good way to
+quickly figure out the answer.
+Remark. Recall that fis [strictly] concave if and only if {-}fis [strictly]
+convex (i.e., f{'}{'}(x){\leq}0 orH{\leq}0). Jensen`s inequality also holds for concave
+functionsf, but with the direction of all the inequalities reversed (E[ f(X)]{\leq}
+f(EX), etc.).
+11.3 General EM algorithms
+Suppose we have an estimation problem in which we have a training set
+{\{}x(1),...,x(n){\}}consisting of nindependent examples. We have a latent vari-
+able model p(x,z;{\theta}) withzbeing the latent variable (which for simplicity is
+assumed to take finite number of values). The density for xcan be obtained
+by marginalized over the latent variable z:
+p(x;{\theta}) ={\sum}
+zp(x,z;{\theta}) (11.1)
+We wish to fit the parameters {\theta}by maximizing the log-likelihood of the
+data, defined by
+{\ell}({\theta}) =n{\sum}
+i=1logp(x(i);{\theta}) (11.2)
+We can rewrite the objective in terms of the joint density p(x,z;{\theta}) by
+{\ell}({\theta}) =n{\sum}
+i=1logp(x(i);{\theta}) (11.3)
+=n{\sum}
+i=1log{\sum}
+z(i)p(x(i),z(i);{\theta}). (11.4)
+But, explicitly finding the maximum likelihood estimates of the parameters
+{\theta}may be hard since it will result in difficult non-convex optimization prob-

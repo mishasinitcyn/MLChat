@@ -1,0 +1,285 @@
+This is page 261
+Printer: Opaque this
+8
+Model Inference and Averaging
+8.1 Introduction
+For most of this book, the fitting (learning) of models has bee n achieved by
+minimizing a sum of squares for regression, or by minimizing cross-entropy
+for classification. In fact, both of these minimizations are instances of the
+maximum likelihood approach to fitting.
+In this chapter we provide a general exposition of the maximu m likeli-
+hood approach, as well as the Bayesian method for inference. The boot-
+strap, introduced in Chapter 7, is discussed in this context , and its relation
+to maximum likelihood and Bayes is described. Finally, we pr esent some
+related techniques for model averaging and improvement, in cluding com-
+mittee methods, bagging, stacking and bumping.
+8.2 The Bootstrap and Maximum Likelihood
+Methods
+8.2.1 A Smoothing Example
+The bootstrap method provides a direct computational way of assessing
+uncertainty, by sampling from the training data. Here we ill ustrate the
+bootstrap in a simple one-dimensional smoothing problem, a nd show its
+connection to maximum likelihood.
+262 8. Model Inference and Averaging
+0.0 0.5 1.0 1.5 2.0 2.5 3.0-1 0 1 2 3 4 5
+xy
+
+
+
+
+
+
+
+
+
+
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.00.0 0.2 0.4 0.6 0.8 1.0
+xB-spline Basis
+FIGURE 8.1. (Left panel): Data for smoothing example. (Right panel:) Set of
+sevenB-spline basis functions. The broken vertical lines indicate t he placement
+of the three knots.
+Denote the training data by Z={\{}z1,z2,...,z N{\}}, withzi= (xi,yi),
+i= 1,2,...,N. Herexiis a one-dimensional input, and yithe outcome,
+either continuous or categorical. As an example, consider t heN= 50 data
+points shown in the left panel of Figure 8.1.
+Suppose we decide to fit a cubic spline to the data, with three k nots
+placed at the quartiles of the Xvalues. This is a seven-dimensional lin-
+ear space of functions, and can be represented, for example, by a linear
+expansion of B-spline basis functions (see Section 5.9.2):
+{\textmu}(x) =7{\sum}
+j=1{\beta}jhj(x). (8.1)
+Here thehj(x),j= 1,2,...,7 are the seven functions shown in the right
+panel of Figure 8.1. We can think of {\textmu}(x) as representing the conditional
+mean E(Y|X=x).
+LetHbe theN{\texttimes}7 matrix with ijth element hj(xi). The usual estimate
+of{\beta}, obtained by minimizing the squared error over the training set, is
+given by
+{\textasciicircum}{\beta}= (HTH){-}1HTy. (8.2)
+The corresponding fit {\textasciicircum} {\textmu}(x) ={\sum}7
+j=1{\textasciicircum}{\beta}jhj(x) is shown in the top left panel
+of Figure 8.2.
+The estimated covariance matrix of {\textasciicircum}{\beta}is
+{\textasciicircum}Var({\textasciicircum}{\beta}) = (HTH){-}1{\textasciicircum}{\sigma}2, (8.3)
+where we have estimated the noise variance by {\textasciicircum} {\sigma}2={\sum}N
+i=1(yi{-}{\textasciicircum}{\textmu}(xi))2/N.
+Lettingh(x)T= (h1(x),h2(x),...,h 7(x)), the standard error of a predic-
+8.2 The Bootstrap and Maximum Likelihood Methods 263
+0.0 0.5 1.0 1.5 2.0 2.5 3.0-1 0 1 2 3 4 5
+
+
+
+
+
+
+
+
+
+
+xy
+0.0 0.5 1.0 1.5 2.0 2.5 3.0-1 0 1 2 3 4 5
+xy
+
+
+
+
+
+
+
+
+
+
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0-1 0 1 2 3 4 5
+xy
+
+
+
+
+
+
+
+
+
+
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0-1 0 1 2 3 4 5
+xy
+
+
+
+
+
+
+
+
+
+
+
+FIGURE 8.2. (Top left:)B-spline smooth of data. (Top right:) B-spline smooth
+plus and minus 1.96{\texttimes}standard error bands. (Bottom left:) Ten bootstrap repli-
+cates of the B-spline smooth. (Bottom right:) B-spline smooth with 95{\%} standard
+error bands computed from the bootstrap distribution.
+264 8. Model Inference and Averaging
+tion {\textasciicircum}{\textmu}(x) =h(x)T{\textasciicircum}{\beta}is
+{\textasciicircum}se[{\textasciicircum}{\textmu}(x)] = [h(x)T(HTH){-}1h(x)]1
+2{\textasciicircum}{\sigma}. (8.4)
+In the top right panel of Figure 8.2 we have plotted {\textasciicircum} {\textmu}(x){\pm}1.96{\textperiodcentered}{\textasciicircum}se[{\textasciicircum}{\textmu}(x)].
+Since 1.96 is the 97.5{\%} point of the standard normal distribu tion, these
+represent approximate 100 {-}2{\texttimes}2.5{\%} = 95{\%} pointwise confidence bands
+for{\textmu}(x).
+Here is how we could apply the bootstrap in this example. We dr awB
+datasets each of size N= 50 with replacement from our training data, the
+sampling unit being the pair zi= (xi,yi). To each bootstrap dataset Z{*}
+we fit a cubic spline {\textasciicircum} {\textmu}{*}(x); the fits from ten such samples are shown in the
+bottom left panel of Figure 8.2. Using B= 200 bootstrap samples, we can
+form a 95{\%} pointwise confidence band from the percentiles at e achx: we
+find the 2.5{\%}{\texttimes}200 = fifth largest and smallest values at each x. These are
+plotted in the bottom right panel of Figure 8.2. The bands loo k similar to
+those in the top right, being a little wider at the endpoints.
+There is actually a close connection between the least squar es estimates
+(8.2)and(8.3),thebootstrap,andmaximumlikelihood.Sup posewefurther
+assume that the model errors are Gaussian,
+Y={\textmu}(X)+{\varepsilon};{\varepsilon}{\sim}N(0,{\sigma}2),
+{\textmu}(x) =7{\sum}
+j=1{\beta}jhj(x). (8.5)
+The bootstrap method described above, in which we sample wit h re-
+placement from the training data, is called the nonparametric bootstrap .
+This really means that the method is {\textquotedblleft}model-free,{\textquotedblright} since it u ses the raw
+data, not a specific parametric model, to generate new datase ts. Consider
+a variation of the bootstrap, called the parametric bootstrap , in which we
+simulate new responses by adding Gaussian noise to the predi cted values:
+y{*}
+i= {\textasciicircum}{\textmu}(xi)+{\varepsilon}{*}
+i;{\varepsilon}{*}
+i{\sim}N(0,{\textasciicircum}{\sigma}2);i= 1,2,...,N. (8.6)
+This process is repeated Btimes, where B= 200 say. The resulting boot-
+strap datasets have the form ( x1,y{*}
+1),...,(xN,y{*}
+N) and we recompute the
+B-spline smooth on each. The confidence bands from this method will ex-
+actly equal the least squares bands in the top right panel, as the number of
+bootstrap samples goes to infinity. A function estimated fro m a bootstrap
+sampley{*}is given by {\textasciicircum} {\textmu}{*}(x) =h(x)T(HTH){-}1HTy{*}, and has distribution
+{\textasciicircum}{\textmu}{*}(x){\sim}N({\textasciicircum}{\textmu}(x),h(x)T(HTH){-}1h(x){\textasciicircum}{\sigma}2). (8.7)
+Notice that the mean of this distribution is the least square s estimate, and
+the standard deviation is the same as the approximate formul a (8.4).
+8.2 The Bootstrap and Maximum Likelihood Methods 265
+8.2.2 Maximum Likelihood Inference
+It turns out that the parametric bootstrap agrees with least squares in the
+previous example because the model (8.5) has additive Gauss ian errors. In
+general, the parametric bootstrap agrees not with least squ ares but with
+maximum likelihood, which we now review.
+We begin by specifying a probability density or probability mass function
+for our observations
+zi{\sim}g{\theta}(z). (8.8)
+In this expression {\theta}represents one or more unknown parameters that gov-
+ern the distribution of Z. This is called a parametric model forZ. As an
+example, if Zhas a normal distribution with mean {\textmu}and variance {\sigma}2, then
+{\theta}= ({\textmu},{\sigma}2), (8.9)
+and
+g{\theta}(z) =1{\sqrt{}}
+2{\pi}{\sigma}e{-}1
+2(z{-}{\textmu})2/{\sigma}2. (8.10)
+Maximum likelihood is based on the likelihood function , given by
+L({\theta};Z) =N{\prod}
+i=1g{\theta}(zi), (8.11)
+the probability of the observed data under the model g{\theta}. The likelihood is
+defined only up to a positive multiplier, which we have taken t o be one.
+We think of L({\theta};Z) as a function of {\theta}, with our data Zfixed.
+Denote the logarithm of L({\theta};Z) by
+{\ell}({\theta};Z) =N{\sum}
+i=1{\ell}({\theta};zi)
+=N{\sum}
+i=1logg{\theta}(zi), (8.12)
+which we will sometimes abbreviate as {\ell}({\theta}). This expression is called the
+log-likelihood, and each value {\ell}({\theta};zi) = logg{\theta}(zi) is called a log-likelihood
+component. The method of maximum likelihood chooses the val ue{\theta}={\textasciicircum}{\theta}
+to maximize {\ell}({\theta};Z).
+The likelihood function can be used to assess the precision o f{\textasciicircum}{\theta}. We need
+a few more definitions. The score function is defined by
+{\textperiodcentered}{\ell}({\theta};Z) =N{\sum}
+i=1{\textperiodcentered}{\ell}({\theta};zi), (8.13)
+266 8. Model Inference and Averaging
+where{\textperiodcentered}{\ell}({\theta};zi) ={\partial}{\ell}({\theta};zi)/{\partial}{\theta}. Assuming that the likelihood takes its maxi-
+mum in the interior of the parameter space, {\textperiodcentered}{\ell}({\textasciicircum}{\theta};Z) = 0. The information
+matrixis
+I({\theta}) ={-}N{\sum}
+i=1{\partial}2{\ell}({\theta};zi)
+{\partial}{\theta}{\partial}{\theta}T. (8.14)
+WhenI({\theta}) is evaluated at {\theta}={\textasciicircum}{\theta}, it is often called the observed information .
+TheFisher information (or expected information) is
+i({\theta}) = E{\theta}[I({\theta})]. (8.15)
+Finally, let {\theta}0denote the true value of {\theta}.
+A standard result says that the sampling distribution of the maximum
+likelihood estimator has a limiting normal distribution
+{\textasciicircum}{\theta}{\textrightarrow}N({\theta}0,i({\theta}0){-}1), (8.16)
+asN{\textrightarrow}{\infty}. Here we are independently sampling from g{\theta}0(z). This suggests
+that the sampling distribution of {\textasciicircum}{\theta}may be approximated by
+N({\textasciicircum}{\theta},i({\textasciicircum}{\theta}){-}1) orN({\textasciicircum}{\theta},I({\textasciicircum}{\theta}){-}1), (8.17)
+where{\textasciicircum}{\theta}represents the maximum likelihood estimate from the observ ed
+data.
+The corresponding estimates for the standard errors of {\textasciicircum}{\theta}jare obtained
+from
+{\sqrt{}}
+i({\textasciicircum}{\theta}){-}1
+jjand{\sqrt{}}
+I({\textasciicircum}{\theta}){-}1
+jj. (8.18)
+Confidence points for {\theta}jcan be constructed from either approximation
+in (8.17). Such a confidence point has the form
+{\textasciicircum}{\theta}j{-}z(1{-}{\alpha}){\textperiodcentered}{\sqrt{}}
+i({\textasciicircum}{\theta}){-}1
+jjor{\textasciicircum}{\theta}j{-}z(1{-}{\alpha}){\textperiodcentered}{\sqrt{}}
+I({\textasciicircum}{\theta}){-}1
+jj,
+respectively, where z(1{-}{\alpha})is the 1{-}{\alpha}percentile of the standard normal
+distribution. More accurate confidence intervals can be der ived from the
+likelihood function, by using the chi-squared approximati on
+2[{\ell}({\textasciicircum}{\theta}){-}{\ell}({\theta}0)]{\sim}{\chi}2
+p, (8.19)
+wherepis the number of components in {\theta}. The resulting 1 {-}2{\alpha}confi-
+dence interval is the set of all {\theta}0such that 2[ {\ell}({\textasciicircum}{\theta}){-}{\ell}({\theta}0)]{\leq}{\chi}2
+p(1{-}2{\alpha}),
+where{\chi}2
+p(1{-}2{\alpha})is the 1{-}2{\alpha}percentile of the chi-squared distribution with
+pdegrees of freedom.
+8.3 Bayesian Methods 267
+Let`s return to our smoothing example to see what maximum lik elihood
+yields. The parameters are {\theta}= ({\beta},{\sigma}2). The log-likelihood is
+{\ell}({\theta}) ={-}N
+2log{\sigma}22{\pi}{-}1
+2{\sigma}2N{\sum}
+i=1(yi{-}h(xi)T{\beta})2. (8.20)
+The maximum likelihood estimate is obtained by setting {\partial}{\ell}/{\partial}{\beta}= 0 and
+{\partial}{\ell}/{\partial}{\sigma}2= 0, giving
+{\textasciicircum}{\beta}= (HTH){-}1HTy,
+{\textasciicircum}{\sigma}2=1
+N{\sum}
+(yi{-}{\textasciicircum}{\textmu}(xi))2,(8.21)
+which are the same as the usual estimates given in (8.2) and be low (8.3).
+The information matrix for {\theta}= ({\beta},{\sigma}2) is block-diagonal, and the block
+corresponding to {\beta}is
+I({\beta}) = (HTH)/{\sigma}2, (8.22)
+so that the estimated variance ( HTH){-}1{\textasciicircum}{\sigma}2agrees with the least squares
+estimate (8.3).
+8.2.3 Bootstrap versus Maximum Likelihood
+In essence the bootstrap is a computer implementation of non parametric or
+parametric maximum likelihood. The advantage of the bootst rap over the
+maximum likelihood formula is that it allows us to compute ma ximum like-
+lihood estimates of standard errors and other quantities in settings where
+no formulas are available.
+In our example, suppose that we adaptively choose by cross-v alidation
+the number and position of the knots that define the B-splines, rather
+than fix them in advance. Denote by {\lambda}the collection of knots and their
+positions. Then the standard errors and confidence bands sho uld account
+for the adaptive choice of {\lambda}, but there is no way to do this analytically.
+With the bootstrap, we compute the B-spline smooth with an adaptive
+choice of knots for each bootstrap sample. The percentiles o f the resulting
+curves capture the variability from both the noise in the tar gets as well as
+that from {\textasciicircum}{\lambda}. In this particular example the confidence bands (not shown)
+don`t look much different than the fixed {\lambda}bands. But in other problems,
+where more adaptation is used, this can be an important effect to capture.
+8.3 Bayesian Methods
+In the Bayesian approach to inference, we specify a sampling model Pr( Z|{\theta})
+(density or probability mass function) for our data given th e parameters,

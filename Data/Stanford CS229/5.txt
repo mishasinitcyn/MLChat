@@ -1,0 +1,388 @@
+Chapter 5
+Kernel methods
+5.1 Feature maps
+Recall that in our discussion about linear regression, we considered the prob-
+lem of predicting the price of a house (denoted by y) from the living area of
+the house (denoted by x), and we fit a linear function of xto the training
+data. What if the price ycan be more accurately represented as a non-linear
+function of x? In this case, we need a more expressive family of models than
+linear models.
+We start by considering fitting cubic functions y={\theta}3x3+{\theta}2x2+{\theta}1x+{\theta}0.
+It turns out that we can view the cubic function as a linear function over
+the a different set of feature variables (defined below). Concretely, let the
+function{\varphi}:R{\textrightarrow}R4be defined as
+{\varphi}(x) =
+1
+x
+x2
+x3
+{\in}R4. (5.1)
+Let{\theta}{\in}R4be the vector containing {\theta}0,{\theta}1,{\theta}2,{\theta}3as entries. Then we can
+rewrite the cubic function in xas:
+{\theta}3x3+{\theta}2x2+{\theta}1x+{\theta}0={\theta}T{\varphi}(x)
+Thus, a cubic function of the variable xcan be viewed as a linear function
+over the variables {\varphi}(x). To distinguish between these two sets of variables,
+in the context of kernel methods, we will call the {\textquotedblleft}original{\textquotedblright} input value the
+input attributes of a problem (in this case, x, the living area). When the
+48
+49
+original input is mapped to some new set of quantities {\varphi}(x), we will call those
+new quantities the features variables. (Unfortunately, different authors use
+different terms to describe these two things in different contexts.) We will
+call{\varphi}afeature map , which maps the attributes to the features.
+5.2 LMS (least mean squares) with features
+We will derive the gradient descent algorithm for fitting the model {\theta}T{\varphi}(x).
+First recall that for ordinary least square problem where we were to fit {\theta}Tx,
+the batch gradient descent update is (see the first lecture note for its deriva-
+tion):
+{\theta}:={\theta}+{\alpha}n{\sum}
+i=1(
+y(i){-}h{\theta}(x(i)))
+x(i)
+:={\theta}+{\alpha}n{\sum}
+i=1(
+y(i){-}{\theta}Tx(i))
+x(i). (5.2)
+Let{\varphi}:Rd{\textrightarrow}Rpbe a feature map that maps attribute x(inRd) to the
+features{\varphi}(x) inRp. (In the motivating example in the previous subsection,
+we haved= 1 andp= 4.) Now our goal is to fit the function {\theta}T{\varphi}(x), with
+{\theta}being a vector in Rpinstead of Rd. We can replace all the occurrences of
+x(i)in the algorithm above by {\varphi}(x(i)) to obtain the new update:
+{\theta}:={\theta}+{\alpha}n{\sum}
+i=1(
+y(i){-}{\theta}T{\varphi}(x(i)))
+{\varphi}(x(i)) (5.3)
+Similarly, the corresponding stochastic gradient descent update rule is
+{\theta}:={\theta}+{\alpha}(
+y(i){-}{\theta}T{\varphi}(x(i)))
+{\varphi}(x(i)) (5.4)
+5.3 LMS with the kernel trick
+The gradient descent update, or stochastic gradient update above becomes
+computationally expensive when the features {\varphi}(x) is high-dimensional. For
+example, consider the direct extension of the feature map in equation (5.1)
+to high-dimensional input x: supposex{\in}Rd, and let{\varphi}(x) be the vector that
+50
+contains all the monomials of xwith degree{\leq}3
+{\varphi}(x) =
+1
+x1
+x2
+...
+x2
+1
+x1x2
+x1x3
+...
+x2x1
+...
+x3
+1
+x2
+1x2
+...
+. (5.5)
+The dimension of the features {\varphi}(x) is on the order of d3.1This is a pro-
+hibitively long vector for computational purpose {\textemdash} when d= 1000, each
+update requires at least computing and storing a 10003= 109dimensional
+vector, which is 106times slower than the update rule for for ordinary least
+squares updates (5.2).
+It may appear at first that such d3runtime per update and memory usage
+are inevitable, because the vector {\theta}itself is of dimension p{\approx}d3, and we may
+need to update every entry of {\theta}and store it. However, we will introduce the
+kernel trick with which we will not need to store {\theta}explicitly, and the runtime
+can be significantly improved.
+For simplicity, we assume the initialize the value {\theta}= 0, and we focus
+on the iterative update (5.3). The main observation is that at any time, {\theta}
+can be represented as a linear combination of the vectors {\varphi}(x(1)),...,{\varphi} (x(n)).
+Indeed, we can show this inductively as follows. At initialization, {\theta}= 0 ={\sum}n
+i=10{\textperiodcentered}{\varphi}(x(i)). Assume at some point, {\theta}can be represented as
+{\theta}=n{\sum}
+i=1{\beta}i{\varphi}(x(i)) (5.6)
+1Here, for simplicity, we include all the monomials with repetitions (so that, e.g., x1x2x3
+andx2x3x1both appear in {\varphi}(x)). Therefore, there are totally 1 + d+d2+d3entries in
+{\varphi}(x).
+51
+for some{\beta}1,...,{\beta}n{\in}R. Then we claim that in the next round, {\theta}is still a
+linear combination of {\varphi}(x(1)),...,{\varphi} (x(n)) because
+{\theta}:={\theta}+{\alpha}n{\sum}
+i=1(
+y(i){-}{\theta}T{\varphi}(x(i)))
+{\varphi}(x(i))
+=n{\sum}
+i=1{\beta}i{\varphi}(x(i)) +{\alpha}n{\sum}
+i=1(
+y(i){-}{\theta}T{\varphi}(x(i)))
+{\varphi}(x(i))
+=n{\sum}
+i=1({\beta}i+{\alpha}(
+y(i){-}{\theta}T{\varphi}(x(i)))
+)
+new{\beta}i{\varphi}(x(i)) (5.7)
+You may realize that our general strategy is to implicitly represent the p-
+dimensional vector {\theta}by a set of coefficients {\beta}1,...,{\beta}n. Towards doing this,
+we derive the update rule of the coefficients {\beta}1,...,{\beta}n. Using the equation
+above, we see that the new {\beta}idepends on the old one via
+{\beta}i:={\beta}i+{\alpha}(
+y(i){-}{\theta}T{\varphi}(x(i)))
+(5.8)
+Here we still have the old {\theta}on the RHS of the equation. Replacing {\theta}by
+{\theta}={\sum}n
+j=1{\beta}j{\varphi}(x(j)) gives
+{\forall}i{\in}{\{}1,...,n{\}},{\beta}i:={\beta}i+{\alpha}(
+y(i){-}n{\sum}
+j=1{\beta}j{\varphi}(x(j))T{\varphi}(x(i)))
+We often rewrite {\varphi}(x(j))T{\varphi}(x(i)) as{\langle}{\varphi}(x(j)),{\varphi}(x(i)){\rangle}to emphasize that it`s the
+inner product of the two feature vectors. Viewing {\beta}i`s as the new representa-
+tion of{\theta}, we have successfully translated the batch gradient descent algorithm
+into an algorithm that updates the value of {\beta}iteratively. It may appear that
+at every iteration, we still need to compute the values of {\langle}{\varphi}(x(j)),{\varphi}(x(i)){\rangle}for
+all pairs of i,j, each of which may take roughly O(p) operation. However,
+two important properties come to rescue:
+1. We can pre-compute the pairwise inner products {\langle}{\varphi}(x(j)),{\varphi}(x(i)){\rangle}for all
+pairs ofi,jbefore the loop starts.
+2. For the feature map {\varphi}defined in (5.5) (or many other interesting fea-
+ture maps), computing {\langle}{\varphi}(x(j)),{\varphi}(x(i)){\rangle}can be efficient and does not
+52
+necessarily require computing {\varphi}(x(i)) explicitly. This is because:
+{\langle}{\varphi}(x),{\varphi}(z){\rangle}= 1 +d{\sum}
+i=1xizi+{\sum}
+i,j{\in}{\{}1,...,d{\}}xixjzizj+{\sum}
+i,j,k{\in}{\{}1,...,d{\}}xixjxkzizjzk
+= 1 +d{\sum}
+i=1xizi+(d{\sum}
+i=1xizi)2
++(d{\sum}
+i=1xizi)3
+= 1 +{\langle}x,z{\rangle}+{\langle}x,z{\rangle}2+{\langle}x,z{\rangle}3(5.9)
+Therefore, to compute {\langle}{\varphi}(x),{\varphi}(z){\rangle}, we can first compute {\langle}x,z{\rangle}with
+O(d) time and then take another constant number of operations to com-
+pute 1 +{\langle}x,z{\rangle}+{\langle}x,z{\rangle}2+{\langle}x,z{\rangle}3.
+As you will see, the inner products between the features {\langle}{\varphi}(x),{\varphi}(z){\rangle}are
+essential here. We define the Kernel corresponding to the feature map {\varphi}as
+a function that maps X{\texttimes}X{\textrightarrow} Rsatisfying:2
+K(x,z){\triangleq}{\langle}{\varphi}(x),{\varphi}(z){\rangle} (5.10)
+To wrap up the discussion, we write the down the final algorithm as
+follows:
+1. Compute all the values K(x(i),x(j)){\triangleq}{\langle}{\varphi}(x(i)),{\varphi}(x(j)){\rangle}using equa-
+tion (5.9) for all i,j{\in}{\{}1,...,n{\}}. Set{\beta}:= 0.
+2.Loop:
+{\forall}i{\in}{\{}1,...,n{\}},{\beta}i:={\beta}i+{\alpha}(
+y(i){-}n{\sum}
+j=1{\beta}jK(x(i),x(j)))
+(5.11)
+Or in vector notation, letting Kbe then{\texttimes}nmatrix with Kij=
+K(x(i),x(j)), we have
+{\beta}:={\beta}+{\alpha}( y{-}K{\beta})
+With the algorithm above, we can update the representation {\beta}of the
+vector{\theta}efficiently with O(n) time per update. Finally, we need to show that
+2Recall thatXis the space of the input x. In our running example, X=Rd
+53
+the knowledge of the representation {\beta}suffices to compute the prediction
+{\theta}T{\varphi}(x). Indeed, we have
+{\theta}T{\varphi}(x) =n{\sum}
+i=1{\beta}i{\varphi}(x(i))T{\varphi}(x) =n{\sum}
+i=1{\beta}iK(x(i),x) (5.12)
+You may realize that fundamentally all we need to know about the feature
+map{\varphi}({\textperiodcentered}) is encapsulated in the corresponding kernel function K({\textperiodcentered},{\textperiodcentered}). We
+will expand on this in the next section.
+5.4 Properties of kernels
+In the last subsection, we started with an explicitly defined feature map {\varphi},
+which induces the kernel function K(x,z){\triangleq}{\langle}{\varphi}(x),{\varphi}(z){\rangle}. Then we saw that
+the kernel function is so intrinsic so that as long as the kernel function is
+defined, the whole training algorithm can be written entirely in the language
+of the kernel without referring to the feature map {\varphi}, so can the prediction of
+a test example x(equation (5.12).)
+Therefore, it would be tempted to define other kernel function K({\textperiodcentered},{\textperiodcentered}) and
+run the algorithm (5.11). Note that the algorithm (5.11) does not need to
+explicitly access the feature map {\varphi}, and therefore we only need to ensure the
+existence of the feature map {\varphi}, but do not necessarily need to be able to
+explicitly write {\varphi}down.
+What kinds of functions K({\textperiodcentered},{\textperiodcentered}) can correspond to some feature map {\varphi}? In
+other words, can we tell if there is some feature mapping {\varphi}so thatK(x,z) =
+{\varphi}(x)T{\varphi}(z) for allx,z?
+If we can answer this question by giving a precise characterization of valid
+kernel functions, then we can completely change the interface of selecting
+feature maps {\varphi}to the interface of selecting kernel function K. Concretely,
+we can pick a function K, verify that it satisfies the characterization (so
+that there exists a feature map {\varphi}thatKcorresponds to), and then we can
+run update rule (5.11). The benefit here is that we don`t have to be able
+to compute {\varphi}or write it down analytically, and we only need to know its
+existence. We will answer this question at the end of this subsection after
+we go through several concrete examples of kernels.
+Supposex,z{\in}Rd, and let`s first consider the function K({\textperiodcentered},{\textperiodcentered}) defined as:
+K(x,z) = (xTz)2.
+54
+We can also write this as
+K(x,z) =(d{\sum}
+i=1xizi)(d{\sum}
+j=1xjzj)
+=d{\sum}
+i=1d{\sum}
+j=1xixjzizj
+=d{\sum}
+i,j=1(xixj)(zizj)
+Thus, we see that K(x,z) ={\langle}{\varphi}(x),{\varphi}(z){\rangle}is the kernel function that corre-
+sponds to the the feature mapping {\varphi}given (shown here for the case of d= 3)
+by
+{\varphi}(x) =
+x1x1
+x1x2
+x1x3
+x2x1
+x2x2
+x2x3
+x3x1
+x3x2
+x3x3
+.
+Revisiting the computational efficiency perspective of kernel, note that whereas
+calculating the high-dimensional {\varphi}(x) requiresO(d2) time, finding K(x,z)
+takes onlyO(d) time{\textemdash}linear in the dimension of the input attributes.
+For another related example, also consider K({\textperiodcentered},{\textperiodcentered}) defined by
+K(x,z) = (xTz+c)2
+=d{\sum}
+i,j=1(xixj)(zizj) +d{\sum}
+i=1({\sqrt{}}
+2cxi)({\sqrt{}}
+2czi) +c2.
+(Check this yourself.) This function Kis a kernel function that corresponds
+55
+to the feature mapping (again shown for d= 3)
+{\varphi}(x) =
+x1x1
+x1x2
+x1x3
+x2x1
+x2x2
+x2x3
+x3x1
+x3x2
+x3x3{\sqrt{}}
+2cx1{\sqrt{}}
+2cx2{\sqrt{}}
+2cx3
+c
+,
+and the parameter ccontrols the relative weighting between the xi(first
+order) and the xixj(second order) terms.
+More broadly, the kernel K(x,z) = (xTz+c)kcorresponds to a feature
+mapping to an(d+k
+k)
+feature space, corresponding of all monomials of the
+formxi1xi2...xikthat are up to order k. However, despite working in this
+O(dk)-dimensional space, computing K(x,z) still takes only O(d) time, and
+hence we never need to explicitly represent feature vectors in this very high
+dimensional feature space.
+Kernels as similarity metrics. Now, let`s talk about a slightly different
+view of kernels. Intuitively, (and there are things wrong with this intuition,
+but nevermind), if {\varphi}(x) and{\varphi}(z) are close together, then we might expect
+K(x,z) ={\varphi}(x)T{\varphi}(z) to be large. Conversely, if {\varphi}(x) and{\varphi}(z) are far apart{\textemdash}
+say nearly orthogonal to each other{\textemdash}then K(x,z) ={\varphi}(x)T{\varphi}(z) will be small.
+So, we can think of K(x,z) as some measurement of how similar are {\varphi}(x)
+and{\varphi}(z), or of how similar are xandz.
+Given this intuition, suppose that for some learning problem that you`re
+working on, you`ve come up with some function K(x,z) that you think might
+be a reasonable measure of how similar xandzare. For instance, perhaps
+you chose
+K(x,z) = exp(
+{-}||x{-}z||2
+2{\sigma}2)
+.
+This is a reasonable measure of xandz`s similarity, and is close to 1 when
+xandzare close, and near 0 when xandzare far apart. Does there exist
+56
+a feature map {\varphi}such that the kernel Kdefined above satisfies K(x,z) =
+{\varphi}(x)T{\varphi}(z)? In this particular example, the answer is yes. This kernel is called
+theGaussian kernel , and corresponds to an infinite dimensional feature
+mapping{\varphi}. We will give a precise characterization about what properties
+a functionKneeds to satisfy so that it can be a valid kernel function that
+corresponds to some feature map {\varphi}.
+Necessary conditions for valid kernels. Suppose for now that Kis
+indeed a valid kernel corresponding to some feature mapping {\varphi}, and we will
+first see what properties it satisfies. Now, consider some finite set of npoints
+(not necessarily the training set) {\{}x(1),...,x(n){\}}, and let a square, n-by-n
+matrixKbe defined so that its ( i,j)-entry is given by Kij=K(x(i),x(j)).
+This matrix is called the kernel matrix . Note that we`ve overloaded the
+notation and used Kto denote both the kernel function K(x,z) and the
+kernel matrix K, due to their obvious close relationship.
+Now, ifKis a valid kernel, then Kij=K(x(i),x(j)) ={\varphi}(x(i))T{\varphi}(x(j)) =
+{\varphi}(x(j))T{\varphi}(x(i)) =K(x(j),x(i)) =Kji, and hence Kmust be symmetric. More-
+over, letting {\varphi}k(x) denote the k-th coordinate of the vector {\varphi}(x), we find that
+for any vector z, we have
+zTKz ={\sum}
+i{\sum}
+jziKijzj
+={\sum}
+i{\sum}
+jzi{\varphi}(x(i))T{\varphi}(x(j))zj
+={\sum}
+i{\sum}
+jzi{\sum}
+k{\varphi}k(x(i)){\varphi}k(x(j))zj
+={\sum}
+k{\sum}
+i{\sum}
+jzi{\varphi}k(x(i)){\varphi}k(x(j))zj
+={\sum}
+k({\sum}
+izi{\varphi}k(x(i)))2
+{\geq}0.
+The second-to-last step uses the fact that{\sum}
+i,jaiaj= ({\sum}
+iai)2forai=
+zi{\varphi}k(x(i)). Sincezwas arbitrary, this shows that Kis positive semi-definite
+(K{\geq}0).
+Hence, we`ve shown that if Kis a valid kernel (i.e., if it corresponds to
+some feature mapping {\varphi}), then the corresponding kernel matrix K{\in}Rn{\texttimes}n
+is symmetric positive semidefinite.
+57
+Sufficient conditions for valid kernels. More generally, the condition
+above turns out to be not only a necessary, but also a sufficient, condition
+forKto be a valid kernel (also called a Mercer kernel). The following result
+is due to Mercer.3
+Theorem (Mercer). LetK:Rd{\texttimes}Rd{\mapsto}{\textrightarrow}Rbe given. Then for K
+to be a valid (Mercer) kernel, it is necessary and sufficient that for any
+{\{}x(1),...,x(n){\}}, (n{<}{\infty}), the corresponding kernel matrix is symmetric pos-
+itive semi-definite.
+Given a function K, apart from trying to find a feature mapping {\varphi}that
+corresponds to it, this theorem therefore gives another way of testing if it is
+a valid kernel. You`ll also have a chance to play with these ideas more in
+problem set 2.
+In class, we also brie{fl}y talked about a couple of other examples of ker-
+nels. For instance, consider the digit recognition problem, in which given
+an image (16x16 pixels) of a handwritten digit (0-9), we have to figure out
+which digit it was. Using either a simple polynomial kernel K(x,z) = (xTz)k
+or the Gaussian kernel, SVMs were able to obtain extremely good perfor-
+mance on this problem. This was particularly surprising since the input
+attributesxwere just 256-dimensional vectors of the image pixel intensity
+values, and the system had no prior knowledge about vision, or even about
+which pixels are adjacent to which other ones. Another example that we
+brie{fl}y talked about in lecture was that if the objects xthat we are trying
+to classify are strings (say, xis a list of amino acids, which strung together
+form a protein), then it seems hard to construct a reasonable, {\textquotedblleft}small{\textquotedblright} set of
+features for most learning algorithms, especially if different strings have dif-
+ferent lengths. However, consider letting {\varphi}(x) be a feature vector that counts
+the number of occurrences of each length- ksubstring in x. If we`re consid-
+ering strings of English letters, then there are 26ksuch strings. Hence, {\varphi}(x)
+is a 26kdimensional vector; even for moderate values of k, this is probably
+too big for us to efficiently work with. (e.g., 264{\approx}460000.) However, using
+(dynamic programming-ish) string matching algorithms, it is possible to ef-
+ficiently compute K(x,z) ={\varphi}(x)T{\varphi}(z), so that we can now implicitly work
+in this 26k-dimensional feature space, but without ever explicitly computing
+feature vectors in this space.
+3Many texts present Mercer`s theorem in a slightly more complicated form involving
+L2functions, but when the input attributes take values in Rd, the version given here is
+equivalent.
+58
+Application of kernel methods: We`ve seen the application of kernels
+to linear regression. In the next part, we will introduce the support vector
+machines to which kernels can be directly applied. dwell too much longer on
+it here. In fact, the idea of kernels has significantly broader applicability than
+linear regression and SVMs. Specifically, if you have any learning algorithm
+that you can write in terms of only inner products {\langle}x,z{\rangle}between input
+attribute vectors, then by replacing this with K(x,z) whereKis a kernel,
+you can {\textquotedblleft}magically{\textquotedblright} allow your algorithm to work efficiently in the high
+dimensional feature space corresponding to K. For instance, this kernel trick
+can be applied with the perceptron to derive a kernel perceptron algorithm.
+Many of the algorithms that we`ll see later in this class will also be amenable
+to this method, which has come to be known as the {\textquotedblleft}kernel trick.{\textquotedblright}
