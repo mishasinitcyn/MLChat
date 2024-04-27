@@ -4,3 +4,4 @@ pypdf
 html2text
 dotenv
 tiktoken
+PyPDF2
