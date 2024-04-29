@@ -2,6 +2,7 @@ from config import index, model, mxbai, genai
 import numpy as np
 
 INVALID_CHAT_HISTORY_ERROR = "Invalid chat history. Expected assistant-user format."
+TOP_K = 1
 
 def get_embeddings(queries):
     res = mxbai.embeddings(
@@ -14,7 +15,7 @@ def get_embeddings(queries):
     embeddings = np.array([res.data[i].embedding for i in range(len(res.data))])
     return embeddings
 
-def query_pinecone(query, top_k=5):
+def query_pinecone(query, top_k=TOP_K):
     embedded_query = get_embeddings([query]).tolist()
     return index.query(vector=embedded_query, top_k=top_k, include_metadata=True)
 
@@ -56,19 +57,20 @@ def generate_response(prompt):
 system_instruction = """
     You are my Machine Learning tutor. Please help me answer my questions.
     
-    I will provide an excerpt from a textbook along with each question. If the included textbook content is relevant, consider including a quote from it as part of your explanation. 
-    If you use a quote, you MUST cite the source as `textbook_name Chapter chapter_number`. Feel free to elaborate on the topic and provide additional context. 
-    Else if the included textbook content does not contain the answer, but covers similar material indicating that the chapter may contain relevant information, you MUST use this format: "<Your answer>. Read more about this in textbook_name Chapter chapter_number."
-    Else, if the included textbook content is completely irrelevant, you MUST use this format: 
-    `Unfortunately, I can't find an answer for this question in my knowledge base. I will make my best attempt to answer per my pre-training knowledge. <Your answer>`
+    If the user is just asking for clarification on a previous question, you do not have to follow the format below and you can ignore the excerpt.
+    If the user is just making conversation, you do not have to follow the format below and you can ignore the excerpt.
     
-    However, if the user is not directly asking a novel question, rather asking for clarification on a previous question or a benign question, you do not have to follow the above format. Just provide the necessary information.
+    I will provide an excerpt from a textbook along with each question. If the included textbook content is relevant to the material in the question, cite the chapter as 
+    `textbook_name Chapter chapter_number`. For example, "Deep Learning Chapter 5". 
+    Additionally, consider including a direct quote from it as part of your explanation. Feel free to elaborate on the topic and provide additional context. 
+    Else, if the user is asking a machine learning question and the included textbook content is COMPLETELY irrelevant, you MUST use this format: 
+    `Unfortunately, I can't find an answer for this question in my knowledge base. I will make my best attempt to answer per my pre-training knowledge.` And then provide your best answer.
     
-    Ignore the 'Assistant' and 'User' prefixes. Just focus on the content.
+    Ignore the 'Assistant' and 'User' prefixes. Do not format the answer in markdown.
     """
     
 prompt_template = """
-    Prompt: Please help me answer this question: "{query}".
+    Prompt: {query}
     
     Here is a textbook excerpt from {textbook} Chapter {chapter} that may be relevant: 
     ```
