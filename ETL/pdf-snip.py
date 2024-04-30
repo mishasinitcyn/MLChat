@@ -3,11 +3,10 @@ import json
 import PyPDF2
 from dotenv import load_dotenv
 
-# Constants
 load_dotenv()
 TEXTBOOK_DIRECTORY = os.getenv('TEXTBOOK_DIRECTORY')
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-textbook_config = 'textbook_config.json'
+textbook_config = 'textbook_config_full_chapters.json'
 
 def ensure_dir(file_path):
     if not os.path.exists(file_path):

@@ -1,0 +1,107 @@
+{
+    "Deep Learning":{
+        "authors": ["Ian Goodfellow", "Yoshua Bengio", "Aaron Courville"],
+        "year": 2016,
+        "chapters": [
+            {
+                "5": [113, 182]
+            },
+            {
+                "6": [183, 242]
+            },
+            {
+                "8": [289, 344]
+            },
+            {
+                "9": [345, 387]
+            },
+            {
+                "14": [517, 540]
+            }
+        ]
+    },
+    "Stanford CS229":{
+        "authors": ["Andrew Ng", "Tengyu Ma"],
+        "year": 2023,
+        "chapters": [
+            {
+                "5": [49, 59]
+            },
+            {
+                "6": [60, 79]
+            },
+            {
+                "7": [81, 112]
+            },
+            {
+                "8": [114, 135]
+            },
+            {
+                "9": [136, 144]
+            },
+            {
+                "11": [149, 158]
+            }
+        ]
+    },
+    "Math for Machine Learning":{
+        "authors": ["Marc Peter Deisenroth", "A Aldo Faisal", "Cheng Soon Ong"],
+        "year": 2019,
+        "chapters": [
+            {
+                "3": [76, 103]
+            },
+            {
+                "4": [104, 144]
+            },
+            {
+                "5": [145, 155]
+            },
+            {
+                "6": [178, 230]
+            },
+            {
+                "7": [231, 254]
+            },
+            {
+                "12": [376, 400]
+            }
+        ]
+    },
+    "The Elements of Statistical Learning":{
+        "authors": ["Trevor Hastie", "Robert Tibshirani", "Jerome Friedman"],
+        "year": 2017,
+        "chapters": [
+            {
+                "7.10": [260, 268]
+            },
+            {
+                "8.2": [280, 286]
+            },
+            {
+                "8.3": [286, 289]
+            },
+            {
+                "12": [436, 456]
+            }
+        ]
+    },
+    "An Introduction to Statistical Learning":{
+        "authors": ["Gareth James", "Daniela Witten", "Trevor Hastie", "Robert Tibshirani"],
+        "year": 2023,
+        "chapters": [
+            {
+                "6": [237, 275]
+            },
+            {
+                "2": [25, 49]
+            },
+            {
+                "9": [374, 393]
+            },
+            {
+                "10": [406, 438]
+            }
+        ]
+    }
+}
