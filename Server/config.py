@@ -4,7 +4,6 @@ from pinecone import Pinecone, ServerlessSpec
 from mixedbread_ai.client import MixedbreadAI
 import google.generativeai as genai
 import numpy as np
-
 load_dotenv()
 
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')

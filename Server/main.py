@@ -20,18 +20,12 @@ class QueryInput(BaseModel):
     history: List[str] = []
 
 @app.post("/query/")
-async def handle_query(query_input: QueryInput):
+async def handle_query(query_input: QueryInput):    
     try:
-        validate_history(query_input.history)
-    except Exception as e:
-        print("Error: ", str(e))
-        return {"response": str(e)}
-    
-    try:
-        print("Query received: ", query_input)
         prompt = generate_prompt(query_input.query, query_input.history)
-        print("Prompt generated: ", prompt)
         response_text = generate_response(prompt)
+        print("Prompt: ", prompt)
+        print("Response: ", response_text)
         return {"response": response_text}
     except Exception as e:
         print("Error: ", str(e))
