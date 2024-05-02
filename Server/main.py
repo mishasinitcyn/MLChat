@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from config import CORS_ORIGINS
 from typing import List
-from utils import generate_response, generate_prompt, validate_history
+from utils import generate_response, generate_prompt
 
 app = FastAPI()
 

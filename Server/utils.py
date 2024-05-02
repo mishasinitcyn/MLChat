@@ -1,8 +1,8 @@
 from config import index, model, mxbai, genai
 import numpy as np
 
-INVALID_CHAT_HISTORY_ERROR = "Invalid chat history. Expected assistant-user format."
 TOP_K = 1
+TEMPERATURE = 0.05
 
 def get_embeddings(queries):
     res = mxbai.embeddings(
@@ -15,9 +15,13 @@ def get_embeddings(queries):
     embeddings = np.array([res.data[i].embedding for i in range(len(res.data))])
     return embeddings
 
-def query_pinecone(query, top_k=TOP_K):
-    embedded_query = get_embeddings([query]).tolist()
-    return index.query(vector=embedded_query, top_k=top_k, include_metadata=True)
+def query_pinecone(query):
+    try:
+        embedded_query = get_embeddings([query]).tolist()
+    except Exception as e:
+        print("Error: ", str(e))
+        return None
+    return index.query(vector=embedded_query, top_k=TOP_K, include_metadata=True)
 
 def generate_prompt(query, history):
     prompt = f"System Instruction: {system_instruction}\n\n"
@@ -25,7 +29,12 @@ def generate_prompt(query, history):
     for turn in history:
         prompt += f"\"{turn}\", "
     prompt = prompt.rstrip(', ') + "]\n\n"
-    response = query_pinecone(query)
+    try:
+        response = query_pinecone(query)
+    except Exception as e:
+        print("Error: ", str(e))
+        return prompt
+
     first_match = response['matches'][0]
     
     fields = {
@@ -40,7 +49,7 @@ def generate_prompt(query, history):
 
 
 def generate_response(prompt):    
-    response = model.generate_content(prompt, generation_config=genai.types.GenerationConfig(temperature=0))
+    response = model.generate_content(prompt, generation_config=genai.types.GenerationConfig(temperature=TEMPERATURE))
     return response.text
 
     
@@ -48,9 +57,9 @@ system_instruction = """
     You are my Machine Learning tutor. Please help me answer my questions.
     
     I will provide an excerpt from a textbook along with each question. If the included textbook content is relevant to the material in the question, YOU MUST CITE THE CHAPTER in the format
-    `textbook_name Chapter chapter_number`. For example, "Deep Learning Chapter 5". 
+    `textbook_name Chapter chapter_number`. For example, "Deep Learning Chapter 5" or "Read more in Stanford CS229 Chapter 9" etc. 
     Additionally, consider including a direct quote from it as part of your explanation. Feel free to elaborate on the topic and provide additional context. 
-    Else, if the user is asking a machine learning question and the included textbook content is COMPLETELY irrelevant, you MUST use this format: 
+    Else, if the user is asking a machine learning question and the included textbook content is COMPLETELY irrelevant to their question, you MUST use this format: 
     `Unfortunately, I can't find an answer for this question in my knowledge base. I will make my best attempt to answer per my pre-training knowledge.` And then provide your best answer.
     
     However, if the user is not asking a new question, just asking for clarification on a previous question, you do not have to follow the above format and you can ignore the excerpt.
@@ -62,8 +71,9 @@ system_instruction = """
 prompt_template = """
     Prompt: {query}
     
-    Here is a textbook excerpt from {textbook} Chapter {chapter} that may be relevant: 
+    If the prompt is about machine learning or math, here is a textbook excerpt from {textbook} Chapter {chapter} that may be relevant: 
     ```
     {textbook_content}
     ```
+    If it is relevant, you must cite it. If the prompt is not about machine learning or math, you can ignore the excerpt and answer accordingly.
     """
