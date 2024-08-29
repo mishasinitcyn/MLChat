@@ -1,5 +1,7 @@
 # MLChat: A Learning Platform :honeybee:
 
+Try out MLChat at [MLChat.chat](https://mlchat.chat)
+
 Official submission for Google AI Hackathon on [DevPost](https://devpost.com/software/mlchat)
 
 Read the official [Medium article](https://medium.com/@msa242/mlchat-a-retrieval-augmented-generation-rag-learning-platform-4f5a5601fcff)
