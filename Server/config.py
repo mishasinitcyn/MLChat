@@ -20,7 +20,7 @@ index = pc.Index(INDEX_NAME)
 mxbai = MixedbreadAI(api_key=MIXEDBREAD_API_KEY)
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 
 
