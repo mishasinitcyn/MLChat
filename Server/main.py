@@ -5,7 +5,7 @@ from config import CORS_ORIGINS
 from typing import List
 from utils import generate_response, generate_prompt
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None)
 
 app.add_middleware(
     CORSMiddleware,
